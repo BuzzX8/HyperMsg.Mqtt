@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 
@@ -36,7 +37,7 @@ namespace HyperMsg.Mqtt
 			AddWriter<Disconnect>(Write);
 		}
 
-		public static (Packet packet, int size) ReadPacket(this ReadOnlyMemory<byte> buffer)
+		public static (Packet packet, int size) ReadPacket(this PipeReader reader)
 		{
 			throw new NotImplementedException();
 		}
