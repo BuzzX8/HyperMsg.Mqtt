@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Tests
@@ -327,11 +329,20 @@ namespace HyperMsg.Mqtt.Tests
 
 		private void VerifySerialization(Packet packet, params byte[] expected)
 	    {
-		    //var buffer = new Memory<byte>(new byte[expected.Length]);
-		    //int written = buffer.WritePacket(packet);
+            var pipe = new Pipe();
+		    pipe.Writer.WritePacket(packet);            
+            pipe.Writer.FlushAsync().AsTask().Wait();
 
-		    //Assert.Equal(expected, buffer.ToArray());
-		    //Assert.Equal(expected.Length, written);
+            var result = pipe.Reader.ReadAsync().Result;
+
+            var actual = new List<byte>();
+
+            foreach (var segment in result.Buffer)
+            {
+                actual.AddRange(segment.ToArray());
+            }
+
+            Assert.Equal(expected, actual.ToArray());		    
 	    }
 
 	    public static IEnumerable<object[]> GetTestCasesForWriteRemaningLength()
@@ -353,28 +364,46 @@ namespace HyperMsg.Mqtt.Tests
 
 	    [Theory(DisplayName = "WriteRemainingLength serializes value for remaining length")]
 	    [MemberData(nameof(GetTestCasesForWriteRemaningLength))]
-	    public void WriteRemainingLength_Serializes_Value_For_Remaining_Length(int value, byte[] expected)
+	    public async Task WriteRemainingLength_Serializes_Value_For_Remaining_Length(int value, byte[] expected)
 	    {
-		    //var buffer = new Memory<byte>(new byte[expected.Length]);
+            var pipe = new Pipe();
+		    
+		    int bytesWritten = pipe.Writer.WriteRemainingLength(value);
+            pipe.Writer.Advance(bytesWritten);
+            await pipe.Writer.FlushAsync();
+            var result = await pipe.Reader.ReadAsync();
 
-		    //int bytesWritten = buffer.WriteRemainingLength(value, 0);
+            var actual = new List<byte>();
 
-		    //Assert.Equal(expected.Length, bytesWritten);
-		    //Assert.Equal(expected, buffer.ToArray());
+            foreach (var segment in result.Buffer)
+            {
+                actual.AddRange(segment.ToArray());
+            }
+
+		    Assert.Equal(expected.Length, bytesWritten);
+		    Assert.Equal(expected, actual.ToArray());
 	    }
 
 	    [Fact(DisplayName = "WriteString correctly serializes string")]
-	    public void WriteString_Correctly_Serializes_String()
+	    public async Task WriteString_Correctly_Serializes_String()
 	    {
-		 //   string value = Guid.NewGuid().ToString();
-		 //   byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
-			//var buffer = new Memory<byte>(expected);
+            var pipe = new Pipe();
+		    string value = Guid.NewGuid().ToString();
+		    byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();            
+            await pipe.Writer.WriteAsync(new ReadOnlyMemory<byte>(expected));
+            pipe.Writer.Advance(expected.Length);
+            await pipe.Writer.FlushAsync();
 
-		 //   var bytesWritten = buffer.WriteString(value, 0);
-		 //   byte[] actual = buffer.ToArray();
+            var result = await pipe.Reader.ReadAsync();
 
-			//Assert.Equal(expected.Length, bytesWritten);
-		 //   Assert.Equal(expected, actual);
+            var actual = new List<byte>();
+
+            foreach (var segment in result.Buffer)
+            {
+                actual.AddRange(segment.ToArray());
+            }
+
+            Assert.Equal(expected, actual.ToArray());
 	    }
 	}
 }
