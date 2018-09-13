@@ -50,8 +50,10 @@ namespace HyperMsg.Mqtt.Serialization
 		private static void Write(IBufferWriter<byte> writer, ConnAck connAck)
 		{ }
 
-		private static void Write(IBufferWriter<byte> writer, Publish publish)
-		{ }
+	    private static void Write(IBufferWriter<byte> writer, Publish publish)
+	    {
+		    byte header = 0;
+	    }
 
 	    private static void Write(IBufferWriter<byte> writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);
 
@@ -61,26 +63,62 @@ namespace HyperMsg.Mqtt.Serialization
 
 		private static void Write(IBufferWriter<byte> writer, PubComp pubComp) => WriteShortPacket(writer, PacketCodes.Pubcomp, pubComp.Id);
 
-		private static void Write(IBufferWriter<byte> writer, Subscribe subscribe)
-		{ }
-
-	    private static void Write(IBufferWriter<byte> writer, SubAck subAck)
+	    private static void Write(IBufferWriter<byte> writer, Subscribe subscribe)
 	    {
-	    }
+		    var contentLength = GetSubscriptionsByteCount(subscribe.Subscriptions) + sizeof(ushort);//ID + subscriptions
+		    WriteHeaderWithLength(writer, PacketCodes.Subscribe, subscribe.Id, contentLength);
+
+		    foreach (var (topic, qos) in subscribe.Subscriptions)
+		    {
+			    int written = writer.WriteString(topic);
+				writer.Advance(written);
+			    var span = writer.GetSpan(1);
+			    span[0] = (byte)qos;
+			    writer.Advance(1);
+			}
+		}
+
+	    private static int GetSubscriptionsByteCount((string, QosLevel)[] subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.Item1) + 1);
+
+		private static void Write(IBufferWriter<byte> writer, SubAck subAck)
+		{
+			var contentLength = subAck.Results.Length + sizeof(ushort);
+			WriteHeaderWithLength(writer, PacketCodes.SubAck, subAck.Id, contentLength);
+
+			var span = writer.GetSpan(subAck.Results.Length);
+
+			for (int i = 0; i < subAck.Results.Length; i++)
+			{
+				span[i] = (byte) subAck.Results[i];
+			}
+
+			writer.Advance(subAck.Results.Length);
+		}
 
 	    private static void Write(IBufferWriter<byte> writer, Unsubscribe unsubscribe)
 	    {
-		    int length = GetTopicsByteCount(unsubscribe.Topics) + sizeof(ushort) + 4;
-		    var span = writer.GetSpan(length);
-		    span[0] = PacketCodes.Unsubscribe;
-		    //writer.WriteRemainingLength(contentLength);
+		    var contentLength = GetTopicsByteCount(unsubscribe.Topics) + sizeof(ushort);//ID + topics
+		    WriteHeaderWithLength(writer, PacketCodes.Unsubscribe, unsubscribe.Id, contentLength);
 
-		    foreach (var topic in unsubscribe.Topics)
-		    {
-			    //writer.WriteString(topic);
-		    }
+			foreach (var topic in unsubscribe.Topics)
+			{
+				int written = writer.WriteString(topic);
+				writer.Advance(written);
+			}
+		}
 
-		    writer.Advance(length);
+	    private static void WriteHeaderWithLength(IBufferWriter<byte> writer, byte code, ushort packetId, int contentLength)
+	    {
+		    var buffer = writer.GetMemory(5);//code + max length
+		    var span = buffer.Span;
+
+		    span[0] = code;
+		    var written = buffer.Slice(1).WriteRemainingLength(contentLength);
+		    writer.Advance(written + 1);
+
+		    span = writer.GetSpan(sizeof(ushort));
+		    BinaryPrimitives.WriteUInt16BigEndian(span, packetId);
+		    writer.Advance(sizeof(ushort));
 		}
 
 	    private static int GetTopicsByteCount(string[] topics) => topics.Aggregate(0, (a, s) => a + GetStringByteCount(s));
@@ -106,9 +144,9 @@ namespace HyperMsg.Mqtt.Serialization
 
 		private static void Write(IBufferWriter<byte> writer, Disconnect disconnect) => writer.Write(Disconnect);
 
-	    public static int WriteRemainingLength(this IBufferWriter<byte> writer, int length)
+	    public static int WriteRemainingLength(this Memory<byte> buffer, int length)
 	    {
-		    var span = writer.GetSpan(4);
+		    var span = buffer.Span;
 
 		    if (length > 0x1fffff)
 		    {
@@ -140,11 +178,11 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    public static int WriteString(this IBufferWriter<byte> writer, string value)
 	    {
-		    //var bytes = Encoding.UTF8.GetBytes(value);
-		    //buffer.WriteUInt16BigEndian((ushort)bytes.Length, offset);
-		    //bytes.CopyTo(buffer.Slice(offset + sizeof(ushort)));
-		    //return bytes.Length + sizeof(ushort);
-		    throw new NotImplementedException();
+		    var span = writer.GetSpan(Encoding.UTF8.GetByteCount(value) + sizeof(ushort));
+		    var bytes = Encoding.UTF8.GetBytes(value);
+			BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)bytes.Length);
+		    bytes.CopyTo(span.Slice(sizeof(ushort)));
+		    return bytes.Length + sizeof(ushort);
 	    }
 	}
 }

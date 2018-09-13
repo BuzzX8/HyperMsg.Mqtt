@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -365,8 +366,9 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		public void WriteRemainingLength_Serializes_Value_For_Remaining_Length(int value, byte[] expected)
 		{
 			var pipe = new Pipe();
+			var buffer = pipe.Writer.GetMemory(expected.Length);
 
-			int bytesWritten = pipe.Writer.WriteRemainingLength(value);
+			int bytesWritten = buffer.WriteRemainingLength(value);
 			pipe.Writer.Advance(bytesWritten);
 			pipe.Writer.FlushAsync().AsTask().Wait();
 			var result = pipe.Reader.ReadAsync().Result;
@@ -382,26 +384,27 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			Assert.Equal(expected, actual.ToArray());
 		}
 
-		//[Fact(DisplayName = "WriteString correctly serializes string")]
-		//public async Task WriteString_Correctly_Serializes_String()
-		//{
-		// var pipe = new Pipe();
-		// string value = Guid.NewGuid().ToString();
-		// byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
-		// await pipe.Writer.WriteAsync(new ReadOnlyMemory<byte>(expected));
-		// pipe.Writer.Advance(expected.Length);
-		// await pipe.Writer.FlushAsync();
+		[Fact(DisplayName = "WriteString correctly serializes string")]
+		public void WriteString_Correctly_Serializes_String()
+		{
+			var pipe = new Pipe();
+			string value = Guid.NewGuid().ToString();
+			byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
+			int bytesWritten = pipe.Writer.WriteString(value);
+			pipe.Writer.Advance(expected.Length);
+			pipe.Writer.FlushAsync().AsTask().Wait();
 
-		// var result = await pipe.Reader.ReadAsync();
+			var result = pipe.Reader.ReadAsync().Result;
 
-		// var actual = new List<byte>();
+			var actual = new List<byte>();
 
-		// foreach (var segment in result.Buffer)
-		// {
-		//  actual.AddRange(segment.ToArray());
-		// }
+			foreach (var segment in result.Buffer)
+			{
+				actual.AddRange(segment.ToArray());
+			}
 
-		// Assert.Equal(expected, actual.ToArray());
-		//}
+			Assert.Equal(expected.Length, bytesWritten);
+			Assert.Equal(expected, actual.ToArray());
+		}
 	}
 }
