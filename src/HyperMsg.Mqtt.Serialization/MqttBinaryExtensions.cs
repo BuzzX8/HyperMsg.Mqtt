@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Buffers.Binary;
 
 namespace HyperMsg.Mqtt
 {
@@ -94,7 +95,7 @@ namespace HyperMsg.Mqtt
             span[offset] = 4;//Protocol level
             span[offset + 1] = (byte)packet.Flags;
             offset += 2;
-            buffer.WriteUInt16BigEndian(packet.KeepAlive, offset);
+            //buffer.WriteUInt16BigEndian(packet.KeepAlive, offset);
             //_bufferWriter.WriteString(packet.ClientId);
 
             //if (packet.Flags.HasFlag(ConnectFlags.Will))
@@ -121,7 +122,7 @@ namespace HyperMsg.Mqtt
         private static int WriteProtocolName(Memory<byte> buffer, int offset)
         {
             var span = buffer.Span;
-            buffer.WriteUInt16BigEndian(0x0004, offset);
+            //buffer.WriteUInt16BigEndian(0x0004, offset);
             ProtocolName.CopyTo(buffer.Slice(sizeof(ushort) + offset));
 
             return sizeof(ushort) + 4;
@@ -162,7 +163,7 @@ namespace HyperMsg.Mqtt
             //offset += buffer.WriteRemainingLength(contentLength, offset);
 
             //offset += buffer.WriteString(packet.Topic, offset);
-            buffer.WriteUInt16BigEndian(packet.Id, offset);
+            //buffer.WriteUInt16BigEndian(packet.Id, offset);
             offset += sizeof(ushort);
             packet.Message.CopyTo(span.Slice(offset));
             
@@ -186,7 +187,7 @@ namespace HyperMsg.Mqtt
 
 			int contentLength = GetSubscriptionsByteCount(packet.Subscriptions) + sizeof(ushort);
             int offset = 0;// buffer.WriteRemainingLength(contentLength, 1) + 1;
-			buffer.WriteUInt16BigEndian(packet.Id, offset);
+			//buffer.WriteUInt16BigEndian(packet.Id, offset);
 			offset += sizeof(ushort);
 
 			foreach (var (topic, qos) in packet.Subscriptions)
@@ -209,7 +210,7 @@ namespace HyperMsg.Mqtt
 
 			int contentLength = packet.Results.Length + sizeof(ushort);
             int offset = 0;// buffer.WriteRemainingLength(contentLength, 1) + 1;
-			buffer.WriteUInt16BigEndian(packet.Id, offset);
+			//buffer.WriteUInt16BigEndian(packet.Id, offset);
 			offset += sizeof(ushort);
 
 			foreach (var result in packet.Results)
@@ -225,10 +226,10 @@ namespace HyperMsg.Mqtt
 		{
             int count = 1;
             var buffer = writer.GetMemory(1);
-            buffer.Span[0] = PacketCodes.Unsubscribe;
+            //buffer.Span[0] = PacketCodes.Unsubscribe;
             writer.Advance(1);
             int contentLength = GetTopicsByteCount(packet.Topics) + sizeof(ushort);
-            writer.WriteRemainingLength(contentLength);
+            //writer.WriteRemainingLength(contentLength);
 
             foreach (var topic in packet.Topics)
             {
@@ -253,7 +254,8 @@ namespace HyperMsg.Mqtt
 
 			span[0] = code;
 			span[1] = 2; //Remaining length always 2
-			buffer.WriteUInt16BigEndian(packetId, 2);
+			//span.Wr(packetId, 2);
+			BinaryPrimitives.WriteUInt16BigEndian(span.Slice(2), packetId);
             writer.Advance(4);
 			return writer.FlushAsync(token);
 		}
@@ -264,37 +266,37 @@ namespace HyperMsg.Mqtt
 
         private static ValueTask<FlushResult> Write(PipeWriter writer, Disconnect packet, CancellationToken token) => writer.WriteAsync(Disconnect, token);
 
-        public static int WriteRemainingLength(this PipeWriter writer, int length)
-		{
-            var span = writer.GetSpan(4);
+  //      public static int WriteRemainingLength(this PipeWriter writer, int length)
+		//{
+  //          var span = writer.GetSpan(4);
 
-			if (length > 0x1fffff)
-			{
-                span[0] = (byte)(length | 0x80);
-                span[1] = (byte)((length >> 7) | 0x80);
-                span[2] = (byte)((length >> 14) | 0x80);
-                span[3] = (byte)(length >> 21);
-                return 4;
-            }
+		//	if (length > 0x1fffff)
+		//	{
+  //              span[0] = (byte)(length | 0x80);
+  //              span[1] = (byte)((length >> 7) | 0x80);
+  //              span[2] = (byte)((length >> 14) | 0x80);
+  //              span[3] = (byte)(length >> 21);
+  //              return 4;
+  //          }
 
-			if (length > 0x3fff)
-			{
-				span[0] = (byte)(length | 0x80);
-				span[1] = (byte)((length >> 7) | 0x80);
-				span[2] = (byte)(length >> 14);
-				return 3;
-			}
+		//	if (length > 0x3fff)
+		//	{
+		//		span[0] = (byte)(length | 0x80);
+		//		span[1] = (byte)((length >> 7) | 0x80);
+		//		span[2] = (byte)(length >> 14);
+		//		return 3;
+		//	}
 
-			if (length > 0x7f)
-			{
-				span[0] = (byte)(length | 0x80);
-				span[1] = (byte)(length >> 7);
-				return 2;
-			}
+		//	if (length > 0x7f)
+		//	{
+		//		span[0] = (byte)(length | 0x80);
+		//		span[1] = (byte)(length >> 7);
+		//		return 2;
+		//	}
 
-			span[0] = (byte) length;
-			return 1;
-		}
+		//	span[0] = (byte) length;
+		//	return 1;
+		//}
         
 		public static int WriteString(this PipeWriter writer, string value)
 		{
