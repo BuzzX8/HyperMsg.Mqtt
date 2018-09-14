@@ -12,7 +12,7 @@ namespace HyperMsg.Mqtt.Serialization
 	    private static readonly byte[] Disconnect = { 0b11100000, 0b00000000 };
 	    private static readonly byte[] PingResp = { 0b11010000, 0b00000000 };
 	    private static readonly byte[] PingReq = { 0b11000000, 0b00000000 };
-	    private static readonly byte[] ProtocolName = { (byte)'M', (byte)'Q', (byte)'T', (byte)'T' };
+	    private static readonly byte[] ProtocolName = { 0, 4, (byte)'M', (byte)'Q', (byte)'T', (byte)'T', 4 };
 
 	    const byte ConnectCode = 0b00010000;
 
@@ -44,15 +44,56 @@ namespace HyperMsg.Mqtt.Serialization
 			writers[packet.GetType()](writer, packet);
 		}
 
-		private static void Write(IBufferWriter<byte> writer, Connect connect)
-		{ }
+	    private static void Write(IBufferWriter<byte> writer, Connect connect)
+	    {
+		    var contentLength = 10 + GetStringByteCount(connect.ClientId);
+		    
+	    }
 
-		private static void Write(IBufferWriter<byte> writer, ConnAck connAck)
-		{ }
+	    private static void Write(IBufferWriter<byte> writer, ConnAck connAck)
+	    {
+		    var span = writer.GetSpan(4);
+
+		    span[0] = 0x20;
+		    span[1] = 0x02;
+		    span[2] = (byte)(connAck.SessionPresent ? 1 : 0);
+		    span[3] = (byte)connAck.ResultCode;
+
+			writer.Advance(4);
+		}
 
 	    private static void Write(IBufferWriter<byte> writer, Publish publish)
 	    {
-		    byte header = 0;
+			byte header = 0b00110000;
+
+		    if (publish.Dup)
+		    {
+			    header |= 0x08;
+		    }
+
+		    header |= (byte)((byte)publish.Qos << 1);
+
+		    if (publish.Retain)
+		    {
+			    header |= 0x01;
+		    }
+
+			int contentLength = GetStringByteCount(publish.Topic) + sizeof(ushort) + publish.Message.Length;
+		    var buffer = writer.GetMemory(5);//code + max length
+		    var span = buffer.Span;
+
+		    span[0] = header;
+		    var written = buffer.Slice(1).WriteRemainingLength(contentLength);
+		    writer.Advance(written + 1);
+
+		    written = writer.WriteString(publish.Topic);
+			writer.Advance(written);
+			
+		    buffer = writer.GetMemory(publish.Message.Length + sizeof(ushort));
+		    span = buffer.Span;
+		    BinaryPrimitives.WriteUInt16BigEndian(span, publish.Id);
+			publish.Message.CopyTo(buffer.Slice(sizeof(ushort)));
+			writer.Advance(publish.Message.Length + sizeof(ushort));
 	    }
 
 	    private static void Write(IBufferWriter<byte> writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);
@@ -123,7 +164,7 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static int GetTopicsByteCount(string[] topics) => topics.Aggregate(0, (a, s) => a + GetStringByteCount(s));
 
-	    private static int GetStringByteCount(string str) => Encoding.UTF8.GetByteCount(str) + sizeof(ushort);
+	    private static int GetStringByteCount(string str) => string.IsNullOrEmpty(str) ? 0 : Encoding.UTF8.GetByteCount(str) + sizeof(ushort);
 
 		private static void Write(IBufferWriter<byte> writer, UnsubAck unsubAck) => WriteShortPacket(writer, PacketCodes.UnsubAck, unsubAck.Id);
 

@@ -177,7 +177,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 				Topic = topicName,
 				Message = payload
 			};
-			List<byte> expected = new List<byte>
+			var expected = new List<byte>
 			{
 				expectedHeader, //Packet type, dup flag, retain
 				(byte)(topicName.Length + 2 /*topic length*/ + 2 /*packet ID*/ + payload.Length), //Length
@@ -341,8 +341,9 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			    actual.AddRange(segment.ToArray());
 		    }
 
-		    Assert.Equal(expected, actual.ToArray());
-	    }
+		    var diff = expected.Except(actual).ToArray();
+			Assert.Equal(expected, actual.ToArray());
+		}
 
 	    public static IEnumerable<object[]> GetTestCasesForWriteRemaningLength()
 	    {
