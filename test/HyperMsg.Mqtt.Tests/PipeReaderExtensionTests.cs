@@ -62,8 +62,8 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			return new[] { serialized, expected };
 		}
 
-	    [Theory(DisplayName = "Deserialize correctly deserializes packets")]
-	    [MemberData(nameof(GetTestCasesForDeserialize))]
+	    //[Theory(DisplayName = "Deserialize correctly deserializes packets")]
+	    //[MemberData(nameof(GetTestCasesForDeserialize))]
 		private void VerifyDeserialization(byte[] serialized, Packet expected)
 	    {
 		    var pipe = new Pipe();
