@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO.Pipelines;
+using System.Text;
 using System.Threading;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Serialization.Tests
 {
-    public class PipeReaderExtensionTests
+	public class PipeReaderExtensionTests
     {
 		public static IEnumerable<object[]> GetTestCasesForDeserialize()
 		{
@@ -62,8 +64,8 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			return new[] { serialized, expected };
 		}
 
-	    //[Theory(DisplayName = "Deserialize correctly deserializes packets")]
-	    //[MemberData(nameof(GetTestCasesForDeserialize))]
+	    [Theory(DisplayName = "Deserialize correctly deserializes packets")]
+	    [MemberData(nameof(GetTestCasesForDeserialize))]
 		private void VerifyDeserialization(byte[] serialized, Packet expected)
 	    {
 		    var pipe = new Pipe();
@@ -73,5 +75,56 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 
 			Assert.Equal(expected, actual);
 	    }
-    }
+
+	    public static IEnumerable<object[]> GetTestCasesForReadRemainingLength()
+	    {
+		    yield return GetTestCaseForReadRemainingLength(0, 0);
+		    yield return GetTestCaseForReadRemainingLength(127, 0x7f);
+		    yield return GetTestCaseForReadRemainingLength(128, 0x80, 0x01);
+		    yield return GetTestCaseForReadRemainingLength(16383, 0xff, 0x7f);
+		    yield return GetTestCaseForReadRemainingLength(16384, 0x80, 0x80, 0x01);
+		    yield return GetTestCaseForReadRemainingLength(2097151, 0xff, 0xff, 0x7f);
+		    yield return GetTestCaseForReadRemainingLength(2097152, 0x80, 0x80, 0x80, 0x01);
+		    yield return GetTestCaseForReadRemainingLength(268435455, 0xff, 0xff, 0xff, 0x7f);
+	    }
+
+	    private static object[] GetTestCaseForReadRemainingLength(int expected, params byte[] serialized)
+	    {
+		    return new object[] { serialized, expected };
+	    }
+
+	    [Theory(DisplayName = "ReadRemainingLength reads correct value")]
+	    [MemberData(nameof(GetTestCasesForReadRemainingLength))]
+	    public void ReadRemainingLength_Reads_Correct_Value(byte[] serialized, int expected)
+	    {
+		    var buffer = new ReadOnlyMemory<byte>(serialized);
+
+		    int actual = buffer.ReadRemainingLength();
+
+		    Assert.Equal(expected, actual);
+	    }
+
+		[Fact]
+	    public void ReadRemainingLength_Throws_Exception()
+	    {
+		    var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
+		    var buffer = new ReadOnlyMemory<byte>(data);
+
+		    Assert.Throws<Exception>(() => buffer.ReadRemainingLength());
+	    }
+
+
+	    [Fact(DisplayName = "ReadString correctly reads string")]
+	    public void ReadString_Correctly_Reads_String()
+	    {
+		    string expected = Guid.NewGuid().ToString();
+		    var bytes = new List<byte> { 0, (byte)expected.Length };
+		    bytes.AddRange(Encoding.UTF8.GetBytes(expected));
+		    var buffer = new ReadOnlyMemory<byte>(bytes.ToArray());
+
+		    string actual = buffer.ReadString();
+
+		    Assert.Equal(expected, actual);
+	    }
+	}
 }
