@@ -99,9 +99,10 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 	    {
 		    var buffer = new ReadOnlyMemory<byte>(serialized);
 
-		    int actual = buffer.ReadRemainingLength();
+		    (var length, var byteCount) = buffer.ReadRemainingLength();
 
-		    Assert.Equal(expected, actual);
+		    Assert.Equal(expected, length);
+            Assert.Equal(serialized.Length, byteCount);
 	    }
 
 		[Fact]

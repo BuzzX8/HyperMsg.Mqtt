@@ -41,11 +41,12 @@ namespace HyperMsg.Mqtt.Serialization
 	    {
 		    var span = buffer.Span;
 		    var code = span[0];
-		    var length = buffer.Slice(1).ReadRemainingLength();
-
+            buffer = buffer.Slice(1);
+		    (var length, var count) = buffer.ReadRemainingLength();
+            
 		    if ((code & 0xf0) == 0x30)
 		    {
-			    return ReadPublish(buffer, code, length);
+			    return ReadPublish(buffer.Slice(count), code, length);
 		    }
 
 			if (TwoBytePackets.ContainsKey(code))
@@ -55,7 +56,7 @@ namespace HyperMsg.Mqtt.Serialization
 
 		    if (Readers.ContainsKey(code))
 		    {
-			    return Readers[code](buffer, length);
+			    return Readers[code](buffer.Slice(count), length);
 		    }
 
 			throw new Exception();
@@ -63,9 +64,10 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
 	    {
-		    //bool sessionPresent = reader.ReadByte() == 1;
-		    //var code = (ConnectionResult)reader.ReadByte();
-		    return null;//new ConnAck(code, sessionPresent);
+            var span = buffer.Span;
+		    bool sessionPresent = span[0] == 1;
+		    var code = (ConnectionResult)span[1];
+		    return new ConnAck(code, sessionPresent);
 	    }
 
 	    private static Publish ReadPublish(ReadOnlyMemory<byte> buffer, byte code, int length)
@@ -73,11 +75,14 @@ namespace HyperMsg.Mqtt.Serialization
 		    bool dup = (code & 0x08) == 0x08;
 		    QosLevel qos = (QosLevel)((code & 0x06) >> 1);
 		    bool retain = (code & 0x01) == 1;
-		    string topic = "";//reader.ReadString();
-		    ushort packetId = 0;//reader.ReadUInt16();
-
+		    string topic = buffer.ReadString();
+            buffer = buffer.Slice(Encoding.UTF8.GetByteCount(topic) + 2);
+            var span = buffer.Span;
+            ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
+            buffer = buffer.Slice(2);
+            span = buffer.Span;
 		    int payloadLength = length - Encoding.UTF8.GetByteCount(topic) - 4;
-		    byte[] payload = null;//reader.ReadBytes(payloadLength);
+            byte[] payload = span.Slice(0, payloadLength).ToArray();
 
 		    return new Publish(packetId)
 		    {
@@ -106,20 +111,23 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<(string, QosLevel)> callback)
 	    {
-		    //var topic = reader.ReadString();
-		    //var qos = (QosLevel)reader.ReadByte();
-		    //callback((topic, qos));
-		    return 0;//Encoding.UTF8.GetByteCount(topic) + 3;
+		    var topic = buffer.ReadString();
+            var byteCount = Encoding.UTF8.GetByteCount(topic) + 2;
+            buffer = buffer.Slice(byteCount);
+            var span = buffer.Span;		    
+		    callback((topic, (QosLevel)span[0]));
+		    return Encoding.UTF8.GetByteCount(topic) + 3;
 	    }
 
 	    private static Packet ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
 	    {
-		    return null;//ReadPacketWithItems<SubscriptionResult>(reader, length, ReadSubsResult, (id, res) => new SubAck(id, res));
+		    return ReadPacketWithItems<SubscriptionResult>(buffer, length, ReadSubsResult, (id, res) => new SubAck(id, res));
 	    }
 
 	    private static int ReadSubsResult(ReadOnlyMemory<byte> buffer, Action<SubscriptionResult> callback)
 	    {
-		    //callback((SubscriptionResult)reader.ReadByte());
+            var span = buffer.Span;
+		    callback((SubscriptionResult)span[0]);
 		    return 1;
 	    }
 
@@ -130,19 +138,23 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static int ReadTopic(ReadOnlyMemory<byte> buffer, Action<string> callback)
 	    {
-		    //string filter = reader.ReadString();
-		    return 0;//Encoding.UTF8.GetByteCount(filter) + 2;
+		    string filter = buffer.ReadString();
+		    return Encoding.UTF8.GetByteCount(filter) + 2;
 	    }
 
 	    private static Packet ReadPacketWithItems<T>(ReadOnlyMemory<byte> buffer, int length, Func<ReadOnlyMemory<byte>, Action<T>, int> readItem, Func<ushort, T[], Packet> createResult)
 	    {
-		    ushort id = 0;//reader.ReadUInt16();
-		    int readed = 2;
+            var span = buffer.Span;
+            ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
+		    int totalRead = 2;
 		    var items = new List<T>();
+            buffer = buffer.Slice(totalRead);
 
-		    while (readed < length)
+		    while (totalRead < length)
 		    {
-			    //readed += readItem(reader, items.Add);
+			    int currentRead = readItem(buffer, items.Add);
+                totalRead += currentRead;
+                buffer = buffer.Slice(currentRead);
 		    }
 
 		    return createResult(id, items.ToArray());
@@ -164,12 +176,12 @@ namespace HyperMsg.Mqtt.Serialization
 		    {
 			    throw new Exception();
 		    }
-
-		    ushort id = 0;//reader.ReadUInt16();
+            var span = buffer.Span;
+            ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
 		    return packetCreate(id);
 	    }
 
-		public static int ReadRemainingLength(this ReadOnlyMemory<byte> buffer)
+		public static (int length, int byteCount) ReadRemainingLength(this ReadOnlyMemory<byte> buffer)
 	    {
 		    var span = buffer.Span;
 		    int result = 0;
@@ -180,18 +192,17 @@ namespace HyperMsg.Mqtt.Serialization
 		    do
 		    {
 			    value = span[i];
-
-			    if (i == sizeof(int) && value >= 0x80)
-			    {
-				    throw new Exception();
-			    }
-
 			    result |= (value & 0x7f) << offset;
 			    offset += 7;
 			    i++;
-			}
+
+                if (i == sizeof(int) && value >= 0x80)
+                {
+                    throw new Exception();
+                }
+            }
 		    while ((value & 0x80) == 0x80);
-		    return result;
+		    return (result, i);
 	    }
 
 	    public static string ReadString(this ReadOnlyMemory<byte> buffer)
