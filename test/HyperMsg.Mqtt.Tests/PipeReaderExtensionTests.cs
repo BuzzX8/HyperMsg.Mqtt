@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Pipelines;
 using System.Text;
 using System.Threading;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Serialization.Tests
 {
-	public class PipeReaderExtensionTests
+    public class PipeReaderExtensionTests
     {
 		public static IEnumerable<object[]> GetTestCasesForDeserialize()
 		{
@@ -68,10 +67,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 	    [MemberData(nameof(GetTestCasesForDeserialize))]
 		private void VerifyDeserialization(byte[] serialized, Packet expected)
 	    {
-		    var pipe = new Pipe();
-		    pipe.Writer.WriteAsync(serialized, CancellationToken.None).AsTask().Wait();
-
-		    var actual = pipe.Reader.ReadMqttPacketAsync(CancellationToken.None).Result;
+            var actual = (Packet)null;
 
 			Assert.Equal(expected, actual);
 	    }

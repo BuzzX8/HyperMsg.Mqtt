@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.IO.Pipelines;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,11 +29,9 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		public static async Task<Packet> ReadMqttPacketAsync(this PipeReader reader, CancellationToken token = default)
+		public static async Task<Packet> ReadMqttPacketAsync(CancellationToken token = default)
 	    {
-		    var result = await reader.ReadAsync(token);
-
-		    return ReadMqttPacket(result.Buffer.First);
+		    return ReadMqttPacket(new ReadOnlyMemory<byte>());
 	    }
 
 	    public static Packet ReadMqttPacket(ReadOnlyMemory<byte> buffer)
