@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
@@ -29,34 +30,30 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		public static async Task<Packet> ReadMqttPacketAsync(CancellationToken token = default)
+	    internal static DeserializationResult<Packet> ReadMqttPacket(this ReadOnlySequence<byte> buffer)
 	    {
-		    return ReadMqttPacket(new ReadOnlyMemory<byte>());
-	    }
-
-	    public static Packet ReadMqttPacket(ReadOnlyMemory<byte> buffer)
-	    {
-		    var span = buffer.Span;
-		    var code = span[0];
-            buffer = buffer.Slice(1);
-		    (var length, var count) = buffer.ReadRemainingLength();
+            throw new NotImplementedException();
+		 //   var span = buffer.Span;
+		 //   var code = span[0];
+   //         buffer = buffer.Slice(1);
+		 //   (var length, var count) = buffer.ReadRemainingLength();
             
-		    if ((code & 0xf0) == 0x30)
-		    {
-			    return ReadPublish(buffer.Slice(count), code, length);
-		    }
+		 //   if ((code & 0xf0) == 0x30)
+		 //   {
+			//    return ReadPublish(buffer.Slice(count), code, length);
+		 //   }
 
-			if (TwoBytePackets.ContainsKey(code))
-		    {
-			    return GetTwoBytePacket(code, length);
-		    }
+			//if (TwoBytePackets.ContainsKey(code))
+		 //   {
+			//    return GetTwoBytePacket(code, length);
+		 //   }
 
-		    if (Readers.ContainsKey(code))
-		    {
-			    return Readers[code](buffer.Slice(count), length);
-		    }
+		 //   if (Readers.ContainsKey(code))
+		 //   {
+			//    return Readers[code](buffer.Slice(count), length);
+		 //   }
 
-			throw new Exception();
+			//throw new Exception();// TODO: DeserializationException
 	    }
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)

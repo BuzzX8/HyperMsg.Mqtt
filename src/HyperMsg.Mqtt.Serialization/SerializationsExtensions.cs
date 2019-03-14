@@ -39,12 +39,9 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static void AddWriter<T>(Action<IBufferWriter<byte>, T> writer) where T : Packet => writers.Add(typeof(T), (w, p) => writer(w, (T)p));
 
-		public static void WriteMqttPacket(this IBufferWriter<byte> writer, Packet packet)
-		{
-			writers[packet.GetType()](writer, packet);
-		}
+        internal static void WriteMqttPacket(this IBufferWriter<byte> writer, Packet packet) => writers[packet.GetType()](writer, packet);
 
-	    private static void Write(IBufferWriter<byte> writer, Connect connect)
+        private static void Write(IBufferWriter<byte> writer, Connect connect)
 	    {
             var contentLength = 10 + GetStringByteCount(connect.ClientId);
 

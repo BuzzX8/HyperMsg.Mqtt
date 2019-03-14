@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FakeItEasy;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
@@ -328,18 +329,12 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 
 		private void VerifySerialization(Packet packet, params byte[] expected)
 	    {
-            var writer = (IBufferWriter<byte>)null;
-		    writer.WriteMqttPacket(packet);		    
+            var serializer = new MqttSerializer();
+            var writer = A.Fake<IBufferWriter<byte>>();
 
-		    var actual = new List<byte>();
+            serializer.Serialize(writer, packet);
 
-		    //foreach (var segment in result.Buffer)
-		    //{
-			   // actual.AddRange(segment.ToArray());
-		    //}
-
-		    var diff = expected.Except(actual).ToArray();
-			Assert.Equal(expected, actual.ToArray());
+            Assert.Equal(expected, null);
 		}
 
 	    public static IEnumerable<object[]> GetTestCasesForWriteRemaningLength()
