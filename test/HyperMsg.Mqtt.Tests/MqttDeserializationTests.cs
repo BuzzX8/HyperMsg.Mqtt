@@ -62,7 +62,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 
         [Theory(DisplayName = "Deserialize return correct DeserializationResult")]
 	    [MemberData(nameof(DeserializeTestCases))]
-		private void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, DeserializationResult<Packet> expected)
+		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, DeserializationResult<Packet> expected)
 	    {
             var serializer = new MqttSerializer();
 
@@ -88,8 +88,8 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		    return new object[] { serialized, expected };
 	    }
 
-	    //[Theory(DisplayName = "ReadRemainingLength reads correct value")]
-	    //[MemberData(nameof(GetTestCasesForReadRemainingLength))]
+	    [Theory(DisplayName = "ReadRemainingLength reads correct value")]
+	    [MemberData(nameof(GetTestCasesForReadRemainingLength))]
 	    public void ReadRemainingLength_Reads_Correct_Value(byte[] serialized, int expected)
 	    {
 		    var buffer = new ReadOnlyMemory<byte>(serialized);
@@ -100,7 +100,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
             Assert.Equal(serialized.Length, byteCount);
 	    }
 
-		//[Fact]
+		[Fact]
 	    public void ReadRemainingLength_Throws_Exception()
 	    {
 		    var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
@@ -110,7 +110,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 	    }
 
 
-	    //[Fact(DisplayName = "ReadString correctly reads string")]
+	    [Fact(DisplayName = "ReadString correctly reads string")]
 	    public void ReadString_Correctly_Reads_String()
 	    {
 		    string expected = Guid.NewGuid().ToString();

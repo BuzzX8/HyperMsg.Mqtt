@@ -3,8 +3,6 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Serialization
 {
@@ -32,29 +30,32 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    internal static DeserializationResult<Packet> ReadMqttPacket(this ReadOnlySequence<byte> buffer)
 	    {
-            throw new NotImplementedException();
-		 //   var span = buffer.Span;
-		 //   var code = span[0];
-   //         buffer = buffer.Slice(1);
-		 //   (var length, var count) = buffer.ReadRemainingLength();
+            var span = buffer.First.Span;
+            var code = span[0];
+            buffer = buffer.Slice(1);
+            (var length, var count) = buffer.First.ReadRemainingLength();
+            var consumed = length + count + 1;
+
+            if ((code & 0xf0) == 0x30)
+            {
+                var publish = ReadPublish(buffer.First.Slice(count), code, length);
+                return new DeserializationResult<Packet>(consumed, publish);
+            }
+
+            if (TwoBytePackets.ContainsKey(code))
+            {
+                var packet = GetTwoBytePacket(code, length);
+                return new DeserializationResult<Packet>(consumed, packet);
+            }
+
+            if (Readers.ContainsKey(code))
+            {
+                var packet = Readers[code](buffer.First.Slice(count), length);
+                return new DeserializationResult<Packet>(consumed, packet);
+            }
             
-		 //   if ((code & 0xf0) == 0x30)
-		 //   {
-			//    return ReadPublish(buffer.Slice(count), code, length);
-		 //   }
-
-			//if (TwoBytePackets.ContainsKey(code))
-		 //   {
-			//    return GetTwoBytePacket(code, length);
-		 //   }
-
-		 //   if (Readers.ContainsKey(code))
-		 //   {
-			//    return Readers[code](buffer.Slice(count), length);
-		 //   }
-
-			//throw new Exception();// TODO: DeserializationException
-	    }
+            throw new Exception();// TODO: DeserializationException            
+        }
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
 	    {
