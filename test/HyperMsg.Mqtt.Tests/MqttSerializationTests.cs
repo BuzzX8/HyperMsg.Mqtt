@@ -330,11 +330,11 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		private void VerifySerialization(Packet packet, params byte[] expected)
 	    {
             var serializer = new MqttSerializer();
-            var writer = A.Fake<IBufferWriter<byte>>();
+            var writer = new ByteBufferWriter(new byte[1000]);
 
             serializer.Serialize(writer, packet);
 
-            Assert.Equal(expected, null);
+            Assert.Equal(expected, writer.CommitedMemory.ToArray());
 		}
 
 	    public static IEnumerable<object[]> GetTestCasesForWriteRemaningLength()
@@ -358,45 +358,26 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		[MemberData(nameof(GetTestCasesForWriteRemaningLength))]
 		public void WriteRemainingLength_Serializes_Value_For_Remaining_Length(int value, byte[] expected)
 		{
-			//var pipe = new Pipe();
-			//var buffer = pipe.Writer.GetMemory(expected.Length);
+            var writer = new ByteBufferWriter(new byte[100]);
+            var buffer = writer.GetMemory(expected.Length);
 
-			//int bytesWritten = buffer.WriteRemainingLength(value);
-			//pipe.Writer.Advance(bytesWritten);
-			//pipe.Writer.FlushAsync().AsTask().Wait();
-			//var result = pipe.Reader.ReadAsync().Result;
+            int bytesWritten = buffer.WriteRemainingLength(value);
+            writer.Advance(bytesWritten);
 
-			//var actual = new List<byte>();
+            Assert.Equal(expected.Length, bytesWritten);
+            Assert.Equal(expected, writer.CommitedMemory.ToArray());
+        }
 
-			//foreach (var segment in result.Buffer)
-			//{
-			//	actual.AddRange(segment.ToArray());
-			//}
-
-			//Assert.Equal(expected.Length, bytesWritten);
-			//Assert.Equal(expected, actual.ToArray());
-		}
-
-		[Fact(DisplayName = "WriteString correctly serializes string")]
+        [Fact(DisplayName = "WriteString correctly serializes string")]
 		public void WriteString_Correctly_Serializes_String()
 		{			
 			string value = Guid.NewGuid().ToString();
 			byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
-            int bytesWritten = -1;// pipe.Writer.WriteString(value);
-			//pipe.Writer.Advance(expected.Length);
-			//pipe.Writer.FlushAsync().AsTask().Wait();
-
-			//var result = pipe.Reader.ReadAsync().Result;
-
-			var actual = new List<byte>();
-
-			//foreach (var segment in result.Buffer)
-			//{
-			//	actual.AddRange(segment.ToArray());
-			//}
-
-			Assert.Equal(expected.Length, bytesWritten);
-			Assert.Equal(expected, actual.ToArray());
+            var writer = new ByteBufferWriter(new byte[100]);
+            writer.WriteString(value);
+			writer.Advance(expected.Length);
+            			
+			Assert.Equal(expected, writer.CommitedMemory.ToArray());
 		}
 	}
 }
