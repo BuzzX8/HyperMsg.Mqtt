@@ -1,6 +1,6 @@
 ﻿namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectionSettings
+    public class MqttConnectionSettings
     {
     }
 }

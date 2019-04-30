@@ -7,6 +7,11 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient
     {
+        public MqttClient(IConnection connection, ISender<Packet> sender)
+        {
+
+        }
+
         public SessionState Connect(bool cleanSession = false)
         {
             throw new NotImplementedException();
