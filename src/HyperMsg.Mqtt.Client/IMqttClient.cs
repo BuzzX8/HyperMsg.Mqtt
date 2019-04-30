@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
@@ -10,5 +12,13 @@ namespace HyperMsg.Mqtt.Client
         Task DisconnectAsync(CancellationToken token = default);
 
         Task PublishAsync(PublishRequest request, CancellationToken token = default);
+
+        Task<IEnumerable<QosLevel>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default);
+
+        Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token = default);
+
+        Task PingAsync(CancellationToken token);
+
+        event EventHandler<PublishReceivedEventArgs> PublishReceived;
     }
 }
