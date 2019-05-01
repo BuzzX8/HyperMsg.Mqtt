@@ -7,19 +7,42 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient
     {
-        public MqttClient(IConnection connection, ISender<Packet> sender)
-        {
+        private readonly IConnection connection;
+        private readonly ISender<Packet> sender;
+        private readonly MqttConnectionSettings connectionSettings;
 
+        public MqttClient(IConnection connection, ISender<Packet> sender, MqttConnectionSettings connectionSettings)
+        {
+            this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
+            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
         }
 
-        public SessionState Connect(bool cleanSession = false)
+        public SessionState Connect(bool cleanSession = false) => ConnectAsync(cleanSession).GetAwaiter().GetResult();
+
+        public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            await connection.OpenAsync(token);
+            var connectPacket = CreateConnectPacket(cleanSession);
+            await sender.SendAsync(connectPacket, token);
+
+            return SessionState.Clean;
         }
 
-        public Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default)
+        private Connect CreateConnectPacket(bool cleanSession)
         {
-            throw new NotImplementedException();
+            var flags = ConnectFlags.None;
+
+            if (cleanSession)
+            {
+                flags |= ConnectFlags.CleanSession;
+            }
+
+            return new Connect
+            {
+                ClientId = connectionSettings.ClientId,
+                Flags = flags
+            };
         }
 
         public void Disconnect()
