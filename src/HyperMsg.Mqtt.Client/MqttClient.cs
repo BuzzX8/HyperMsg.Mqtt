@@ -65,14 +65,12 @@ namespace HyperMsg.Mqtt.Client
             return subscriptionHandler.SendSubscribeAsync(requests, token);
         }
 
-        public void Unsubscribe(IEnumerable<string> topics)
-        {
-            throw new NotImplementedException();
-        }
+        public void Unsubscribe(IEnumerable<string> topics) => UnsubscribeAsync(topics).GetAwaiter().GetResult();
 
         public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            _ = topics ?? throw new ArgumentNullException(nameof(topics));
+            return subscriptionHandler.SendUnsubscribeAsync(topics, token);
         }
 
         public void OnPacketReceived(Packet packet)
@@ -85,6 +83,10 @@ namespace HyperMsg.Mqtt.Client
 
                 case SubAck subAck:
                     subscriptionHandler.OnSubAckReceived(subAck);
+                    break;
+
+                case UnsubAck unsubAck:
+                    subscriptionHandler.OnUnsubAckReceived(unsubAck);
                     break;
             }
         }

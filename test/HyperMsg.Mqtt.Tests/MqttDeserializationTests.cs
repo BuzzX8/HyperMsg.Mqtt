@@ -14,7 +14,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			yield return TestCase(new PingResp(), 0b11010000, 0);
 			yield return TestCase(new PingReq(), 0b11000000, 0);
 			yield return TestCase(new UnsubAck(8), 0b10110000, 2, 0, 8);
-			yield return TestCase(new Unsubscribe(8, "a/b", "c/d"),
+			yield return TestCase(new Unsubscribe(8, new[] { "a/b", "c/d" }),
 				0b10100010, //Packet code
 				12, //Length
 				0, 8, //Packet Id

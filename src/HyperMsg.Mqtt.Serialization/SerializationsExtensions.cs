@@ -215,7 +215,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    writer.Advance(sizeof(ushort));
 		}
 
-	    private static int GetTopicsByteCount(string[] topics) => topics.Aggregate(0, (a, s) => a + GetStringByteCount(s));
+	    private static int GetTopicsByteCount(IEnumerable<string> topics) => topics.Aggregate(0, (a, s) => a + GetStringByteCount(s));
 
 	    private static int GetStringByteCount(string str) => string.IsNullOrEmpty(str) ? 0 : Encoding.UTF8.GetByteCount(str) + sizeof(ushort);
 

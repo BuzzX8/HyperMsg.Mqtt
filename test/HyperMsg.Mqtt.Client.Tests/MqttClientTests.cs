@@ -144,5 +144,32 @@ namespace HyperMsg.Mqtt.Client
             Assert.True(task.IsCompleted);
             Assert.Equal(subAck.Results, task.Result);
         }
+
+        [Fact]
+        public void UnsubscribeAsync_Sends_Unsubscription_Request()
+        {
+            var topics = new[] { "topic-1", "topic-2" };
+
+            client.UnsubscribeAsync(topics);
+            packetSentEvent.Wait(waitTimeout);
+
+            var unsubscribe = sentPacket as Unsubscribe;
+
+            Assert.NotNull(unsubscribe);
+            Assert.Equal(topics, unsubscribe.Topics);
+        }
+
+        [Fact]
+        public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
+        {
+            var topics = new[] { "topic-1", "topic-2" };
+            var task = client.UnsubscribeAsync(topics);
+            packetSentEvent.Wait(waitTimeout);
+            var unsubscribe = sentPacket as Unsubscribe;
+
+            client.OnPacketReceived(new UnsubAck(unsubscribe.Id));
+
+            Assert.True(task.IsCompleted);
+        }
     }
 }

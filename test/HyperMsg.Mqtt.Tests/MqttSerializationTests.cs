@@ -289,7 +289,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 	    public void WriteMqttPacket_Serializes_Unsubscribe_Packet()
 	    {
 		    ushort packetId = 0x0c1d;
-		    var packet = new Unsubscribe(packetId, "a/b", "c/d");
+		    var packet = new Unsubscribe(packetId, new[] { "a/b", "c/d" });
 		    byte[] expected =
 		    {
 			    0b10100010, //Type code

@@ -1,16 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
     public class Unsubscribe : Packet, IEquatable<Unsubscribe>
     {
-        public Unsubscribe(ushort id) => Id = id;
-
-        public Unsubscribe(ushort id, params string[] topics) : this(id) => Topics = topics;
+        public Unsubscribe(ushort id, IEnumerable<string> topics)
+        {
+            Id = id;
+            Topics = topics ?? throw new ArgumentNullException(nameof(topics));
+        }
 
         public ushort Id { get; }
 
-		public string[] Topics { get; set; }
+		public IEnumerable<string> Topics { get; }
 
         public override int GetHashCode() => Id;
 
