@@ -10,12 +10,15 @@ namespace HyperMsg.Mqtt.Client
         private readonly IConnection connection;
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings connectionSettings;
+        
+        private readonly ConnectHandler connectHandler;
 
         public MqttClient(IConnection connection, ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
+            connectHandler = new ConnectHandler(sender, connectionSettings);
         }
 
         public SessionState Connect(bool cleanSession = false) => ConnectAsync(cleanSession).GetAwaiter().GetResult();
@@ -23,32 +26,10 @@ namespace HyperMsg.Mqtt.Client
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default)
         {
             await connection.OpenAsync(token);
-            var connectPacket = CreateConnectPacket(cleanSession);
-            await sender.SendAsync(connectPacket, token);
-
-            return SessionState.Clean;
+            return await connectHandler.SendConnectAsync(cleanSession, token);
         }
 
-        private Connect CreateConnectPacket(bool cleanSession)
-        {
-            var flags = ConnectFlags.None;
-
-            if (cleanSession)
-            {
-                flags |= ConnectFlags.CleanSession;
-            }
-
-            return new Connect
-            {
-                ClientId = connectionSettings.ClientId,
-                Flags = flags
-            };
-        }
-
-        public void Disconnect()
-        {
-            throw new NotImplementedException();
-        }
+        public void Disconnect() => DisconnectAsync().GetAwaiter().GetResult();
 
         public Task DisconnectAsync(CancellationToken token = default)
         {
@@ -93,6 +74,16 @@ namespace HyperMsg.Mqtt.Client
         public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token = default)
         {
             throw new NotImplementedException();
+        }
+
+        public void OnPacketReceived(Packet packet)
+        {
+            switch (packet)
+            {
+                case ConnAck connAck:
+                    connectHandler.OnConnAckReceived(connAck);
+                    break;
+            }
         }
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived;
