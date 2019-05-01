@@ -9,16 +9,16 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly IConnection connection;
         private readonly ISender<Packet> sender;
-        private readonly MqttConnectionSettings connectionSettings;
         
         private readonly ConnectHandler connectHandler;
+        private readonly SubscriptionHandler subscriptionHandler;
 
         public MqttClient(IConnection connection, ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
-            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
-            connectHandler = new ConnectHandler(sender, connectionSettings);
+            connectHandler = new ConnectHandler(sender, connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings)));
+            subscriptionHandler = new SubscriptionHandler(sender);
         }
 
         public SessionState Connect(bool cleanSession = false) => ConnectAsync(cleanSession).GetAwaiter().GetResult();
@@ -57,14 +57,12 @@ namespace HyperMsg.Mqtt.Client
             throw new NotImplementedException();
         }
 
-        public IEnumerable<QosLevel> Subscribe(IEnumerable<SubscriptionRequest> requests)
-        {
-            throw new NotImplementedException();
-        }
+        public IEnumerable<SubscriptionResult> Subscribe(IEnumerable<SubscriptionRequest> requests) => SubscribeAsync(requests).GetAwaiter().GetResult();
 
-        public Task<IEnumerable<QosLevel>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default)
+        public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            _ = requests ?? throw new ArgumentNullException(nameof(requests));
+            return subscriptionHandler.SendSubscribeAsync(requests, token);
         }
 
         public void Unsubscribe(IEnumerable<string> topics)
@@ -83,6 +81,10 @@ namespace HyperMsg.Mqtt.Client
             {
                 case ConnAck connAck:
                     connectHandler.OnConnAckReceived(connAck);
+                    break;
+
+                case SubAck subAck:
+                    subscriptionHandler.OnSubAckReceived(subAck);
                     break;
             }
         }

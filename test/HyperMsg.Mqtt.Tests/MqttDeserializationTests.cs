@@ -21,13 +21,13 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 				0, 3, 0x61, 0x2f, 0x62, //Filter "a/b"
 				0, 3, 0x63, 0x2f, 0x64 //Filter "c/d"
 			);
-			yield return TestCase(new SubAck(10, SubscriptionResult.SuccessQos0, SubscriptionResult.SuccessQos2, SubscriptionResult.Failure),
+			yield return TestCase(new SubAck(10, new[] { SubscriptionResult.SuccessQos0, SubscriptionResult.SuccessQos2, SubscriptionResult.Failure }),
 				0b10010000, //Packet code
 				5, //Length
 				0, 10, //Packet Id
 				0, 2, 0x80 //Response codes
 			);
-			yield return TestCase(new Subscribe(4, ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2)),
+			yield return TestCase(new Subscribe(4, new[] { ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2) }),
 				0b10000010, //Packet code
 				14, //Length
 				0, 4, //Packet ID

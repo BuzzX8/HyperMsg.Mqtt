@@ -1,5 +1,6 @@
 using FakeItEasy;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -112,6 +113,36 @@ namespace HyperMsg.Mqtt.Client
             await client.DisconnectAsync(token);
 
             A.CallTo(() => connection.CloseAsync(token)).MustHaveHappened();
+        }
+
+        [Fact]
+        public void SubscribeAsync_Sends_Correct_Subscribe_Request()
+        {
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
+            _ = client.SubscribeAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+
+            var subscribePacket = sentPacket as Subscribe;
+            Assert.NotNull(subscribePacket);
+        }
+
+        [Fact]
+        public void SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
+        {
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
+            var task = client.SubscribeAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+            var packetId = ((Subscribe)sentPacket).Id;
+            var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
+
+            client.OnPacketReceived(subAck);
+
+            Assert.True(task.IsCompleted);
+            Assert.Equal(subAck.Results, task.Result);
         }
     }
 }

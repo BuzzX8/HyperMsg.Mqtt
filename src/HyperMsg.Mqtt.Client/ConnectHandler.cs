@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings connectionSettings;
 
-        private TaskCompletionSource<SessionState> tsc;
+        private TaskCompletionSource<SessionState> taskCompletionSource;
 
         internal ConnectHandler(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
@@ -21,9 +21,9 @@ namespace HyperMsg.Mqtt.Client
             var connectPacket = CreateConnectPacket(cleanSession);
             await sender.SendAsync(connectPacket, token);
 
-            tsc = new TaskCompletionSource<SessionState>();
+            taskCompletionSource = new TaskCompletionSource<SessionState>();
 
-            return await tsc.Task;
+            return await taskCompletionSource.Task;
         }
 
         private Connect CreateConnectPacket(bool cleanSession)
@@ -44,7 +44,13 @@ namespace HyperMsg.Mqtt.Client
 
         internal void OnConnAckReceived(ConnAck connAck)
         {
-            tsc.SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
+            if (taskCompletionSource == null)
+            {
+                return;
+            }
+
+            taskCompletionSource.SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
+            taskCompletionSource = null;
         }
     }
 }

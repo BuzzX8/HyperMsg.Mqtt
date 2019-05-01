@@ -1,16 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
     public class Subscribe : Packet, IEquatable<Subscribe>
 	{
-        public Subscribe(ushort id) => Id = id;
-
-        public Subscribe(ushort packetId, params (string, QosLevel)[] subscriptions) : this(packetId) => Subscriptions = subscriptions;
+        public Subscribe(ushort packetId, IEnumerable<(string, QosLevel)> subscriptions)
+        {
+            Id = packetId;
+            Subscriptions = subscriptions ?? throw new ArgumentNullException(nameof(subscriptions));
+        }
 
         public ushort Id { get; }
 
-		public (string, QosLevel)[] Subscriptions { get; set; }
+		public IEnumerable<(string, QosLevel)> Subscriptions { get; }
 
         public override int GetHashCode() => Id;
 

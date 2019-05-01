@@ -256,7 +256,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		public void WriteMqttPacket_Serializes_Subscribe_Packet()
 		{
 			ushort packetId = 0x8098;
-			var packet = new Subscribe(packetId, ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2));
+			var packet = new Subscribe(packetId, new [] { ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2) });
 			byte[] expected =
 			{
 				0b10000010, //Type code
@@ -273,7 +273,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 	    public void WriteMqttPacket_Serializes_SubAck_Packet()
 	    {
 		    ushort packetId = 0x6790;
-		    var packet = new SubAck(packetId, SubscriptionResult.SuccessQos0, SubscriptionResult.SuccessQos2, SubscriptionResult.Failure);
+		    var packet = new SubAck(packetId, new[] { SubscriptionResult.SuccessQos0, SubscriptionResult.SuccessQos2, SubscriptionResult.Failure });
 		    byte[] expected =
 		    {
 			    0b10010000, //Type code

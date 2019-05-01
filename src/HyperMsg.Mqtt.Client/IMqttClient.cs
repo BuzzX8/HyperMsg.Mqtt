@@ -19,9 +19,9 @@ namespace HyperMsg.Mqtt.Client
 
         Task PublishAsync(PublishRequest request, CancellationToken token = default);
 
-        IEnumerable<QosLevel> Subscribe(IEnumerable<SubscriptionRequest> requests);
+        IEnumerable<SubscriptionResult> Subscribe(IEnumerable<SubscriptionRequest> requests);
 
-        Task<IEnumerable<QosLevel>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default);
+        Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default);
 
         void Unsubscribe(IEnumerable<string> topics);
 

@@ -171,21 +171,22 @@ namespace HyperMsg.Mqtt.Serialization
 			}
 		}
 
-	    private static int GetSubscriptionsByteCount((string, QosLevel)[] subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.Item1) + 1);
+	    private static int GetSubscriptionsByteCount(IEnumerable<(string, QosLevel)> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.Item1) + 1);
 
 		private static void Write(IBufferWriter<byte> writer, SubAck subAck)
 		{
-			var contentLength = subAck.Results.Length + sizeof(ushort);
+            var results = subAck.Results.ToArray();
+			var contentLength = results.Length + sizeof(ushort);
 			WriteHeaderWithLength(writer, PacketCodes.SubAck, subAck.Id, contentLength);
 
-			var span = writer.GetSpan(subAck.Results.Length);
+			var span = writer.GetSpan(results.Length);
 
-			for (int i = 0; i < subAck.Results.Length; i++)
+			for (int i = 0; i < results.Length; i++)
 			{
-				span[i] = (byte) subAck.Results[i];
+				span[i] = (byte) results[i];
 			}
 
-			writer.Advance(subAck.Results.Length);
+			writer.Advance(results.Length);
 		}
 
 	    private static void Write(IBufferWriter<byte> writer, Unsubscribe unsubscribe)

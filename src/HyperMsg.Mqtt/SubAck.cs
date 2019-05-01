@@ -1,16 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
     public class SubAck : Packet, IEquatable<SubAck>
     {
-        public SubAck(ushort id) => Id = id;
-
-        public SubAck(ushort id, params SubscriptionResult[] results) : this(id) => Results = results;
+        public SubAck(ushort id, IEnumerable<SubscriptionResult> results)
+        {
+            Id = id;
+            Results = results;
+        }
 
         public ushort Id { get; }
 
-		public SubscriptionResult[] Results { get; set; }
+		public IEnumerable<SubscriptionResult> Results { get; }
 
         public override int GetHashCode() => Id;
 
