@@ -31,9 +31,10 @@ namespace HyperMsg.Mqtt.Client
 
         public void Disconnect() => DisconnectAsync().GetAwaiter().GetResult();
 
-        public Task DisconnectAsync(CancellationToken token = default)
+        public async Task DisconnectAsync(CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            await sender.SendAsync(Mqtt.Disconnect.Instance, token);
+            await connection.CloseAsync(token);
         }
 
         public void Ping()

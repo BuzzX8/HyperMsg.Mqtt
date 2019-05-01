@@ -93,5 +93,25 @@ namespace HyperMsg.Mqtt.Client
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Present, task.Result);
         }
+
+        [Fact]
+        public void DisconnectAsync_Sends_Disconnect_Packet()
+        {
+            _ = client.DisconnectAsync();
+
+            packetSentEvent.Wait(waitTimeout);
+
+            Assert.NotNull(sentPacket as Disconnect);
+        }
+
+        [Fact]
+        public async Task DisconnectAsync_Closes_Connection()
+        {
+            var token = default(CancellationToken);
+
+            await client.DisconnectAsync(token);
+
+            A.CallTo(() => connection.CloseAsync(token)).MustHaveHappened();
+        }
     }
 }

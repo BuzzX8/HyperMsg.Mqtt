@@ -4,6 +4,8 @@ namespace HyperMsg.Mqtt
 {
 	public class Disconnect : Packet, IEquatable<Disconnect>
 	{
+        public static readonly Disconnect Instance = new Disconnect();
+
 		public override int GetHashCode() => PacketCodes.Disconnect;
 
 		public override bool Equals(object obj) => Equals(obj as Disconnect);
