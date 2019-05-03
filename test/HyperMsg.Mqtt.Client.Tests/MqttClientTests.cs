@@ -13,7 +13,8 @@ namespace HyperMsg.Mqtt.Client
         private readonly IConnection connection;
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings settings;
-        private readonly TimeSpan waitTimeout;
+
+        private readonly TimeSpan waitTimeout = TimeSpan.FromSeconds(2);
 
         private ManualResetEventSlim packetSentEvent;
         private Packet sentPacket;
@@ -173,19 +174,35 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void PublishAsync_Sends_Publish_Packet()
+        public void PublishAsync_Sends_Qos0_Message_And_Completes_Task()
         {
             var topicName = Guid.NewGuid().ToString();
             var message = Guid.NewGuid().ToByteArray();
-            var request = new PublishRequest(topicName, message);
+            var request = new PublishRequest(topicName, message, QosLevel.Qos0);
 
-            client.PublishAsync(request);
+            var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
 
             var publishPacket = sentPacket as Publish;
             Assert.NotNull(publishPacket);
+            Assert.True(task.IsCompleted);
             Assert.Equal(topicName, publishPacket.Topic);
-            Assert.Equal(message, publishPacket.Message);
+            Assert.Equal(message, publishPacket.Message);            
+        }
+
+        [Fact]
+        public void PublishAsync_Sends_Qos1_Message_And_Not_Completes_Task()
+        {
+            var topicName = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            var request = new PublishRequest(topicName, message, QosLevel.Qos1);
+
+            var task = client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+
+            var publishPacket = sentPacket as Publish;
+            Assert.NotNull(publishPacket);
+            Assert.False(task.IsCompleted);
         }
     }
 }
