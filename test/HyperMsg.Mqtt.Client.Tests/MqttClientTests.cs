@@ -171,5 +171,21 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.IsCompleted);
         }
+
+        [Fact]
+        public void PublishAsync_Sends_Publish_Packet()
+        {
+            var topicName = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            var request = new PublishRequest(topicName, message);
+
+            client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+
+            var publishPacket = sentPacket as Publish;
+            Assert.NotNull(publishPacket);
+            Assert.Equal(topicName, publishPacket.Topic);
+            Assert.Equal(message, publishPacket.Message);
+        }
     }
 }

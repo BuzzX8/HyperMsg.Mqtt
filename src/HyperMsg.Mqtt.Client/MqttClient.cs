@@ -11,6 +11,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly ISender<Packet> sender;
         
         private readonly ConnectHandler connectHandler;
+        private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;
 
         public MqttClient(IConnection connection, ISender<Packet> sender, MqttConnectionSettings connectionSettings)
@@ -18,6 +19,7 @@ namespace HyperMsg.Mqtt.Client
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             connectHandler = new ConnectHandler(sender, connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings)));
+            publishHandler = new PublishHandler(sender);
             subscriptionHandler = new SubscriptionHandler(sender);
         }
 
@@ -47,14 +49,12 @@ namespace HyperMsg.Mqtt.Client
             throw new NotImplementedException();
         }
 
-        public void Publish(PublishRequest request)
-        {
-            throw new NotImplementedException();
-        }
+        public void Publish(PublishRequest request) => PublishAsync(request).GetAwaiter().GetResult();
 
         public Task PublishAsync(PublishRequest request, CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            _ = request ?? throw new ArgumentNullException(nameof(request));
+            return publishHandler.SendPublishAsync(request, token);
         }
 
         public IEnumerable<SubscriptionResult> Subscribe(IEnumerable<SubscriptionRequest> requests) => SubscribeAsync(requests).GetAwaiter().GetResult();
@@ -87,6 +87,18 @@ namespace HyperMsg.Mqtt.Client
 
                 case UnsubAck unsubAck:
                     subscriptionHandler.OnUnsubAckReceived(unsubAck);
+                    break;
+
+                case PubAck pubAck:
+                    publishHandler.OnPubAckReceived(pubAck);
+                    break;
+
+                case PubRec pubRec:
+                    publishHandler.OnPubRecReceived(pubRec);
+                    break;
+
+                case PubComp pubComp:
+                    publishHandler.OnPubCompReceived(pubComp);
                     break;
             }
         }
