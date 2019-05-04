@@ -174,28 +174,36 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
+        public void PublishAsync_Sends_Publish_Packet()
+        {
+            var request = CreatePublishRequest();
+
+            _ = client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+
+            var publishPacket = sentPacket as Publish;
+
+            Assert.NotNull(publishPacket);
+            Assert.Equal(request.TopicName, publishPacket.Topic);
+            Assert.Equal(request.Message.ToArray(), publishPacket.Message.ToArray());
+            Assert.Equal(request.Qos, publishPacket.Qos);
+        }
+
+        [Fact]
         public void PublishAsync_Sends_Qos0_Message_And_Completes_Task()
         {
-            var topicName = Guid.NewGuid().ToString();
-            var message = Guid.NewGuid().ToByteArray();
-            var request = new PublishRequest(topicName, message, QosLevel.Qos0);
+            var request = CreatePublishRequest(QosLevel.Qos0);
 
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
 
-            var publishPacket = sentPacket as Publish;
-            Assert.NotNull(publishPacket);
             Assert.True(task.IsCompleted);
-            Assert.Equal(topicName, publishPacket.Topic);
-            Assert.Equal(message, publishPacket.Message);            
         }
 
         [Fact]
         public void PublishAsync_Sends_Qos1_Message_And_Not_Completes_Task()
         {
-            var topicName = Guid.NewGuid().ToString();
-            var message = Guid.NewGuid().ToByteArray();
-            var request = new PublishRequest(topicName, message, QosLevel.Qos1);
+            var request = CreatePublishRequest(QosLevel.Qos1);
 
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
@@ -203,6 +211,27 @@ namespace HyperMsg.Mqtt.Client
             var publishPacket = sentPacket as Publish;
             Assert.NotNull(publishPacket);
             Assert.False(task.IsCompleted);
+        }
+
+        [Fact]
+        public void OnPubAckReceived_Completes_Task_For_Qos1_Publish()
+        {
+            var request = CreatePublishRequest(QosLevel.Qos1);
+            var task = client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+            var publishPacket = sentPacket as Publish;
+            var pubAck = new PubAck(publishPacket.Id);
+
+            client.OnPacketReceived(pubAck);
+
+            Assert.True(task.IsCompleted);
+        }
+
+        private PublishRequest CreatePublishRequest(QosLevel qos = QosLevel.Qos0)
+        {
+            var topicName = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            return new PublishRequest(topicName, message, qos);
         }
     }
 }
