@@ -4,6 +4,8 @@ namespace HyperMsg.Mqtt
 {
 	public class PingResp : Packet, IEquatable<PingResp>
 	{
+        public static readonly PingResp Instance = new PingResp();
+
 		public override int GetHashCode() => PacketCodes.PingResp;
 
 		public override bool Equals(object obj) => Equals(obj as PingResp);
