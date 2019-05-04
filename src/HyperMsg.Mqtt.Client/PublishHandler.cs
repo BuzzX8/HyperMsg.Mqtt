@@ -1,6 +1,7 @@
-﻿using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using Qos1Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<bool>>;
+using Qos2Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, (System.Threading.Tasks.TaskCompletionSource<bool>, bool)>;
 
 namespace HyperMsg.Mqtt.Client
 {
@@ -8,11 +9,13 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly ISender<Packet> sender;
 
-        private readonly ConcurrentDictionary<ushort, TaskCompletionSource<bool>> qos1Requests;
+        private readonly Qos1Dictionary qos1Requests;
+        private readonly Qos2Dictionary qos2Requests;
 
         internal PublishHandler(ISender<Packet> sender)
         {
-            qos1Requests = new ConcurrentDictionary<ushort, TaskCompletionSource<bool>>();
+            qos1Requests = new Qos1Dictionary();
+            qos2Requests = new Qos2Dictionary();
             this.sender = sender;
         }
 
@@ -25,6 +28,13 @@ namespace HyperMsg.Mqtt.Client
             {
                 var tsc = new TaskCompletionSource<bool>();
                 qos1Requests.AddOrUpdate(publishPacket.Id, tsc, (k, v) => v);
+                await tsc.Task;
+            }
+
+            if (request.Qos == QosLevel.Qos2)
+            {
+                var tsc = new TaskCompletionSource<bool>();
+                qos2Requests.AddOrUpdate(publishPacket.Id, (tsc, false), (k, v) => v);
                 await tsc.Task;
             }
         }
@@ -43,9 +53,21 @@ namespace HyperMsg.Mqtt.Client
         }
 
         internal void OnPubRecReceived(PubRec pubRec)
-        { }
+        {
+            if (qos2Requests.TryGetValue(pubRec.Id, out var request))
+            {
+                sender.Send(new PubRel(pubRec.Id));
+                var newRequest = (request.Item1, true);
+                qos2Requests.TryUpdate(pubRec.Id, newRequest, request);
+            }
+        }
 
         internal void OnPubCompReceived(PubComp pubComp)
-        { }
+        {
+            if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
+            {
+                request.Item1.SetResult(true);
+            }
+        }
     }
 }

@@ -27,6 +27,11 @@ namespace HyperMsg.Mqtt.Client
             client = new MqttClient(connection, sender, settings);
 
             packetSentEvent = new ManualResetEventSlim();
+            A.CallTo(() => sender.Send(A<Packet>._)).Invokes(foc =>
+            {
+                sentPacket = foc.GetArgument<Packet>(0);
+                packetSentEvent.Set();
+            });
             A.CallTo(() => sender.SendAsync(A<Packet>._, A<CancellationToken>._))
                 .Invokes(foc =>
                 {
@@ -214,15 +219,44 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void OnPubAckReceived_Completes_Task_For_Qos1_Publish()
+        public void OnPacketReceived_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
-            var pubAck = new PubAck(publishPacket.Id);
 
-            client.OnPacketReceived(pubAck);
+            client.OnPacketReceived(new PubAck(publishPacket.Id));
+
+            Assert.True(task.IsCompleted);
+        }
+
+        [Fact]
+        public void OnPacketReceived_Sends_PubRel_After_Receiving_PubRec()
+        {
+            var request = CreatePublishRequest(QosLevel.Qos2);
+            var task = client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+            var publishPacket = sentPacket as Publish;
+
+            client.OnPacketReceived(new PubRec(publishPacket.Id));
+
+            Assert.False(task.IsCompleted);
+            var pubRel = sentPacket as PubRel;
+            Assert.NotNull(pubRel);
+            Assert.Equal(publishPacket.Id, pubRel.Id);
+        }
+
+        [Fact]
+        public void OnPacketReceived_Completes_Task_For_Qos2_After_Receiving_PubComp()
+        {
+            var request = CreatePublishRequest(QosLevel.Qos2);
+            var task = client.PublishAsync(request);
+            packetSentEvent.Wait(waitTimeout);
+            var publishPacket = sentPacket as Publish;
+            client.OnPacketReceived(new PubRec(publishPacket.Id));
+
+            client.OnPacketReceived(new PubComp(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }

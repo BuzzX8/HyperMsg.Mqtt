@@ -39,12 +39,9 @@ namespace HyperMsg.Mqtt.Client
             await connection.CloseAsync(token);
         }
 
-        public void Ping()
-        {
-            throw new NotImplementedException();
-        }
+        public void Ping() => PingAsync().GetAwaiter().GetResult();
 
-        public Task PingAsync(CancellationToken token)
+        public Task PingAsync(CancellationToken token = default)
         {
             throw new NotImplementedException();
         }
