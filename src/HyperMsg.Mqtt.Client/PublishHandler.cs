@@ -1,21 +1,28 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Qos1Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<bool>>;
 using Qos2Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, (System.Threading.Tasks.TaskCompletionSource<bool>, bool)>;
+using Qos2Publish = System.Collections.Concurrent.ConcurrentDictionary<ushort, HyperMsg.Mqtt.Publish>;
 
 namespace HyperMsg.Mqtt.Client
 {
     internal class PublishHandler
     {
         private readonly ISender<Packet> sender;
+        private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
         private readonly Qos2Dictionary qos2Requests;
 
-        internal PublishHandler(ISender<Packet> sender)
+        private readonly Qos2Publish qos2Receive;
+
+        internal PublishHandler(ISender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
+            qos2Receive = new Qos2Publish();
+            this.receiveHandler = receiveHandler;
             this.sender = sender;
         }
 
@@ -41,7 +48,7 @@ namespace HyperMsg.Mqtt.Client
 
         private Publish CreatePublishPacket(PublishRequest request)
         {
-            return new Publish(PacketId.New(), request.Message.ToArray()) { Topic = request.TopicName };
+            return new Publish(PacketId.New(), request.TopicName, request.Message);
         }
 
         internal void OnPubAckReceived(PubAck pubAck)
@@ -67,6 +74,35 @@ namespace HyperMsg.Mqtt.Client
             if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
             {
                 request.Item1.SetResult(true);
+            }
+        }
+
+        internal void OnPublishReceived(Publish publish)
+        {
+            if (publish.Qos == QosLevel.Qos0)
+            {
+                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+            }
+
+            if (publish.Qos == QosLevel.Qos1)
+            {
+                sender.Send(new PubAck(publish.Id));
+                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+            }
+
+            if (publish.Qos == QosLevel.Qos2)
+            {
+                sender.Send(new PubRec(publish.Id));
+                qos2Receive.TryAdd(publish.Id, publish);
+            }
+        }
+
+        internal void OnPubRelReceived(PubRel pubRel)
+        {
+            if (qos2Receive.TryRemove(pubRel.Id, out var publish))
+            {
+                sender.Send(new PubComp(pubRel.Id));
+                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }
     }

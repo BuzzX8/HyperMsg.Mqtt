@@ -4,21 +4,25 @@ namespace HyperMsg.Mqtt
 {
     public class Publish : Packet, IEquatable<Publish>
     {
-        public Publish(ushort id) => Id = id;
-
-        public Publish(ushort packetId, params byte[] message) : this(packetId) => Message = message;
+        public Publish(ushort packetId, string topic, ReadOnlyMemory<byte> message, QosLevel qos = QosLevel.Qos0)
+        {
+            Id = packetId;
+            Topic = topic ?? throw new ArgumentNullException(nameof(topic));
+            Message = message;
+            Qos = qos;
+        }
 
         public bool Dup { get; set; }
 
-		public QosLevel Qos { get; set; }
+		public QosLevel Qos { get; }
 
 		public bool Retain { get; set; }
 
-		public string Topic { get; set; }
+		public string Topic { get; }
 
 		public ushort Id { get; }
 
-		public byte[] Message { get; set; }
+		public ReadOnlyMemory<byte> Message { get; }
 
         public override int GetHashCode() => Id;
 

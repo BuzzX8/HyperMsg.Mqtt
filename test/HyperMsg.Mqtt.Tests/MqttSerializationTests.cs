@@ -170,13 +170,10 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			string topicName = Guid.NewGuid().ToString();
 			byte[] payload = Guid.NewGuid().ToByteArray();
 
-			var packet = new Publish(packetId)
+			var packet = new Publish(packetId, topicName, payload, qos)
 			{
 				Dup = dup,
-				Qos = qos,
-				Retain = retain,
-				Topic = topicName,
-				Message = payload
+				Retain = retain
 			};
 			var expected = new List<byte>
 			{

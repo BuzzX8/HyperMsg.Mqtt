@@ -14,9 +14,10 @@ namespace HyperMsg.Mqtt.Client
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings settings;
 
+        private readonly ManualResetEventSlim packetSentEvent = new ManualResetEventSlim();
         private readonly TimeSpan waitTimeout = TimeSpan.FromSeconds(2);
 
-        private ManualResetEventSlim packetSentEvent;
+        private PublishReceivedEventArgs receiveEventArgs;
         private Packet sentPacket;
 
         public MqttClientTests()
@@ -25,13 +26,14 @@ namespace HyperMsg.Mqtt.Client
             sender = A.Fake<ISender<Packet>>();
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             client = new MqttClient(connection, sender, settings);
-
-            packetSentEvent = new ManualResetEventSlim();
+            client.PublishReceived += (s, e) => receiveEventArgs = e;
+                        
             A.CallTo(() => sender.Send(A<Packet>._)).Invokes(foc =>
             {
                 sentPacket = foc.GetArgument<Packet>(0);
                 packetSentEvent.Set();
             });
+
             A.CallTo(() => sender.SendAsync(A<Packet>._, A<CancellationToken>._))
                 .Invokes(foc =>
                 {
@@ -219,6 +221,27 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
+        public void PingAsync_Sends_PingReq_Packet()
+        {
+            var task = client.PingAsync();
+
+            var pingReq = sentPacket as PingReq;
+            Assert.NotNull(pingReq);
+            Assert.False(task.IsCompleted);
+        }
+
+        [Fact]
+        public void PingAsync_Completes_Task_When_PingResp_Received()
+        {
+            var task = client.PingAsync();
+            packetSentEvent.Wait(waitTimeout);
+
+            client.OnPacketReceived(PingResp.Instance);
+
+            Assert.True(task.IsCompleted);
+        }
+
+        [Fact]
         public void OnPacketReceived_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
@@ -261,11 +284,67 @@ namespace HyperMsg.Mqtt.Client
             Assert.True(task.IsCompleted);
         }
 
+        [Fact]
+        public void OnPacketReceived_Rises_PublishReceived_When_Qos0_Publish_Received()
+        {
+            var publish = CreatePublishPacket();
+
+            client.OnPacketReceived(publish);
+
+            Assert.NotNull(receiveEventArgs);            
+        }
+
+        [Fact]
+        public void OnPacketReceived_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
+        {
+            var publish = CreatePublishPacket(QosLevel.Qos1);
+
+            client.OnPacketReceived(publish);
+
+            var pubAck = sentPacket as PubAck;
+            Assert.Equal(publish.Id, pubAck.Id);
+            Assert.NotNull(receiveEventArgs);
+            Assert.NotNull(pubAck);
+        }
+
+        [Fact]
+        public void OnPacketReceived_Sends_PubRec_When_Qos2_Publish_Received()
+        {
+            var publish = CreatePublishPacket(QosLevel.Qos2);
+
+            client.OnPacketReceived(publish);
+
+            var pubRec = sentPacket as PubRec;
+            Assert.Null(receiveEventArgs);
+            Assert.NotNull(pubRec);
+            Assert.Equal(publish.Id, pubRec.Id);
+        }
+
+        [Fact]
+        public void OnPacketReceived_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
+        {
+            var publish = CreatePublishPacket(QosLevel.Qos2);
+            client.OnPacketReceived(publish);
+
+            client.OnPacketReceived(new PubRel(publish.Id));
+
+            var pubCom = sentPacket as PubComp;
+            Assert.NotNull(pubCom);
+            Assert.NotNull(receiveEventArgs);
+        }
+
         private PublishRequest CreatePublishRequest(QosLevel qos = QosLevel.Qos0)
         {
             var topicName = Guid.NewGuid().ToString();
             var message = Guid.NewGuid().ToByteArray();
             return new PublishRequest(topicName, message, qos);
+        }
+
+        private Publish CreatePublishPacket(QosLevel qos = QosLevel.Qos0)
+        {
+            var topicName = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            return new Publish(Guid.NewGuid().ToByteArray()[0], topicName, message, qos);
         }
     }
 }

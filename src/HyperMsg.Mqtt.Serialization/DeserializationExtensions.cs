@@ -54,7 +54,7 @@ namespace HyperMsg.Mqtt.Serialization
                 return new DeserializationResult<Packet>(consumed, packet);
             }
             
-            throw new Exception();// TODO: DeserializationException            
+            throw new DeserializationException();
         }
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
@@ -79,13 +79,10 @@ namespace HyperMsg.Mqtt.Serialization
 		    int payloadLength = length - Encoding.UTF8.GetByteCount(topic) - 4;
             byte[] payload = span.Slice(0, payloadLength).ToArray();
 
-		    return new Publish(packetId)
+		    return new Publish(packetId, topic, payload, qos)
 		    {
 			    Dup = dup,
-			    Qos = qos,
-			    Retain = retain,
-			    Topic = topic,
-			    Message = payload
+			    Retain = retain
 		    };
 	    }
 
@@ -93,7 +90,7 @@ namespace HyperMsg.Mqtt.Serialization
 	    {
 		    if (length != 0)
 		    {
-			    throw new Exception();
+			    throw new DeserializationException();
 		    }
 
 		    return TwoBytePackets[code];
@@ -193,7 +190,7 @@ namespace HyperMsg.Mqtt.Serialization
 
                 if (i == sizeof(int) && value >= 0x80)
                 {
-                    throw new Exception();
+                    throw new DeserializationException();
                 }
             }
 		    while ((value & 0x80) == 0x80);

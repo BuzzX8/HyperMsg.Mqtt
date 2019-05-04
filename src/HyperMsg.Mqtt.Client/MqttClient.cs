@@ -11,6 +11,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly ISender<Packet> sender;
         
         private readonly ConnectHandler connectHandler;
+        private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;
 
@@ -19,7 +20,8 @@ namespace HyperMsg.Mqtt.Client
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             connectHandler = new ConnectHandler(sender, connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings)));
-            publishHandler = new PublishHandler(sender);
+            pingHandler = new PingHandler(sender);
+            publishHandler = new PublishHandler(sender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(sender);
         }
 
@@ -41,10 +43,7 @@ namespace HyperMsg.Mqtt.Client
 
         public void Ping() => PingAsync().GetAwaiter().GetResult();
 
-        public Task PingAsync(CancellationToken token = default)
-        {
-            throw new NotImplementedException();
-        }
+        public Task PingAsync(CancellationToken token = default) => pingHandler.SendPingReqAsync(token);
 
         public void Publish(PublishRequest request) => PublishAsync(request).GetAwaiter().GetResult();
 
@@ -97,8 +96,22 @@ namespace HyperMsg.Mqtt.Client
                 case PubComp pubComp:
                     publishHandler.OnPubCompReceived(pubComp);
                     break;
+
+                case Publish publish:
+                    publishHandler.OnPublishReceived(publish);
+                    break;
+
+                case PubRel pubRel:
+                    publishHandler.OnPubRelReceived(pubRel);
+                    break;
+
+                case PingResp pingResp:
+                    pingHandler.OnPingRespReceived();
+                    break;
             }
         }
+
+        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived;
     }

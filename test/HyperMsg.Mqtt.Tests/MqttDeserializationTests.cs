@@ -37,13 +37,10 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 			yield return TestCase(new PubRel(45), 0b01100010, 2, 0, 45);
 			yield return TestCase(new PubRec(40), 0b01010000, 2, 0, 40);
 			yield return TestCase(new PubAck(35), 0b01000000, 2, 0, 35);
-			yield return TestCase(new Publish(10)
+			yield return TestCase(new Publish(10, "a/b", new byte[] { 9, 8, 7 }, QosLevel.Qos2)
 			{
 				Dup = true,
-				Qos = QosLevel.Qos2,
-				Retain = true,
-				Topic = "a/b",
-				Message = new byte[] { 9, 8, 7 }
+				Retain = true
 			},
 				0b00111101, //Packet code
 				10, //Length
@@ -106,7 +103,7 @@ namespace HyperMsg.Mqtt.Serialization.Tests
 		    var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
 		    var buffer = new ReadOnlyMemory<byte>(data);
 
-		    Assert.Throws<Exception>(() => buffer.ReadRemainingLength());
+		    Assert.Throws<DeserializationException>(() => buffer.ReadRemainingLength());
 	    }
 
 
