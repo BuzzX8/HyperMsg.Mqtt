@@ -10,7 +10,6 @@ namespace HyperMsg.Mqtt.Client
     public class MqttClientTests
     {
         private readonly MqttClient client;
-        private readonly IConnection connection;
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings settings;
 
@@ -22,10 +21,9 @@ namespace HyperMsg.Mqtt.Client
 
         public MqttClientTests()
         {
-            connection = A.Fake<IConnection>();
             sender = A.Fake<ISender<Packet>>();
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            client = new MqttClient(connection, sender, settings);
+            client = new MqttClient(sender, settings);
             client.PublishReceived += (s, e) => receiveEventArgs = e;
                         
             A.CallTo(() => sender.Send(A<Packet>._)).Invokes(foc =>
@@ -44,14 +42,17 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void ConnectAsync_Opens_Connection()
+        public void ConnectAsync_Submits_OpenConnection_Command()
         {
             var token = default(CancellationToken);
+            var commandHandler = A.Fake<Func<TransportCommands, Task>>();
+            A.CallTo(() => commandHandler.Invoke(A<TransportCommands>._)).Returns(Task.CompletedTask);
+            client.SubmitTransportCommandAsync = commandHandler;
 
             _ = client.ConnectAsync(false, token);
             packetSentEvent.Wait(waitTimeout);
 
-            A.CallTo(() => connection.OpenAsync(token)).MustHaveHappened();
+            A.CallTo(() => commandHandler.Invoke(TransportCommands.OpenConnection)).MustHaveHappened();
         }
 
         [Fact]
@@ -84,7 +85,7 @@ namespace HyperMsg.Mqtt.Client
             var task = client.ConnectAsync();
 
             packetSentEvent.Wait(waitTimeout);
-            client.OnPacketReceived(connAck);
+            client.Handle(connAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Clean, task.Result);
@@ -97,7 +98,7 @@ namespace HyperMsg.Mqtt.Client
             var task = client.ConnectAsync();
 
             packetSentEvent.Wait(waitTimeout);
-            client.OnPacketReceived(connAck);
+            client.Handle(connAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Present, task.Result);
@@ -114,13 +115,16 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task DisconnectAsync_Closes_Connection()
+        public async Task DisconnectAsync_Submits_ClosesConnection_Command()
         {
             var token = default(CancellationToken);
+            var commandHandler = A.Fake<Func<TransportCommands, Task>>();
+            A.CallTo(() => commandHandler.Invoke(A<TransportCommands>._)).Returns(Task.CompletedTask);
+            client.SubmitTransportCommandAsync = commandHandler;
 
             await client.DisconnectAsync(token);
 
-            A.CallTo(() => connection.CloseAsync(token)).MustHaveHappened();
+            A.CallTo(() => commandHandler.Invoke(TransportCommands.CloseConnection)).MustHaveHappened();
         }
 
         [Fact]
@@ -147,7 +151,7 @@ namespace HyperMsg.Mqtt.Client
             var packetId = ((Subscribe)sentPacket).Id;
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
-            client.OnPacketReceived(subAck);
+            client.Handle(subAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(subAck.Results, task.Result);
@@ -175,7 +179,7 @@ namespace HyperMsg.Mqtt.Client
             packetSentEvent.Wait(waitTimeout);
             var unsubscribe = sentPacket as Unsubscribe;
 
-            client.OnPacketReceived(new UnsubAck(unsubscribe.Id));
+            client.Handle(new UnsubAck(unsubscribe.Id));
 
             Assert.True(task.IsCompleted);
         }
@@ -236,33 +240,33 @@ namespace HyperMsg.Mqtt.Client
             var task = client.PingAsync();
             packetSentEvent.Wait(waitTimeout);
 
-            client.OnPacketReceived(PingResp.Instance);
+            client.Handle(PingResp.Instance);
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void OnPacketReceived_Completes_Task_For_Qos1_Publish()
+        public void Handle_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
 
-            client.OnPacketReceived(new PubAck(publishPacket.Id));
+            client.Handle(new PubAck(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void OnPacketReceived_Sends_PubRel_After_Receiving_PubRec()
+        public void Handle_Sends_PubRel_After_Receiving_PubRec()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
 
-            client.OnPacketReceived(new PubRec(publishPacket.Id));
+            client.Handle(new PubRec(publishPacket.Id));
 
             Assert.False(task.IsCompleted);
             var pubRel = sentPacket as PubRel;
@@ -271,35 +275,35 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void OnPacketReceived_Completes_Task_For_Qos2_After_Receiving_PubComp()
+        public void Handle_Completes_Task_For_Qos2_After_Receiving_PubComp()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
-            client.OnPacketReceived(new PubRec(publishPacket.Id));
+            client.Handle(new PubRec(publishPacket.Id));
 
-            client.OnPacketReceived(new PubComp(publishPacket.Id));
+            client.Handle(new PubComp(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void OnPacketReceived_Rises_PublishReceived_When_Qos0_Publish_Received()
+        public void Handle_Rises_PublishReceived_When_Qos0_Publish_Received()
         {
             var publish = CreatePublishPacket();
 
-            client.OnPacketReceived(publish);
+            client.Handle(publish);
 
             Assert.NotNull(receiveEventArgs);            
         }
 
         [Fact]
-        public void OnPacketReceived_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
+        public void Handle_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos1);
 
-            client.OnPacketReceived(publish);
+            client.Handle(publish);
 
             var pubAck = sentPacket as PubAck;
             Assert.Equal(publish.Id, pubAck.Id);
@@ -308,11 +312,11 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void OnPacketReceived_Sends_PubRec_When_Qos2_Publish_Received()
+        public void Handle_Sends_PubRec_When_Qos2_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
 
-            client.OnPacketReceived(publish);
+            client.Handle(publish);
 
             var pubRec = sentPacket as PubRec;
             Assert.Null(receiveEventArgs);
@@ -321,12 +325,12 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void OnPacketReceived_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
+        public void Handle_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
-            client.OnPacketReceived(publish);
+            client.Handle(publish);
 
-            client.OnPacketReceived(new PubRel(publish.Id));
+            client.Handle(new PubRel(publish.Id));
 
             var pubCom = sentPacket as PubComp;
             Assert.NotNull(pubCom);
