@@ -29,7 +29,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (SubmitTransportCommandAsync != null)
             {
-                await SubmitTransportCommandAsync(TransportCommands.OpenConnection);
+                await SubmitTransportCommandAsync(TransportCommands.OpenConnection, token);
             }
 
             return await connectHandler.SendConnectAsync(cleanSession, token);
@@ -41,7 +41,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (SubmitTransportCommandAsync != null)
             {
-                await SubmitTransportCommandAsync(TransportCommands.CloseConnection);
+                await SubmitTransportCommandAsync(TransportCommands.CloseConnection, token);
             }
 
             await sender.SendAsync(Mqtt.Disconnect.Instance, token);
@@ -127,8 +127,8 @@ namespace HyperMsg.Mqtt.Client
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived;
 
-        public Func<ReceiveMode, Task> SetReceiveModeAsync;
+        public Func<ReceiveMode, CancellationToken, Task> SetReceiveModeAsync;
 
-        public Func<TransportCommands, Task> SubmitTransportCommandAsync;
+        public Func<TransportCommands, CancellationToken, Task> SubmitTransportCommandAsync;
     }
 }
