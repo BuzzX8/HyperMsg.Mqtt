@@ -5,9 +5,8 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttClient : IMqttClient
+    public class MqttClient : IMqttClient, IHandler<Packet>
     {
-        private readonly IConnection connection;
         private readonly ISender<Packet> sender;
         
         private readonly ConnectHandler connectHandler;
@@ -15,9 +14,8 @@ namespace HyperMsg.Mqtt.Client
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;
 
-        public MqttClient(IConnection connection, ISender<Packet> sender, MqttConnectionSettings connectionSettings)
+        public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
-            this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             connectHandler = new ConnectHandler(sender, connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings)));
             pingHandler = new PingHandler(sender);
@@ -29,7 +27,11 @@ namespace HyperMsg.Mqtt.Client
 
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default)
         {
-            await connection.OpenAsync(token);
+            if (SubmitTransportCommandAsync != null)
+            {
+                await SubmitTransportCommandAsync(TransportCommands.OpenConnection, token);
+            }
+
             return await connectHandler.SendConnectAsync(cleanSession, token);
         }
 
@@ -37,8 +39,12 @@ namespace HyperMsg.Mqtt.Client
 
         public async Task DisconnectAsync(CancellationToken token = default)
         {
+            if (SubmitTransportCommandAsync != null)
+            {
+                await SubmitTransportCommandAsync(TransportCommands.CloseConnection, token);
+            }
+
             await sender.SendAsync(Mqtt.Disconnect.Instance, token);
-            await connection.CloseAsync(token);
         }
 
         public void Ping() => PingAsync().GetAwaiter().GetResult();
@@ -69,7 +75,7 @@ namespace HyperMsg.Mqtt.Client
             return subscriptionHandler.SendUnsubscribeAsync(topics, token);
         }
 
-        public void OnPacketReceived(Packet packet)
+        public void Handle(Packet packet)
         {
             switch (packet)
             {
@@ -105,14 +111,24 @@ namespace HyperMsg.Mqtt.Client
                     publishHandler.OnPubRelReceived(pubRel);
                     break;
 
-                case PingResp pingResp:
+                case PingResp _:
                     pingHandler.OnPingRespReceived();
                     break;
             }
         }
 
-        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);
+        public Task HandleAsync(Packet message, CancellationToken token = default)
+        {
+            Handle(message);
+            return Task.CompletedTask;
+        }
+
+        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);        
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived;
+
+        public Func<ReceiveMode, CancellationToken, Task> SetReceiveModeAsync;
+
+        public Func<TransportCommands, CancellationToken, Task> SubmitTransportCommandAsync;
     }
 }
