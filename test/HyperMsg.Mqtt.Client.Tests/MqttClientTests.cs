@@ -93,6 +93,18 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
+        public void ConnectAsync_Sends_Connect_Packet_With_KeepAlive_Specified_In_Settings()
+        {
+            settings.KeepAlive = 0x9080;
+            _ = client.ConnectAsync(true);
+            packetSentEvent.Wait(waitTimeout);
+
+            var connPacket = sentPacket as Connect;
+            Assert.NotNull(connPacket);
+            Assert.Equal(settings.KeepAlive, connPacket.KeepAlive);
+        }
+
+        [Fact]
         public void ConnectAsync_Returns_Correct_Result_For_Clean_Session()
         {
             var connAck = new ConnAck(ConnectionResult.Accepted);

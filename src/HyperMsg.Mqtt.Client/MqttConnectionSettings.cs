@@ -10,7 +10,15 @@ namespace HyperMsg.Mqtt.Client
             ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
         }
 
+        /// <summary>
+        /// Unique ID of client for server.
+        /// </summary>
         public string ClientId { get; }
+
+        /// <summary>
+        /// Time interval measured in seconds.
+        /// </summary>
+        public ushort KeepAlive { get; set; }
 
         public string UserName { get; }
 

@@ -38,6 +38,7 @@ namespace HyperMsg.Mqtt.Client
             return new Connect
             {
                 ClientId = connectionSettings.ClientId,
+                KeepAlive = connectionSettings.KeepAlive,
                 Flags = flags
             };
         }
