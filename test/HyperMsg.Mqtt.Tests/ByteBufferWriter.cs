@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Buffers;
 
-namespace HyperMsg
+namespace HyperMsg.Mqtt
 {
-    public class ByteBufferWriter : IBufferWriter<byte>
+    internal class ByteBufferWriter : IBufferWriter<byte>
     {
         private readonly Memory<byte> buffer;
         private int position;

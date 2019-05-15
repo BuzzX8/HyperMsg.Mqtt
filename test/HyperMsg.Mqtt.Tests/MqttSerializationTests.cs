@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Serialization.Tests
+namespace HyperMsg.Mqtt.Serialization
 {
     public class MqttSerializationTests
     {

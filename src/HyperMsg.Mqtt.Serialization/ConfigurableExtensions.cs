@@ -2,7 +2,7 @@
 {
     public static class ConfigurableExtensions
     {
-        public static void UseMqttSerializer(IConfigurable configurable)
+        public static void UseMqttSerializer(this IConfigurable configurable)
         {
             configurable.Configure(context =>
             {
