@@ -24,6 +24,8 @@ namespace HyperMsg.Mqtt.Client
 
         public SecureString Password { get; }
 
+        public WillMessageSettings WillMessageSettings { get; set; }
+
         public bool UseTls { get; set; }
     }
 }

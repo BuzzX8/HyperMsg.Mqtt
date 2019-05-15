@@ -12,7 +12,7 @@ namespace HyperMsg.Mqtt
 
 		public string WillTopic { get; set; }
 
-		public byte[] WillMessage { get; set; }
+		public ReadOnlyMemory<byte> WillMessage { get; set; }
 
 		public string UserName { get; set; }
 

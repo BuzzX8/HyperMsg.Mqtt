@@ -83,7 +83,7 @@ namespace HyperMsg.Mqtt.Serialization
                 writer.Advance(written);
                 span = writer.GetSpan(connect.WillMessage.Length + sizeof(ushort));
                 BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.WillMessage.Length);
-                connect.WillMessage.CopyTo(span.Slice(2));
+                connect.WillMessage.Span.CopyTo(span.Slice(2));
                 writer.Advance(connect.WillMessage.Length + 2);
             }
 

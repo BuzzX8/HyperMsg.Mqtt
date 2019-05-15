@@ -13,9 +13,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly ConnectHandler connectHandler;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
-        private readonly SubscriptionHandler subscriptionHandler;
-
-        
+        private readonly SubscriptionHandler subscriptionHandler;        
 
         public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
