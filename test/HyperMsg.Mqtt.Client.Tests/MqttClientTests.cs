@@ -56,6 +56,20 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
+        public void ConnectAsync_Submits_SetTransportLevelSecurity_If_UseTls_Is_True()
+        {
+            settings.UseTls = true;
+            var commandHandler = A.Fake<Func<TransportCommands, CancellationToken, Task>>();
+            A.CallTo(() => commandHandler.Invoke(A<TransportCommands>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
+            client.SubmitTransportCommandAsync = commandHandler;
+
+            _ = client.ConnectAsync(false);
+            packetSentEvent.Wait(waitTimeout);
+
+            A.CallTo(() => commandHandler.Invoke(TransportCommands.SetTransportLevelSecurity, A<CancellationToken>._)).MustHaveHappened();
+        }
+
+        [Fact]
         public void ConnectAsync_Sends_Correct_Packet()
         {
             _ = client.ConnectAsync();
