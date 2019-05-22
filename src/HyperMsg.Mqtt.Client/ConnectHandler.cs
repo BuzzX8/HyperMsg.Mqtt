@@ -35,11 +35,21 @@ namespace HyperMsg.Mqtt.Client
                 flags |= ConnectFlags.CleanSession;
             }
 
-            return new Connect
+            var connect = new Connect
             {
                 ClientId = connectionSettings.ClientId,
+                KeepAlive = connectionSettings.KeepAlive,
                 Flags = flags
             };
+
+            if (connectionSettings.WillMessageSettings != null)
+            {
+                connect.Flags |= ConnectFlags.Will;
+                connect.WillTopic = connectionSettings.WillMessageSettings.Topic;
+                connect.WillMessage = connectionSettings.WillMessageSettings.Message;
+            }
+
+            return connect;
         }
 
         internal void OnConnAckReceived(ConnAck connAck)

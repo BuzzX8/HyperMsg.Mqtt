@@ -56,6 +56,20 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
+        public void ConnectAsync_Submits_SetTransportLevelSecurity_If_UseTls_Is_True()
+        {
+            settings.UseTls = true;
+            var commandHandler = A.Fake<Func<TransportCommands, CancellationToken, Task>>();
+            A.CallTo(() => commandHandler.Invoke(A<TransportCommands>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
+            client.SubmitTransportCommandAsync = commandHandler;
+
+            _ = client.ConnectAsync(false);
+            packetSentEvent.Wait(waitTimeout);
+
+            A.CallTo(() => commandHandler.Invoke(TransportCommands.SetTransportLevelSecurity, A<CancellationToken>._)).MustHaveHappened();
+        }
+
+        [Fact]
         public void ConnectAsync_Sends_Correct_Packet()
         {
             _ = client.ConnectAsync();
@@ -76,6 +90,35 @@ namespace HyperMsg.Mqtt.Client
             var connPacket = sentPacket as Connect;
             Assert.NotNull(connPacket);
             Assert.True(connPacket.Flags.HasFlag(ConnectFlags.CleanSession));
+        }
+
+        [Fact]
+        public void ConnectAsync_Sends_Connect_Packet_With_KeepAlive_Specified_In_Settings()
+        {
+            settings.KeepAlive = 0x9080;
+            _ = client.ConnectAsync();
+            packetSentEvent.Wait(waitTimeout);
+
+            var connPacket = sentPacket as Connect;
+            Assert.NotNull(connPacket);
+            Assert.Equal(settings.KeepAlive, connPacket.KeepAlive);
+        }
+
+        [Fact]
+        public void ConnectAsync_Sends_Connect_Packet_With_Corredt_WillMessageSettings()
+        {
+            var willTopic = Guid.NewGuid().ToString();
+            var willMessage = Guid.NewGuid().ToByteArray();
+            settings.WillMessageSettings = new WillMessageSettings(willTopic, willMessage, true);
+
+            _ = client.ConnectAsync();
+            packetSentEvent.Wait(waitTimeout);
+
+            var connPacket = sentPacket as Connect;
+
+            Assert.True(connPacket.Flags.HasFlag(ConnectFlags.Will));
+            Assert.Equal(willTopic, connPacket.WillTopic);
+            Assert.Equal(willMessage, connPacket.WillMessage);
         }
 
         [Fact]

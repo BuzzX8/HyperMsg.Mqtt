@@ -8,16 +8,18 @@ namespace HyperMsg.Mqtt.Client
     public class MqttClient : IMqttClient, IHandler<Packet>
     {
         private readonly ISender<Packet> sender;
-        
+        private readonly MqttConnectionSettings connectionSettings;
+
         private readonly ConnectHandler connectHandler;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
-        private readonly SubscriptionHandler subscriptionHandler;
+        private readonly SubscriptionHandler subscriptionHandler;        
 
         public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
-            connectHandler = new ConnectHandler(sender, connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings)));
+            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
+            connectHandler = new ConnectHandler(sender, connectionSettings);
             pingHandler = new PingHandler(sender);
             publishHandler = new PublishHandler(sender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(sender);
@@ -30,6 +32,11 @@ namespace HyperMsg.Mqtt.Client
             if (SubmitTransportCommandAsync != null)
             {
                 await SubmitTransportCommandAsync(TransportCommands.OpenConnection, token);
+
+                if (connectionSettings.UseTls)
+                {
+                    await SubmitTransportCommandAsync(TransportCommands.SetTransportLevelSecurity, token);
+                }
             }
 
             return await connectHandler.SendConnectAsync(cleanSession, token);
