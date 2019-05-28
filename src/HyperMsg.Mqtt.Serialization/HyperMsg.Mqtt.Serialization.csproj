@@ -13,7 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg" Version="0.3.0-alpha" />
+    <PackageReference Include="HyperMsg" Version="0.4.0-alpha" />
+    <PackageReference Include="HyperMsg.Sockets" Version="0.1.0-alpha" />
   </ItemGroup>
 
   <ItemGroup>
