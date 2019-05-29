@@ -27,6 +27,15 @@ namespace HyperMsg.Mqtt.Integration
             builder.UseMqttSerializer();
             builder.UseMqttClient(settings);
             builder.UseSockets(endPoint);
+            builder.RegisterConfigurator((p, s) =>
+            {
+                var repository = (IHandlerRepository)p.GetService(typeof(IHandlerRepository));
+                var messageInterceptor = new DelegateHandler<Packet>(packet =>
+                {
+                    receivedPackets.Add(packet);
+                });
+                repository.AddHandler(messageInterceptor);
+            });
 
             client = builder.Build();
         }

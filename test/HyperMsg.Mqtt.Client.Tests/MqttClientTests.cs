@@ -12,8 +12,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly MqttClient client;
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings settings;
-        private readonly IHandler<TransportCommands> transportCommandHandler;
-        private readonly IHandler<ReceiveMode> receiveModeHandler;
+        private readonly IHandler handler;
 
         private readonly ManualResetEventSlim packetSentEvent = new ManualResetEventSlim();
         private readonly TimeSpan waitTimeout = TimeSpan.FromSeconds(2);
@@ -25,9 +24,8 @@ namespace HyperMsg.Mqtt.Client
         {
             sender = A.Fake<ISender<Packet>>();
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            transportCommandHandler = A.Fake<IHandler<TransportCommands>>();
-            receiveModeHandler = A.Fake<IHandler<ReceiveMode>>();
-            client = new MqttClient(sender, settings, transportCommandHandler, receiveModeHandler);
+            handler = A.Fake<IHandler>();
+            client = new MqttClient(sender, settings, handler);
             client.PublishReceived += (s, e) => receiveEventArgs = e;
                         
             A.CallTo(() => sender.Send(A<Packet>._)).Invokes(foc =>
@@ -49,24 +47,24 @@ namespace HyperMsg.Mqtt.Client
         public void ConnectAsync_Submits_OpenConnection_Command()
         {
             var token = default(CancellationToken);
-            A.CallTo(() => transportCommandHandler.HandleAsync(A<TransportCommands>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
+            A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
             
             _ = client.ConnectAsync(false, token);
             packetSentEvent.Wait(waitTimeout);
 
-            A.CallTo(() => transportCommandHandler.HandleAsync(TransportCommands.OpenConnection, token)).MustHaveHappened();
+            A.CallTo(() => handler.HandleAsync(TransportOperations.OpenConnection, token)).MustHaveHappened();
         }
 
         [Fact]
         public void ConnectAsync_Submits_SetTransportLevelSecurity_If_UseTls_Is_True()
         {
             settings.UseTls = true;
-            A.CallTo(() => transportCommandHandler.HandleAsync(A<TransportCommands>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
+            A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
 
             _ = client.ConnectAsync(false);
             packetSentEvent.Wait(waitTimeout);
 
-            A.CallTo(() => transportCommandHandler.HandleAsync(TransportCommands.SetTransportLevelSecurity, A<CancellationToken>._)).MustHaveHappened();
+            A.CallTo(() => handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, A<CancellationToken>._)).MustHaveHappened();
         }
 
         [Fact]
@@ -161,12 +159,11 @@ namespace HyperMsg.Mqtt.Client
         public async Task DisconnectAsync_Submits_ClosesConnection_Command()
         {
             var token = default(CancellationToken);
-            var commandHandler = A.Fake<Func<TransportCommands, CancellationToken, Task>>();
-            A.CallTo(() => transportCommandHandler.HandleAsync(A<TransportCommands>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
+            A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
 
             await client.DisconnectAsync(token);
 
-            A.CallTo(() => commandHandler.Invoke(TransportCommands.CloseConnection, token)).MustHaveHappened();
+            A.CallTo(() => handler.HandleAsync(TransportOperations.CloseConnection, token)).MustHaveHappened();
         }
 
         [Fact]
