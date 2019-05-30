@@ -1,6 +1,5 @@
 ﻿using FakeItEasy;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Client
@@ -13,26 +12,9 @@ namespace HyperMsg.Mqtt.Client
             var settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             var configurable = A.Fake<IConfigurable>();
 
-            //var context = A.Fake<IConfigurationContext>();
-            //A.CallTo(() => context.GetService(typeof(ISender<Packet>))).Returns(A.Fake<ISender<Packet>>());
-            //A.CallTo(() => context.GetService(typeof(IHandler<TransportCommands>))).Returns(A.Fake<IHandler<TransportCommands>>());
-            //A.CallTo(() => context.GetService(typeof(IHandler<ReceiveMode>))).Returns(A.Fake<IHandler<ReceiveMode>>());
-            //A.CallTo(() => context.GetSetting(nameof(MqttConnectionSettings))).Returns(settings);
+            configurable.UseMqttClient(settings);
 
-            //var configurators = new List<Action<IConfigurationContext>>();
-            //A.CallTo(() => configurable.Configure(A<Action<IConfigurationContext>>._)).Invokes(foc =>
-            //{
-            //    configurators.Add(foc.GetArgument<Action<IConfigurationContext>>(0));
-            //});
-
-            //configurable.UseMqttClient(settings);
-
-            //foreach(var configurator in configurators)
-            //{
-            //    configurator.Invoke(context);
-            //}
-
-            //A.CallTo(() => context.RegisterService(typeof(IMqttClient), A<object>._)).MustHaveHappened();
+            A.CallTo(() => configurable.RegisterService(typeof(IMqttClient), A<ServiceFactory>._)).MustHaveHappened();
         }
     }
 }
