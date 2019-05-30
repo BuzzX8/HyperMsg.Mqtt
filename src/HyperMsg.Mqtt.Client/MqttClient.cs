@@ -35,7 +35,7 @@ namespace HyperMsg.Mqtt.Client
 
         public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
-            await sender.SendAsync(Mqtt.Disconnect.Instance, cancellationToken);
+            await sender.SendAsync(Disconnect.Instance, cancellationToken);
             await handler.HandleAsync(TransportOperations.CloseConnection);
         }
 

@@ -91,12 +91,28 @@ namespace HyperMsg.Mqtt.Integration
         {
             var topic = Guid.NewGuid().ToString();
             var message = Guid.NewGuid().ToByteArray();
+            var request = new PublishRequest(topic, message, QosLevel.Qos1);
             Connect();
 
-            client.PublishAsync(new PublishRequest(topic, message, QosLevel.Qos1)).Wait(waitTimeout);
+            client.PublishAsync(request).Wait(waitTimeout);
             var response = receivedPackets.Last() as PubAck;
 
             Assert.NotNull(response);
+        }
+
+        //[Fact]
+        public void Publish_Receives_PubRec_And_PubComp_For_Qos2_Publications()
+        {
+            var topic = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            var request = new PublishRequest(topic, message, QosLevel.Qos2);
+            Connect();
+
+            client.PublishAsync(request).Wait();
+
+            Assert.Equal(3, receivedPackets.Count);
+            Assert.IsType<PubRec>(receivedPackets[1]);
+            Assert.IsType<PubComp>(receivedPackets[2]);
         }
 
         private void Connect() => client.ConnectAsync(true).Wait();

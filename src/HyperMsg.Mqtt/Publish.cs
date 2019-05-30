@@ -4,7 +4,7 @@ namespace HyperMsg.Mqtt
 {
     public class Publish : Packet, IEquatable<Publish>
     {
-        public Publish(ushort packetId, string topic, ReadOnlyMemory<byte> message, QosLevel qos = QosLevel.Qos0)
+        public Publish(ushort packetId, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
         {
             Id = packetId;
             Topic = topic ?? throw new ArgumentNullException(nameof(topic));

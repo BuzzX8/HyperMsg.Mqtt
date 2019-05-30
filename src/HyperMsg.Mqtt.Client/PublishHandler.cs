@@ -48,7 +48,7 @@ namespace HyperMsg.Mqtt.Client
 
         private Publish CreatePublishPacket(PublishRequest request)
         {
-            return new Publish(PacketId.New(), request.TopicName, request.Message);
+            return new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
         }
 
         internal void OnPubAckReceived(PubAck pubAck)
