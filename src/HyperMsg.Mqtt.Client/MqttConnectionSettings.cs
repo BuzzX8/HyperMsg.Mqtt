@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security;
 
 namespace HyperMsg.Mqtt.Client
 {
@@ -19,10 +18,6 @@ namespace HyperMsg.Mqtt.Client
         /// Time interval measured in seconds.
         /// </summary>
         public ushort KeepAlive { get; set; }
-
-        public string UserName { get; }
-
-        public SecureString Password { get; }
 
         public WillMessageSettings WillMessageSettings { get; set; }
 

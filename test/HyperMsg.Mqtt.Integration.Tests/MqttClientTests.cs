@@ -16,6 +16,8 @@ namespace HyperMsg.Mqtt.Integration
         private readonly MqttConnectionSettings settings;
         private readonly List<Packet> receivedPackets;
 
+        private static readonly TimeSpan waitTimeout = TimeSpan.FromSeconds(2);
+
         public MqttClientTests()
         {
             endPoint = new IPEndPoint(IPAddress.Loopback, 1883);
@@ -43,7 +45,7 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public void Connect_Receives_ConnAck_From_Server()
         {
-            client.Connect(true);
+            client.ConnectAsync(true).Wait(waitTimeout);
 
             var response = receivedPackets.SingleOrDefault() as ConnAck;
 
@@ -53,9 +55,9 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public void Ping_Receives_PingResp()
         {
-            client.Connect(true);
+            Connect();
 
-            client.Ping();
+            client.PingAsync(default).Wait(waitTimeout);
             var response = receivedPackets.Last() as PingResp;
 
             Assert.NotNull(response);
@@ -65,9 +67,9 @@ namespace HyperMsg.Mqtt.Integration
         public void Subscribe_Receives_SubAck()
         {
             var subscriptionRequest = new SubscriptionRequest(Guid.NewGuid().ToString(), QosLevel.Qos0);
-            client.Connect(true);
+            Connect();
 
-            client.Subscribe(new[] { subscriptionRequest });
+            client.SubscribeAsync(new[] { subscriptionRequest }).Wait(waitTimeout);
             var response = receivedPackets.Last() as SubAck;
 
             Assert.NotNull(response);
@@ -76,9 +78,9 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public void Unsubscribe_Receives_UnsubAck()
         {
-            client.Connect(true);
+            Connect();
 
-            client.Unsubscribe(new[] { Guid.NewGuid().ToString() });
+            client.UnsubscribeAsync(new[] { Guid.NewGuid().ToString() }).Wait(waitTimeout);
             var response = receivedPackets.Last() as UnsubAck;
 
             Assert.NotNull(response);
@@ -89,17 +91,16 @@ namespace HyperMsg.Mqtt.Integration
         {
             var topic = Guid.NewGuid().ToString();
             var message = Guid.NewGuid().ToByteArray();
-            client.Connect(true);
+            Connect();
 
-            client.Publish(new PublishRequest(topic, message, QosLevel.Qos1));
+            client.PublishAsync(new PublishRequest(topic, message, QosLevel.Qos1)).Wait(waitTimeout);
             var response = receivedPackets.Last() as PubAck;
 
             Assert.NotNull(response);
         }
 
-        public void Dispose()
-        {
-            client.Disconnect();
-        }
+        private void Connect() => client.ConnectAsync(true).Wait();
+
+        public void Dispose() => client.DisconnectAsync().Wait(waitTimeout);
     }
 }
