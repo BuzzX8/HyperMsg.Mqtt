@@ -9,7 +9,7 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Integration
 {
-    public class MqttClientTests
+    public class MqttClientTests : IDisposable
     {
         private readonly IPEndPoint endPoint;
         private readonly IMqttClient client;
@@ -48,6 +48,58 @@ namespace HyperMsg.Mqtt.Integration
             var response = receivedPackets.SingleOrDefault() as ConnAck;
 
             Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Ping_Receives_PingResp()
+        {
+            client.Connect(true);
+
+            client.Ping();
+            var response = receivedPackets.Last() as PingResp;
+
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Subscribe_Receives_SubAck()
+        {
+            var subscriptionRequest = new SubscriptionRequest(Guid.NewGuid().ToString(), QosLevel.Qos0);
+            client.Connect(true);
+
+            client.Subscribe(new[] { subscriptionRequest });
+            var response = receivedPackets.Last() as SubAck;
+
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Unsubscribe_Receives_UnsubAck()
+        {
+            client.Connect(true);
+
+            client.Unsubscribe(new[] { Guid.NewGuid().ToString() });
+            var response = receivedPackets.Last() as UnsubAck;
+
+            Assert.NotNull(response);
+        }
+
+        [Fact]
+        public void Publish_Receives_PubAck_For_Qos1_Publications()
+        {
+            var topic = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            client.Connect(true);
+
+            client.Publish(new PublishRequest(topic, message, QosLevel.Qos1));
+            var response = receivedPackets.Last() as PubAck;
+
+            Assert.NotNull(response);
+        }
+
+        public void Dispose()
+        {
+            client.Disconnect();
         }
     }
 }
