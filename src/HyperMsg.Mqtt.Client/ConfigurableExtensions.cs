@@ -5,20 +5,17 @@
         public static void UseMqttClient(this IConfigurable configurable, MqttConnectionSettings connectionSettings)
         {
             configurable.AddSetting(nameof(MqttConnectionSettings), connectionSettings);
-            configurable.Configure(context =>
+            configurable.RegisterService(typeof(IMqttClient), (p, s) =>
             {
-                var sender = (ISender<Packet>)context.GetService(typeof(ISender<Packet>));
-                var transportHandler = (IHandler<TransportCommands>)context.GetService(typeof(IHandler<TransportCommands>));
-                var receiveModeHandler = (IHandler<ReceiveMode>)context.GetService(typeof(IHandler<ReceiveMode>));
-                var settings = (MqttConnectionSettings)context.GetSetting(nameof(MqttConnectionSettings));
+                var sender = (ISender<Packet>)p.GetService(typeof(ISender<Packet>));
+                var handler = (IHandler)p.GetService(typeof(IHandler));
+                var repository = (IHandlerRepository)p.GetService(typeof(IHandlerRepository));
+                var settings = (MqttConnectionSettings)s[nameof(MqttConnectionSettings)];
 
-                var client = new MqttClient(sender, settings)
-                {
-                    SetReceiveModeAsync = receiveModeHandler.HandleAsync,
-                    SubmitTransportCommandAsync = transportHandler.HandleAsync
-                };
+                var client = new MqttClient(sender, settings, handler);
+                repository.AddHandler(client);
 
-                context.RegisterService(typeof(IMqttClient), client);
+                return client;
             });
         }
     }

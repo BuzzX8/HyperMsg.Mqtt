@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.202
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.539
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{41323B40-C8C0-46EA-BA43-12CADD79DC2F}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperMsg.Mqtt.Client", "src\HyperMsg.Mqtt.Client\HyperMsg.Mqtt.Client.csproj", "{0AB9A6F6-3E63-4645-B7AD-34A21169648E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperMsg.Mqtt.Client.Tests", "test\HyperMsg.Mqtt.Client.Tests\HyperMsg.Mqtt.Client.Tests.csproj", "{10B5EB28-FE8A-4859-A6B7-735FCB086C0E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperMsg.Mqtt.Integration.Tests", "test\HyperMsg.Mqtt.Integration.Tests\HyperMsg.Mqtt.Integration.Tests.csproj", "{1208B07D-C83C-456B-B24C-7732F37AAA74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,18 @@ Global
 		{10B5EB28-FE8A-4859-A6B7-735FCB086C0E}.Release|x64.Build.0 = Release|Any CPU
 		{10B5EB28-FE8A-4859-A6B7-735FCB086C0E}.Release|x86.ActiveCfg = Release|Any CPU
 		{10B5EB28-FE8A-4859-A6B7-735FCB086C0E}.Release|x86.Build.0 = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|x64.Build.0 = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Debug|x86.Build.0 = Debug|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|x64.ActiveCfg = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|x64.Build.0 = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|x86.ActiveCfg = Release|Any CPU
+		{1208B07D-C83C-456B-B24C-7732F37AAA74}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,6 +111,7 @@ Global
 		{823E2353-DA81-477E-A3C9-494820AE561F} = {41323B40-C8C0-46EA-BA43-12CADD79DC2F}
 		{0AB9A6F6-3E63-4645-B7AD-34A21169648E} = {41323B40-C8C0-46EA-BA43-12CADD79DC2F}
 		{10B5EB28-FE8A-4859-A6B7-735FCB086C0E} = {A30AF15F-7E6E-4B38-A771-B345E3C53807}
+		{1208B07D-C83C-456B-B24C-7732F37AAA74} = {A30AF15F-7E6E-4B38-A771-B345E3C53807}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {51319EA8-0B24-46D3-875C-0EC8CAB7BEC6}

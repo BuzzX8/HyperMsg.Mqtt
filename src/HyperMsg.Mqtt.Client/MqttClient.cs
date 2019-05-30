@@ -9,16 +9,19 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly ISender<Packet> sender;
         private readonly MqttConnectionSettings connectionSettings;
+        private readonly IHandler handler;
 
         private readonly ConnectHandler connectHandler;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
+        public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings, IHandler handler)
         {
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
             this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
+
             connectHandler = new ConnectHandler(sender, connectionSettings);
             pingHandler = new PingHandler(sender);
             publishHandler = new PublishHandler(sender, OnPublishReceived);
@@ -27,31 +30,19 @@ namespace HyperMsg.Mqtt.Client
 
         public SessionState Connect(bool cleanSession = false) => ConnectAsync(cleanSession).GetAwaiter().GetResult();
 
-        public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default)
+        public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
         {
-            if (SubmitTransportCommandAsync != null)
-            {
-                await SubmitTransportCommandAsync(TransportCommands.OpenConnection, token);
-
-                if (connectionSettings.UseTls)
-                {
-                    await SubmitTransportCommandAsync(TransportCommands.SetTransportLevelSecurity, token);
-                }
-            }
-
-            return await connectHandler.SendConnectAsync(cleanSession, token);
+            await handler.HandleAsync(TransportOperations.OpenConnection, cancellationToken);
+            await handler.HandleAsync(ReceiveMode.Reactive);
+            return await connectHandler.SendConnectAsync(cleanSession, cancellationToken);
         }
 
         public void Disconnect() => DisconnectAsync().GetAwaiter().GetResult();
 
-        public async Task DisconnectAsync(CancellationToken token = default)
+        public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
-            if (SubmitTransportCommandAsync != null)
-            {
-                await SubmitTransportCommandAsync(TransportCommands.CloseConnection, token);
-            }
-
-            await sender.SendAsync(Mqtt.Disconnect.Instance, token);
+            await sender.SendAsync(Mqtt.Disconnect.Instance, cancellationToken);
+            await handler.HandleAsync(TransportOperations.CloseConnection);
         }
 
         public void Ping() => PingAsync().GetAwaiter().GetResult();
@@ -133,9 +124,5 @@ namespace HyperMsg.Mqtt.Client
         private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);        
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived;
-
-        public Func<ReceiveMode, CancellationToken, Task> SetReceiveModeAsync;
-
-        public Func<TransportCommands, CancellationToken, Task> SubmitTransportCommandAsync;
     }
 }
