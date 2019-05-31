@@ -8,8 +8,8 @@ namespace HyperMsg.Mqtt.Client
     public class MqttClient : IMqttClient, IHandler<Packet>
     {
         private readonly ISender<Packet> sender;
-        private readonly MqttConnectionSettings connectionSettings;
         private readonly IHandler handler;
+        private readonly MqttConnectionSettings connectionSettings;
 
         private readonly ConnectHandler connectHandler;
         private readonly PingHandler pingHandler;
@@ -19,58 +19,51 @@ namespace HyperMsg.Mqtt.Client
         public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings, IHandler handler)
         {
             this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
-            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
-
+            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
             connectHandler = new ConnectHandler(sender, connectionSettings);
             pingHandler = new PingHandler(sender);
             publishHandler = new PublishHandler(sender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(sender);
         }
 
-        public SessionState Connect(bool cleanSession = false) => ConnectAsync(cleanSession).GetAwaiter().GetResult();
-
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
         {
             await handler.HandleAsync(TransportOperations.OpenConnection, cancellationToken);
-            await handler.HandleAsync(ReceiveMode.Reactive);
+
+            if (connectionSettings.UseTls)
+            {
+                await handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, cancellationToken);
+            }
+
+            await handler.HandleAsync(ReceiveMode.Reactive, cancellationToken);
             return await connectHandler.SendConnectAsync(cleanSession, cancellationToken);
         }
 
-        public void Disconnect() => DisconnectAsync().GetAwaiter().GetResult();
-
         public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
-            await sender.SendAsync(Mqtt.Disconnect.Instance, cancellationToken);
+            await sender.SendAsync(Disconnect.Instance, cancellationToken);
             await handler.HandleAsync(TransportOperations.CloseConnection);
         }
 
-        public void Ping() => PingAsync().GetAwaiter().GetResult();
+        public Task PingAsync(CancellationToken cancellationToken = default) => pingHandler.SendPingReqAsync(cancellationToken);
 
-        public Task PingAsync(CancellationToken token = default) => pingHandler.SendPingReqAsync(token);
-
-        public void Publish(PublishRequest request) => PublishAsync(request).GetAwaiter().GetResult();
-
-        public Task PublishAsync(PublishRequest request, CancellationToken token = default)
+        public Task PublishAsync(PublishRequest request, CancellationToken cancellationToken = default)
         {
             _ = request ?? throw new ArgumentNullException(nameof(request));
-            return publishHandler.SendPublishAsync(request, token);
+            return publishHandler.SendPublishAsync(request, cancellationToken);
         }
 
-        public IEnumerable<SubscriptionResult> Subscribe(IEnumerable<SubscriptionRequest> requests) => SubscribeAsync(requests).GetAwaiter().GetResult();
-
-        public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default)
+        public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {
             _ = requests ?? throw new ArgumentNullException(nameof(requests));
-            return subscriptionHandler.SendSubscribeAsync(requests, token);
+            return subscriptionHandler.SendSubscribeAsync(requests, cancellationToken);
         }
 
-        public void Unsubscribe(IEnumerable<string> topics) => UnsubscribeAsync(topics).GetAwaiter().GetResult();
-
-        public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token = default)
+        public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellationToken = default)
         {
             _ = topics ?? throw new ArgumentNullException(nameof(topics));
-            return subscriptionHandler.SendUnsubscribeAsync(topics, token);
+            return subscriptionHandler.SendUnsubscribeAsync(topics, cancellationToken);
         }
 
         public void Handle(Packet packet)
@@ -115,7 +108,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        public Task HandleAsync(Packet message, CancellationToken token = default)
+        public Task HandleAsync(Packet message, CancellationToken cancellationToken = default)
         {
             Handle(message);
             return Task.CompletedTask;
