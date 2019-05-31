@@ -7,17 +7,17 @@ namespace HyperMsg.Mqtt.Client
 {
     public interface IMqttClient
     {
-        Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken token = default);
+        Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default);
 
-        Task DisconnectAsync(CancellationToken token = default);
+        Task DisconnectAsync(CancellationToken cancellationToken = default);
 
-        Task PublishAsync(PublishRequest request, CancellationToken token = default);
+        Task PublishAsync(PublishRequest request, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token = default);
+        Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default);
 
-        Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token = default);
+        Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellationToken = default);
 
-        Task PingAsync(CancellationToken token = default);
+        Task PingAsync(CancellationToken cancellationToken = default);
 
         event EventHandler<PublishReceivedEventArgs> PublishReceived;
     }

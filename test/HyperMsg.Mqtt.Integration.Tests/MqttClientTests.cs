@@ -100,7 +100,7 @@ namespace HyperMsg.Mqtt.Integration
             Assert.NotNull(response);
         }
 
-        //[Fact]
+        [Fact]
         public void Publish_Receives_PubRec_And_PubComp_For_Qos2_Publications()
         {
             var topic = Guid.NewGuid().ToString();
