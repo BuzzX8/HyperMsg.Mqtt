@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttClient : IMqttClient, IHandler<Packet>
+    public class MqttClient : IMqttClient, IMessageHandler<Packet>
     {
-        private readonly ISender<Packet> sender;
-        private readonly IHandler handler;
+        private readonly IMessageSender<Packet> messageSender;
         private readonly MqttConnectionSettings connectionSettings;
 
         private readonly ConnectHandler connectHandler;
@@ -16,34 +15,32 @@ namespace HyperMsg.Mqtt.Client
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(ISender<Packet> sender, MqttConnectionSettings connectionSettings, IHandler handler)
+        public MqttClient(IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
         {
-            this.sender = sender ?? throw new ArgumentNullException(nameof(sender));
-            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
             this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
-            connectHandler = new ConnectHandler(sender, connectionSettings);
-            pingHandler = new PingHandler(sender);
-            publishHandler = new PublishHandler(sender, OnPublishReceived);
-            subscriptionHandler = new SubscriptionHandler(sender);
+            connectHandler = new ConnectHandler(messageSender, connectionSettings);
+            pingHandler = new PingHandler(messageSender);
+            publishHandler = new PublishHandler(messageSender, OnPublishReceived);
+            subscriptionHandler = new SubscriptionHandler(messageSender);
         }
 
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
         {
-            await handler.HandleAsync(TransportOperations.OpenConnection, cancellationToken);
+            //await handler.HandleAsync(TransportOperations.OpenConnection, cancellationToken);
 
-            if (connectionSettings.UseTls)
-            {
-                await handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, cancellationToken);
-            }
-
-            await handler.HandleAsync(ReceiveMode.Reactive, cancellationToken);
+            //if (connectionSettings.UseTls)
+            //{
+            //    await handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, cancellationToken);
+            //}
+            
             return await connectHandler.SendConnectAsync(cleanSession, cancellationToken);
         }
 
         public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
-            await sender.SendAsync(Disconnect.Instance, cancellationToken);
-            await handler.HandleAsync(TransportOperations.CloseConnection);
+            await messageSender.SendAsync(Disconnect.Instance, cancellationToken);
+            //await handler.HandleAsync(TransportOperations.CloseConnection);
         }
 
         public Task PingAsync(CancellationToken cancellationToken = default) => pingHandler.SendPingReqAsync(cancellationToken);

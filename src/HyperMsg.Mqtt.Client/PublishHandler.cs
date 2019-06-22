@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class PublishHandler
     {
-        private readonly ISender<Packet> sender;
+        private readonly IMessageSender<Packet> sender;
         private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
@@ -17,7 +17,7 @@ namespace HyperMsg.Mqtt.Client
 
         private readonly Qos2Publish qos2Receive;
 
-        internal PublishHandler(ISender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
+        internal PublishHandler(IMessageSender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
