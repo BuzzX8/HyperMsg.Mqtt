@@ -25,12 +25,6 @@ namespace HyperMsg.Mqtt.Client
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             client = new MqttClient(sender, settings);
             client.PublishReceived += (s, e) => receiveEventArgs = e;
-                        
-            A.CallTo(() => sender.Send(A<Packet>._)).Invokes(foc =>
-            {
-                sentPacket = foc.GetArgument<Packet>(0);
-                packetSentEvent.Set();
-            });
 
             A.CallTo(() => sender.SendAsync(A<Packet>._, A<CancellationToken>._))
                 .Invokes(foc =>

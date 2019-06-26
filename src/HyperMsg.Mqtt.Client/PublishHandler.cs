@@ -63,7 +63,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Requests.TryGetValue(pubRec.Id, out var request))
             {
-                sender.Send(new PubRel(pubRec.Id));
+                //sender.Send(new PubRel(pubRec.Id));
                 var newRequest = (request.Item1, true);
                 qos2Requests.TryUpdate(pubRec.Id, newRequest, request);
             }
@@ -86,13 +86,13 @@ namespace HyperMsg.Mqtt.Client
 
             if (publish.Qos == QosLevel.Qos1)
             {
-                sender.Send(new PubAck(publish.Id));
+                //sender.Send(new PubAck(publish.Id));
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
             {
-                sender.Send(new PubRec(publish.Id));
+                //sender.Send(new PubRec(publish.Id));
                 qos2Receive.TryAdd(publish.Id, publish);
             }
         }
@@ -101,7 +101,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
-                sender.Send(new PubComp(pubRel.Id));
+                //sender.Send(new PubComp(pubRel.Id));
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }
