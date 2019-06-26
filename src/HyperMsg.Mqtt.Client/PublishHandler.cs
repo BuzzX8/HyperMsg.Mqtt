@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class PublishHandler
     {
-        private readonly IMessageSender<Packet> sender;
+        private readonly IMessageSender<Packet> messageSender;
         private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
@@ -17,19 +17,19 @@ namespace HyperMsg.Mqtt.Client
 
         private readonly Qos2Publish qos2Receive;
 
-        internal PublishHandler(IMessageSender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
+        internal PublishHandler(IMessageSender<Packet> messageSender, Action<PublishReceivedEventArgs> receiveHandler)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
             qos2Receive = new Qos2Publish();
             this.receiveHandler = receiveHandler;
-            this.sender = sender;
+            this.messageSender = messageSender;
         }
 
         internal async Task SendPublishAsync(PublishRequest request, CancellationToken token)
         {
             var publishPacket = CreatePublishPacket(request);
-            await sender.SendAsync(publishPacket, token);
+            await messageSender.SendAsync(publishPacket, token);
 
             if(request.Qos == QosLevel.Qos1)
             {
@@ -51,33 +51,37 @@ namespace HyperMsg.Mqtt.Client
             return new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
         }
 
-        internal void OnPubAckReceived(PubAck pubAck)
+        internal Task HandleAsync(PubAck pubAck)
         {
             if (qos1Requests.TryRemove(pubAck.Id, out var tsc))
             {
                 tsc.SetResult(true);
             }
+
+            return Task.CompletedTask;
         }
 
-        internal void OnPubRecReceived(PubRec pubRec)
+        internal async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
         {
             if (qos2Requests.TryGetValue(pubRec.Id, out var request))
             {
-                //sender.Send(new PubRel(pubRec.Id));
+                await messageSender.SendAsync(new PubRel(pubRec.Id), cancellationToken);
                 var newRequest = (request.Item1, true);
                 qos2Requests.TryUpdate(pubRec.Id, newRequest, request);
             }
         }
 
-        internal void OnPubCompReceived(PubComp pubComp)
+        internal Task HandleAsync(PubComp pubComp)
         {
             if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
             {
                 request.Item1.SetResult(true);
             }
+
+            return Task.CompletedTask;
         }
 
-        internal void OnPublishReceived(Publish publish)
+        internal async Task HandleAsync(Publish publish, CancellationToken cancellationToken)
         {
             if (publish.Qos == QosLevel.Qos0)
             {
@@ -86,22 +90,22 @@ namespace HyperMsg.Mqtt.Client
 
             if (publish.Qos == QosLevel.Qos1)
             {
-                //sender.Send(new PubAck(publish.Id));
+                await messageSender.SendAsync(new PubAck(publish.Id), cancellationToken);
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
             {
-                //sender.Send(new PubRec(publish.Id));
+                await messageSender.SendAsync(new PubRec(publish.Id), cancellationToken);
                 qos2Receive.TryAdd(publish.Id, publish);
             }
         }
 
-        internal void OnPubRelReceived(PubRel pubRel)
+        internal async Task HandleAsync(PubRel pubRel, CancellationToken cancellationToken)
         {
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
-                //sender.Send(new PubComp(pubRel.Id));
+                await messageSender.SendAsync(new PubComp(pubRel.Id), cancellationToken);
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }

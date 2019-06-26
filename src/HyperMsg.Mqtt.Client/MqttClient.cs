@@ -7,41 +7,26 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient, IMessageHandler<Packet>
     {
+        private readonly IConnectionController connectionController;
         private readonly IMessageSender<Packet> messageSender;
-        private readonly MqttConnectionSettings connectionSettings;
-
-        private readonly ConnectHandler connectHandler;
+        
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
+        public MqttClient(IConnectionController connectionController, IMessageSender<Packet> messageSender)
         {
+            this.connectionController = connectionController ?? throw new ArgumentNullException(nameof(connectionController));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-            this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
-            connectHandler = new ConnectHandler(messageSender, connectionSettings);
+            
             pingHandler = new PingHandler(messageSender);
             publishHandler = new PublishHandler(messageSender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(messageSender);
         }
 
-        public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
-        {
-            //await handler.HandleAsync(TransportOperations.OpenConnection, cancellationToken);
+        public Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default) => connectionController.ConnectAsync(cleanSession, cancellationToken);
 
-            //if (connectionSettings.UseTls)
-            //{
-            //    await handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, cancellationToken);
-            //}
-            
-            return await connectHandler.SendConnectAsync(cleanSession, cancellationToken);
-        }
-
-        public async Task DisconnectAsync(CancellationToken cancellationToken = default)
-        {
-            await messageSender.SendAsync(Disconnect.Instance, cancellationToken);
-            //await handler.HandleAsync(TransportOperations.CloseConnection);
-        }
+        public Task DisconnectAsync(CancellationToken cancellationToken = default) => connectionController.DisconnectAsync(cancellationToken);
 
         public Task PingAsync(CancellationToken cancellationToken = default) => pingHandler.SendPingReqAsync(cancellationToken);
 
@@ -62,14 +47,12 @@ namespace HyperMsg.Mqtt.Client
             _ = topics ?? throw new ArgumentNullException(nameof(topics));
             return subscriptionHandler.SendUnsubscribeAsync(topics, cancellationToken);
         }
-
-        public void Handle(Packet packet)
+        public Task HandleAsync(Packet message, CancellationToken cancellationToken = default)
         {
-            switch (packet)
+            switch (message)
             {
                 case ConnAck connAck:
-                    connectHandler.OnConnAckReceived(connAck);
-                    break;
+                    return connectionController.HandleAsync(connAck, cancellationToken);
 
                 case SubAck subAck:
                     subscriptionHandler.OnSubAckReceived(subAck);
@@ -80,34 +63,26 @@ namespace HyperMsg.Mqtt.Client
                     break;
 
                 case PubAck pubAck:
-                    publishHandler.OnPubAckReceived(pubAck);
-                    break;
+                    return publishHandler.HandleAsync(pubAck);                    
 
                 case PubRec pubRec:
-                    publishHandler.OnPubRecReceived(pubRec);
-                    break;
+                    return publishHandler.HandleAsync(pubRec, cancellationToken);
 
                 case PubComp pubComp:
-                    publishHandler.OnPubCompReceived(pubComp);
+                    publishHandler.HandleAsync(pubComp);
                     break;
 
                 case Publish publish:
-                    publishHandler.OnPublishReceived(publish);
-                    break;
+                    return publishHandler.HandleAsync(publish, cancellationToken);
 
                 case PubRel pubRel:
-                    publishHandler.OnPubRelReceived(pubRel);
-                    break;
+                    return publishHandler.HandleAsync(pubRel, cancellationToken);
 
                 case PingResp _:
                     pingHandler.OnPingRespReceived();
                     break;
             }
-        }
 
-        public Task HandleAsync(Packet message, CancellationToken cancellationToken = default)
-        {
-            Handle(message);
             return Task.CompletedTask;
         }
 

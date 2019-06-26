@@ -9,9 +9,9 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClientTests
     {
+        private readonly IConnectionController connectionController;
+        private readonly IMessageSender<Packet> messageSender;
         private readonly MqttClient client;
-        private readonly IMessageSender<Packet> sender;
-        private readonly MqttConnectionSettings settings;
 
         private readonly ManualResetEventSlim packetSentEvent = new ManualResetEventSlim();
         private readonly TimeSpan waitTimeout = TimeSpan.FromSeconds(2);
@@ -21,12 +21,12 @@ namespace HyperMsg.Mqtt.Client
 
         public MqttClientTests()
         {
-            sender = A.Fake<IMessageSender<Packet>>();
-            settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            client = new MqttClient(sender, settings);
+            connectionController = A.Fake<IConnectionController>();
+            messageSender = A.Fake<IMessageSender<Packet>>();            
+            client = new MqttClient(connectionController, messageSender);
             client.PublishReceived += (s, e) => receiveEventArgs = e;
 
-            A.CallTo(() => sender.SendAsync(A<Packet>._, A<CancellationToken>._))
+            A.CallTo(() => messageSender.SendAsync(A<Packet>._, A<CancellationToken>._))
                 .Invokes(foc =>
                 {
                     sentPacket = foc.GetArgument<Packet>(0);
@@ -34,129 +34,6 @@ namespace HyperMsg.Mqtt.Client
                 })
                 .Returns(Task.CompletedTask);
         }
-
-        //[Fact]
-        //public void ConnectAsync_Submits_OpenConnection_Command()
-        //{
-        //    var token = default(CancellationToken);
-        //    A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
-            
-        //    _ = client.ConnectAsync(false, token);
-        //    packetSentEvent.Wait(waitTimeout);
-
-        //    A.CallTo(() => handler.HandleAsync(TransportOperations.OpenConnection, token)).MustHaveHappened();
-        //}
-
-        //[Fact]
-        //public void ConnectAsync_Submits_SetTransportLevelSecurity_If_UseTls_Is_True()
-        //{
-        //    settings.UseTls = true;
-        //    A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
-
-        //    _ = client.ConnectAsync(false);
-        //    packetSentEvent.Wait(waitTimeout);
-
-        //    A.CallTo(() => handler.HandleAsync(TransportOperations.SetTransportLevelSecurity, A<CancellationToken>._)).MustHaveHappened();
-        //}
-
-        [Fact]
-        public void ConnectAsync_Sends_Correct_Packet()
-        {
-            _ = client.ConnectAsync();
-            packetSentEvent.Wait(waitTimeout);
-
-            var connPacket = sentPacket as Connect;
-            Assert.NotNull(connPacket);
-            Assert.False(connPacket.Flags.HasFlag(ConnectFlags.CleanSession));
-            Assert.Equal(settings.ClientId, connPacket.ClientId);            
-        }
-
-        [Fact]
-        public void ConnectAsync_Sends_Connect_Packet_With_CleanSession_Flag()
-        {
-            _ = client.ConnectAsync(true);
-            packetSentEvent.Wait(waitTimeout);
-
-            var connPacket = sentPacket as Connect;
-            Assert.NotNull(connPacket);
-            Assert.True(connPacket.Flags.HasFlag(ConnectFlags.CleanSession));
-        }
-
-        [Fact]
-        public void ConnectAsync_Sends_Connect_Packet_With_KeepAlive_Specified_In_Settings()
-        {
-            settings.KeepAlive = 0x9080;
-            _ = client.ConnectAsync();
-            packetSentEvent.Wait(waitTimeout);
-
-            var connPacket = sentPacket as Connect;
-            Assert.NotNull(connPacket);
-            Assert.Equal(settings.KeepAlive, connPacket.KeepAlive);
-        }
-
-        [Fact]
-        public void ConnectAsync_Sends_Connect_Packet_With_Corredt_WillMessageSettings()
-        {
-            var willTopic = Guid.NewGuid().ToString();
-            var willMessage = Guid.NewGuid().ToByteArray();
-            settings.WillMessageSettings = new WillMessageSettings(willTopic, willMessage, true);
-
-            _ = client.ConnectAsync();
-            packetSentEvent.Wait(waitTimeout);
-
-            var connPacket = sentPacket as Connect;
-
-            Assert.True(connPacket.Flags.HasFlag(ConnectFlags.Will));
-            Assert.Equal(willTopic, connPacket.WillTopic);
-            Assert.Equal(willMessage, connPacket.WillMessage);
-        }
-
-        [Fact]
-        public void ConnectAsync_Returns_Correct_Result_For_Clean_Session()
-        {
-            var connAck = new ConnAck(ConnectionResult.Accepted);
-            var task = client.ConnectAsync();
-
-            packetSentEvent.Wait(waitTimeout);
-            client.Handle(connAck);
-
-            Assert.True(task.IsCompleted);
-            Assert.Equal(SessionState.Clean, task.Result);
-        }
-
-        [Fact]
-        public void ConnectAsync_Returns_Correct_Result_For_Present_Session()
-        {
-            var connAck = new ConnAck(ConnectionResult.Accepted, true);
-            var task = client.ConnectAsync();
-
-            packetSentEvent.Wait(waitTimeout);
-            client.Handle(connAck);
-
-            Assert.True(task.IsCompleted);
-            Assert.Equal(SessionState.Present, task.Result);
-        }
-
-        [Fact]
-        public void DisconnectAsync_Sends_Disconnect_Packet()
-        {
-            _ = client.DisconnectAsync();
-
-            packetSentEvent.Wait(waitTimeout);
-
-            Assert.NotNull(sentPacket as Disconnect);
-        }
-
-        //[Fact]
-        //public async Task DisconnectAsync_Submits_ClosesConnection_Command()
-        //{
-        //    var token = default(CancellationToken);
-        //    A.CallTo(() => handler.HandleAsync(A<TransportOperations>._, A<CancellationToken>._)).Returns(Task.CompletedTask);
-
-        //    await client.DisconnectAsync(token);
-
-        //    A.CallTo(() => handler.HandleAsync(TransportOperations.CloseConnection, token)).MustHaveHappened();
-        //}
 
         [Fact]
         public void SubscribeAsync_Sends_Correct_Subscribe_Request()
@@ -172,7 +49,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
+        public async Task SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
         {
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
@@ -182,7 +59,7 @@ namespace HyperMsg.Mqtt.Client
             var packetId = ((Subscribe)sentPacket).Id;
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
-            client.Handle(subAck);
+            await client.HandleAsync(subAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(subAck.Results, task.Result);
@@ -203,14 +80,14 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
+        public async Task UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
         {
             var topics = new[] { "topic-1", "topic-2" };
             var task = client.UnsubscribeAsync(topics);
             packetSentEvent.Wait(waitTimeout);
             var unsubscribe = sentPacket as Unsubscribe;
 
-            client.Handle(new UnsubAck(unsubscribe.Id));
+            await client.HandleAsync(new UnsubAck(unsubscribe.Id));
 
             Assert.True(task.IsCompleted);
         }
@@ -266,38 +143,38 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void PingAsync_Completes_Task_When_PingResp_Received()
+        public async Task PingAsync_Completes_Task_When_PingResp_Received()
         {
             var task = client.PingAsync();
             packetSentEvent.Wait(waitTimeout);
 
-            client.Handle(PingResp.Instance);
+            await client.HandleAsync(PingResp.Instance);
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void Handle_Completes_Task_For_Qos1_Publish()
+        public async Task Handle_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
 
-            client.Handle(new PubAck(publishPacket.Id));
+            await client.HandleAsync(new PubAck(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void Handle_Sends_PubRel_After_Receiving_PubRec()
+        public async Task Handle_Sends_PubRel_After_Receiving_PubRec()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
 
-            client.Handle(new PubRec(publishPacket.Id));
+            await client.HandleAsync(new PubRec(publishPacket.Id));
 
             Assert.False(task.IsCompleted);
             var pubRel = sentPacket as PubRel;
@@ -306,35 +183,35 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void Handle_Completes_Task_For_Qos2_After_Receiving_PubComp()
+        public async Task Handle_Completes_Task_For_Qos2_After_Receiving_PubComp()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
             packetSentEvent.Wait(waitTimeout);
             var publishPacket = sentPacket as Publish;
-            client.Handle(new PubRec(publishPacket.Id));
+            await client.HandleAsync(new PubRec(publishPacket.Id));
 
-            client.Handle(new PubComp(publishPacket.Id));
+            await client.HandleAsync(new PubComp(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
 
         [Fact]
-        public void Handle_Rises_PublishReceived_When_Qos0_Publish_Received()
+        public async Task Handle_Rises_PublishReceived_When_Qos0_Publish_Received()
         {
             var publish = CreatePublishPacket();
 
-            client.Handle(publish);
+            await client.HandleAsync(publish);
 
             Assert.NotNull(receiveEventArgs);            
         }
 
         [Fact]
-        public void Handle_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
+        public async Task Handle_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos1);
 
-            client.Handle(publish);
+            await client.HandleAsync(publish);
 
             var pubAck = sentPacket as PubAck;
             Assert.Equal(publish.Id, pubAck.Id);
@@ -343,11 +220,11 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void Handle_Sends_PubRec_When_Qos2_Publish_Received()
+        public async Task Handle_Sends_PubRec_When_Qos2_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
 
-            client.Handle(publish);
+            await client.HandleAsync(publish);
 
             var pubRec = sentPacket as PubRec;
             Assert.Null(receiveEventArgs);
@@ -356,12 +233,12 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public void Handle_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
+        public async Task Handle_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
-            client.Handle(publish);
+            await client.HandleAsync(publish);
 
-            client.Handle(new PubRel(publish.Id));
+            await client.HandleAsync(new PubRel(publish.Id));
 
             var pubCom = sentPacket as PubComp;
             Assert.NotNull(pubCom);
