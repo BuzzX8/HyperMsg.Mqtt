@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class PublishHandler
     {
-        private readonly ISender<Packet> sender;
+        private readonly IMessageSender<Packet> sender;
         private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
@@ -17,7 +17,7 @@ namespace HyperMsg.Mqtt.Client
 
         private readonly Qos2Publish qos2Receive;
 
-        internal PublishHandler(ISender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
+        internal PublishHandler(IMessageSender<Packet> sender, Action<PublishReceivedEventArgs> receiveHandler)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
@@ -63,7 +63,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Requests.TryGetValue(pubRec.Id, out var request))
             {
-                sender.Send(new PubRel(pubRec.Id));
+                //sender.Send(new PubRel(pubRec.Id));
                 var newRequest = (request.Item1, true);
                 qos2Requests.TryUpdate(pubRec.Id, newRequest, request);
             }
@@ -86,13 +86,13 @@ namespace HyperMsg.Mqtt.Client
 
             if (publish.Qos == QosLevel.Qos1)
             {
-                sender.Send(new PubAck(publish.Id));
+                //sender.Send(new PubAck(publish.Id));
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
             {
-                sender.Send(new PubRec(publish.Id));
+                //sender.Send(new PubRec(publish.Id));
                 qos2Receive.TryAdd(publish.Id, publish);
             }
         }
@@ -101,7 +101,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
-                sender.Send(new PubComp(pubRel.Id));
+                //sender.Send(new PubComp(pubRel.Id));
                 receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }

@@ -31,12 +31,12 @@ namespace HyperMsg.Mqtt.Integration
             builder.UseSockets(endPoint);
             builder.RegisterConfigurator((p, s) =>
             {
-                var repository = (IHandlerRepository)p.GetService(typeof(IHandlerRepository));
+                var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
                 var messageInterceptor = new DelegateHandler<Packet>(packet =>
                 {
                     receivedPackets.Add(packet);
                 });
-                repository.AddHandler(messageInterceptor);
+                //repository.Register(messageInterceptor);
             });
 
             client = builder.Build();

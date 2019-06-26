@@ -5,10 +5,10 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class PingHandler
     {
-        private readonly ISender<Packet> sender;
+        private readonly IMessageSender<Packet> sender;
         private TaskCompletionSource<bool> pingTsc;
 
-        internal PingHandler(ISender<Packet> sender)
+        internal PingHandler(IMessageSender<Packet> sender)
         {
             this.sender = sender;
         }

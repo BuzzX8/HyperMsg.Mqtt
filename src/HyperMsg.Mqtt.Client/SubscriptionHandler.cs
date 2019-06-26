@@ -11,9 +11,9 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly RequestDictionary pendingRequests;
         private readonly UnsubscribeDictionary unsubscribeDictionary;
-        private readonly ISender<Packet> sender;
+        private readonly IMessageSender<Packet> sender;
 
-        internal SubscriptionHandler(ISender<Packet> sender)
+        internal SubscriptionHandler(IMessageSender<Packet> sender)
         {
             this.sender = sender;
             pendingRequests = new RequestDictionary();

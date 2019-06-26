@@ -7,13 +7,12 @@
             configurable.AddSetting(nameof(MqttConnectionSettings), connectionSettings);
             configurable.RegisterService(typeof(IMqttClient), (p, s) =>
             {
-                var sender = (ISender<Packet>)p.GetService(typeof(ISender<Packet>));
-                var handler = (IHandler)p.GetService(typeof(IHandler));
-                var repository = (IHandlerRepository)p.GetService(typeof(IHandlerRepository));
+                var sender = (IMessageSender<Packet>)p.GetService(typeof(IMessageSender<Packet>));
+                var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
                 var settings = (MqttConnectionSettings)s[nameof(MqttConnectionSettings)];
 
-                var client = new MqttClient(sender, settings, handler);
-                repository.AddHandler(client);
+                var client = new MqttClient(sender, settings);
+                repository.Register(client);
 
                 return client;
             });

@@ -5,12 +5,12 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class ConnectHandler
     {
-        private readonly ISender<Packet> sender;
+        private readonly IMessageSender<Packet> sender;
         private readonly MqttConnectionSettings connectionSettings;
 
         private TaskCompletionSource<SessionState> taskCompletionSource;
 
-        internal ConnectHandler(ISender<Packet> sender, MqttConnectionSettings connectionSettings)
+        internal ConnectHandler(IMessageSender<Packet> sender, MqttConnectionSettings connectionSettings)
         {
             this.sender = sender;
             this.connectionSettings = connectionSettings;
