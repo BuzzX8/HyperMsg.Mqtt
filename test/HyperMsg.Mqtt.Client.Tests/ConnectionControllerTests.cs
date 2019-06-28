@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt.Client
 {
     public class ConnectionControllerTests
     {
-        private readonly ITransportCommandSender transportCommandSender;
+        private readonly AsyncHandler<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;
         private readonly MqttConnectionSettings connectionSettings;
         private readonly ConnectionController controller;
@@ -20,14 +20,13 @@ namespace HyperMsg.Mqtt.Client
         private Packet sentPacket;
 
         public ConnectionControllerTests()
-        {
-            transportCommandSender = A.Fake<ITransportCommandSender>();
+        {            
             messageSender = A.Fake<IMessageSender<Packet>>();
             connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            controller = new ConnectionController(transportCommandSender, messageSender, connectionSettings);
+            controller = new ConnectionController(transportCommandHandler, messageSender, connectionSettings);
 
-            A.CallTo(() => transportCommandSender.SendAsync(A<TransportCommand>._, cancellationToken)).Returns(Task.CompletedTask);
-            A.CallTo(() => transportCommandSender.SendAsync(A<TransportCommand>._, A<CancellationToken>._)).Invokes(foc =>
+            A.CallTo(() => transportCommandHandler.Invoke(A<TransportCommand>._, cancellationToken)).Returns(Task.CompletedTask);
+            A.CallTo(() => transportCommandHandler.Invoke(A<TransportCommand>._, A<CancellationToken>._)).Invokes(foc =>
             {
                 packetSentEvent.Set();
             })
@@ -47,7 +46,7 @@ namespace HyperMsg.Mqtt.Client
             _ = controller.ConnectAsync(false, cancellationToken);
             packetSentEvent.Wait(waitTimeout);
 
-            A.CallTo(() => transportCommandSender.SendAsync(TransportCommand.Open, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => transportCommandHandler.Invoke(TransportCommand.Open, cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -58,7 +57,7 @@ namespace HyperMsg.Mqtt.Client
             _ = controller.ConnectAsync(false, cancellationToken);
             packetSentEvent.Wait(waitTimeout);
 
-            A.CallTo(() => transportCommandSender.SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => transportCommandHandler.Invoke(TransportCommand.SetTransportLevelSecurity, cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -154,7 +153,7 @@ namespace HyperMsg.Mqtt.Client
         {
             await controller.DisconnectAsync(cancellationToken);
 
-            A.CallTo(() => transportCommandSender.SendAsync(TransportCommand.Close, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => transportCommandHandler.Invoke(TransportCommand.Close, cancellationToken)).MustHaveHappened();
         }
     }
 }

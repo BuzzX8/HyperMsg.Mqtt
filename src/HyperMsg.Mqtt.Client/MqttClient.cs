@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttClient : IMqttClient, IMessageHandler<Packet>
+    public class MqttClient : IMqttClient
     {
         private readonly IConnectionController connectionController;
         private readonly IMessageSender<Packet> messageSender;
@@ -51,9 +51,6 @@ namespace HyperMsg.Mqtt.Client
         {
             switch (message)
             {
-                case ConnAck connAck:
-                    return connectionController.HandleAsync(connAck, cancellationToken);
-
                 case SubAck subAck:
                     subscriptionHandler.OnSubAckReceived(subAck);
                     break;
