@@ -6,12 +6,12 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectionControllerTests
+    public class MqttConnectionTests
     {
         private readonly AsyncHandler<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;
         private readonly MqttConnectionSettings connectionSettings;
-        private readonly ConnectionController controller;
+        private readonly MqttConnection controller;
 
         private readonly CancellationToken cancellationToken = new CancellationToken();
         private readonly ManualResetEventSlim packetSentEvent = new ManualResetEventSlim();
@@ -19,11 +19,12 @@ namespace HyperMsg.Mqtt.Client
 
         private Packet sentPacket;
 
-        public ConnectionControllerTests()
-        {            
+        public MqttConnectionTests()
+        {
+            transportCommandHandler = A.Fake<AsyncHandler<TransportCommand>>();
             messageSender = A.Fake<IMessageSender<Packet>>();
             connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            controller = new ConnectionController(transportCommandHandler, messageSender, connectionSettings);
+            controller = new MqttConnection(transportCommandHandler, messageSender, connectionSettings);
 
             A.CallTo(() => transportCommandHandler.Invoke(A<TransportCommand>._, cancellationToken)).Returns(Task.CompletedTask);
             A.CallTo(() => transportCommandHandler.Invoke(A<TransportCommand>._, A<CancellationToken>._)).Invokes(foc =>

@@ -7,14 +7,14 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient
     {
-        private readonly IConnectionController connectionController;
+        private readonly IMqttConnection connectionController;
         private readonly IMessageSender<Packet> messageSender;
         
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(IConnectionController connectionController, IMessageSender<Packet> messageSender)
+        public MqttClient(IMqttConnection connectionController, IMessageSender<Packet> messageSender)
         {
             this.connectionController = connectionController ?? throw new ArgumentNullException(nameof(connectionController));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));

@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClientTests
     {
-        private readonly IConnectionController connectionController;
+        private readonly IMqttConnection connectionController;
         private readonly IMessageSender<Packet> messageSender;
         private readonly MqttClient client;
 
@@ -21,7 +21,7 @@ namespace HyperMsg.Mqtt.Client
 
         public MqttClientTests()
         {
-            connectionController = A.Fake<IConnectionController>();
+            connectionController = A.Fake<IMqttConnection>();
             messageSender = A.Fake<IMessageSender<Packet>>();            
             client = new MqttClient(connectionController, messageSender);
             client.PublishReceived += (s, e) => receiveEventArgs = e;

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public interface IConnectionController
+    public interface IMqttConnection
     {
         Task<SessionState> ConnectAsync(bool cleanSession, CancellationToken cancellationToken);
 

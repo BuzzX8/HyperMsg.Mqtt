@@ -12,7 +12,7 @@
                 var repository = (IMessageHandlerRegistry<Packet>)p.GetService(typeof(IMessageHandlerRegistry<Packet>));
                 var settings = (MqttConnectionSettings)s[nameof(MqttConnectionSettings)];
 
-                var connection = new ConnectionController(transport.ProcessCommandAsync, messageSender, settings);
+                var connection = new MqttConnection(transport.ProcessCommandAsync, messageSender, settings);
                 var client = new MqttClient(connection, messageSender);
                 repository.Register(client.HandleAsync);
 

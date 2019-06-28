@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectionController : IConnectionController
+    public class MqttConnection : IMqttConnection
     {
         private readonly AsyncHandler<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;        
@@ -12,7 +12,7 @@ namespace HyperMsg.Mqtt.Client
 
         private TaskCompletionSource<SessionState> taskCompletionSource;
 
-        public ConnectionController(AsyncHandler<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
+        public MqttConnection(AsyncHandler<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
         {
             this.transportCommandHandler = transportCommandHandler ?? throw new ArgumentNullException(nameof(transportCommandHandler));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
