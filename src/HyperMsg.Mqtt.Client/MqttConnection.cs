@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttConnection : IMqttConnection
+    internal class MqttConnection
     {
         private readonly AsyncHandler<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;        

@@ -6,19 +6,21 @@ using System.Threading.Tasks;
 namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient
-    {
-        private readonly IMqttConnection connectionController;
+    {        
         private readonly IMessageSender<Packet> messageSender;
-        
+
+        private readonly MqttConnection connectionController;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(IMqttConnection connectionController, IMessageSender<Packet> messageSender)
+        public MqttClient(AsyncHandler<TransportCommand> transportCommandHandler, 
+                          IMessageSender<Packet> messageSender, 
+                          MqttConnectionSettings connectionSettings)
         {
-            this.connectionController = connectionController ?? throw new ArgumentNullException(nameof(connectionController));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-            
+
+            connectionController = new MqttConnection(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingHandler(messageSender);
             publishHandler = new PublishHandler(messageSender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(messageSender);
@@ -51,6 +53,9 @@ namespace HyperMsg.Mqtt.Client
         {
             switch (message)
             {
+                case ConnAck connAck:
+                    return connectionController.HandleAsync(connAck, cancellationToken);
+
                 case SubAck subAck:
                     subscriptionHandler.OnSubAckReceived(subAck);
                     break;
