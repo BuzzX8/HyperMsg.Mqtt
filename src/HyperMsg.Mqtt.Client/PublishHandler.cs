@@ -51,14 +51,12 @@ namespace HyperMsg.Mqtt.Client
             return new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
         }
 
-        internal Task HandleAsync(PubAck pubAck)
+        internal void OnPubAck(PubAck pubAck)
         {
             if (qos1Requests.TryRemove(pubAck.Id, out var tsc))
             {
                 tsc.SetResult(true);
             }
-
-            return Task.CompletedTask;
         }
 
         internal async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
@@ -71,14 +69,12 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal Task HandleAsync(PubComp pubComp)
+        internal void OnPubComp(PubComp pubComp)
         {
             if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
             {
                 request.Item1.SetResult(true);
             }
-
-            return Task.CompletedTask;
         }
 
         internal async Task HandleAsync(Publish publish, CancellationToken cancellationToken)

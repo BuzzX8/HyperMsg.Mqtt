@@ -66,13 +66,14 @@ namespace HyperMsg.Mqtt.Client
                     break;
 
                 case PubAck pubAck:
-                    return publishHandler.HandleAsync(pubAck);                    
+                    publishHandler.OnPubAck(pubAck);
+                    break;
 
                 case PubRec pubRec:
                     return publishHandler.HandleAsync(pubRec, cancellationToken);
 
                 case PubComp pubComp:
-                    publishHandler.HandleAsync(pubComp);
+                    publishHandler.OnPubComp(pubComp);
                     break;
 
                 case Publish publish:
