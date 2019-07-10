@@ -54,7 +54,8 @@ namespace HyperMsg.Mqtt.Client
             switch (message)
             {
                 case ConnAck connAck:
-                    return connectionController.HandleAsync(connAck, cancellationToken);
+                    connectionController.Handle(connAck);
+                    break;
 
                 case SubAck subAck:
                     subscriptionHandler.OnSubAckReceived(subAck);

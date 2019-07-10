@@ -68,16 +68,15 @@ namespace HyperMsg.Mqtt.Client
             return connect;
         }
 
-        public Task HandleAsync(ConnAck connAck, CancellationToken cancellationToken)
+        public void Handle(ConnAck connAck)
         {
             if (taskCompletionSource == null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             taskCompletionSource.SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
             taskCompletionSource = null;
-            return Task.CompletedTask;
         }
     }
 }
