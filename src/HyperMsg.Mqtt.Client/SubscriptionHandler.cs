@@ -44,7 +44,7 @@ namespace HyperMsg.Mqtt.Client
 
         private Unsubscribe CreateUnsubscribeRequest(IEnumerable<string> topics) => new Unsubscribe(PacketId.New(), topics);
 
-        internal void OnSubAckReceived(SubAck subAck)
+        internal void Handle(SubAck subAck)
         {
             if (pendingRequests.TryRemove(subAck.Id, out var tsc))
             {
@@ -52,7 +52,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal void OnUnsubAckReceived(UnsubAck unsubAck)
+        internal void Handle(UnsubAck unsubAck)
         {
             if (unsubscribeDictionary.TryRemove(unsubAck.Id, out var tsc))
             {

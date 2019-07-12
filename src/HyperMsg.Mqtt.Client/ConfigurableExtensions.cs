@@ -9,14 +9,13 @@
             {
                 var transport = (ITransport)p.GetService(typeof(ITransport));
                 var messageSender = (IMessageSender<Packet>)p.GetService(typeof(IMessageSender<Packet>));
-                var repository = (IMessageHandlerRegistry<Packet>)p.GetService(typeof(IMessageHandlerRegistry<Packet>));
+                var registry = (IMessageHandlerRegistry<Packet>)p.GetService(typeof(IMessageHandlerRegistry<Packet>));
                 var settings = (MqttConnectionSettings)s[nameof(MqttConnectionSettings)];
 
-                var connection = new MqttConnection(transport.ProcessCommandAsync, messageSender, settings);
-                //var client = new MqttClient(connection, messageSender);
-                //repository.Register(client.HandleAsync);
+                var client = new MqttClient(transport.ProcessCommandAsync, messageSender, connectionSettings);
+                registry.Register(client.HandleAsync);
 
-                return null;// client;
+                return client;
             });
         }
     }

@@ -58,22 +58,22 @@ namespace HyperMsg.Mqtt.Client
                     break;
 
                 case SubAck subAck:
-                    subscriptionHandler.OnSubAckReceived(subAck);
+                    subscriptionHandler.Handle(subAck);
                     break;
 
                 case UnsubAck unsubAck:
-                    subscriptionHandler.OnUnsubAckReceived(unsubAck);
+                    subscriptionHandler.Handle(unsubAck);
                     break;
 
                 case PubAck pubAck:
-                    publishHandler.OnPubAck(pubAck);
+                    publishHandler.Handle(pubAck);
                     break;
 
                 case PubRec pubRec:
                     return publishHandler.HandleAsync(pubRec, cancellationToken);
 
                 case PubComp pubComp:
-                    publishHandler.OnPubComp(pubComp);
+                    publishHandler.Handle(pubComp);
                     break;
 
                 case Publish publish:
@@ -83,7 +83,7 @@ namespace HyperMsg.Mqtt.Client
                     return publishHandler.HandleAsync(pubRel, cancellationToken);
 
                 case PingResp _:
-                    pingHandler.OnPingRespReceived();
+                    pingHandler.Handle();
                     break;
             }
 

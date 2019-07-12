@@ -51,7 +51,7 @@ namespace HyperMsg.Mqtt.Client
             return new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
         }
 
-        internal void OnPubAck(PubAck pubAck)
+        internal void Handle(PubAck pubAck)
         {
             if (qos1Requests.TryRemove(pubAck.Id, out var tsc))
             {
@@ -69,7 +69,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal void OnPubComp(PubComp pubComp)
+        internal void Handle(PubComp pubComp)
         {
             if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
             {
