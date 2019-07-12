@@ -140,6 +140,8 @@ namespace HyperMsg.Mqtt.Client
 
         #endregion
 
+        #region Subscription tests
+
         [Fact]
         public void SubscribeAsync_Sends_Correct_Subscribe_Request()
         {
@@ -197,6 +199,10 @@ namespace HyperMsg.Mqtt.Client
             Assert.True(task.IsCompleted);
         }
 
+        #endregion
+
+        #region Publish tests
+
         [Fact]
         public void PublishAsync_Sends_Publish_Packet()
         {
@@ -237,6 +243,8 @@ namespace HyperMsg.Mqtt.Client
             Assert.False(task.IsCompleted);
         }
 
+        #endregion
+
         [Fact]
         public void PingAsync_Sends_PingReq_Packet()
         {
@@ -258,8 +266,10 @@ namespace HyperMsg.Mqtt.Client
             Assert.True(task.IsCompleted);
         }
 
+        #region HandleAsync tests
+
         [Fact]
-        public async Task Handle_Completes_Task_For_Qos1_Publish()
+        public async Task HandleAsync_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var task = client.PublishAsync(request);
@@ -272,7 +282,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Sends_PubRel_After_Receiving_PubRec()
+        public async Task HandleAsync_Sends_PubRel_After_Receiving_PubRec()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
@@ -288,7 +298,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Completes_Task_For_Qos2_After_Receiving_PubComp()
+        public async Task HandleAsync_Completes_Task_For_Qos2_After_Receiving_PubComp()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var task = client.PublishAsync(request);
@@ -302,7 +312,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Rises_PublishReceived_When_Qos0_Publish_Received()
+        public async Task HandleAsync_Rises_PublishReceived_When_Qos0_Publish_Received()
         {
             var publish = CreatePublishPacket();
 
@@ -312,7 +322,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
+        public async Task HandleAsync_Sends_PubAck_And_Rises_PublishReceived_When_Qos1_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos1);
 
@@ -325,7 +335,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Sends_PubRec_When_Qos2_Publish_Received()
+        public async Task HandleAsync_Sends_PubRec_When_Qos2_Publish_Received()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
 
@@ -338,7 +348,7 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task Handle_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
+        public async Task HandleAsync_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
             await client.HandleAsync(publish);
@@ -349,6 +359,8 @@ namespace HyperMsg.Mqtt.Client
             Assert.NotNull(pubCom);
             Assert.NotNull(receiveEventArgs);
         }
+
+        #endregion
 
         private PublishRequest CreatePublishRequest(QosLevel qos = QosLevel.Qos0)
         {
