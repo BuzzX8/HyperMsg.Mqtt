@@ -4,28 +4,28 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectionController : IConnectionController
+    internal class MqttConnection
     {
-        private readonly ITransportCommandSender transportCommandSender;
+        private readonly AsyncAction<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;        
         private readonly MqttConnectionSettings connectionSettings;
 
         private TaskCompletionSource<SessionState> taskCompletionSource;
 
-        public ConnectionController(ITransportCommandSender transportCommandSender, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
+        public MqttConnection(AsyncAction<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
         {
-            this.transportCommandSender = transportCommandSender ?? throw new ArgumentNullException(nameof(transportCommandSender));
+            this.transportCommandHandler = transportCommandHandler ?? throw new ArgumentNullException(nameof(transportCommandHandler));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
             this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
         }
 
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
         {
-            await transportCommandSender.SendAsync(TransportCommand.Open, cancellationToken);
+            await transportCommandHandler.Invoke(TransportCommand.Open, cancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await transportCommandSender.SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken);
+                await transportCommandHandler.Invoke(TransportCommand.SetTransportLevelSecurity, cancellationToken);
             }
 
             var connectPacket = CreateConnectPacket(cleanSession);
@@ -39,7 +39,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
             await messageSender.SendAsync(Disconnect.Instance, cancellationToken);
-            await transportCommandSender.SendAsync(TransportCommand.Close, cancellationToken);
+            await transportCommandHandler.Invoke(TransportCommand.Close, cancellationToken);
         }
 
         private Connect CreateConnectPacket(bool cleanSession)
@@ -68,16 +68,15 @@ namespace HyperMsg.Mqtt.Client
             return connect;
         }
 
-        public Task HandleAsync(ConnAck connAck, CancellationToken cancellationToken)
+        public void Handle(ConnAck connAck)
         {
             if (taskCompletionSource == null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             taskCompletionSource.SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
             taskCompletionSource = null;
-            return Task.CompletedTask;
         }
     }
 }

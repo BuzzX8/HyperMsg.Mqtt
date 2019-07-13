@@ -31,7 +31,7 @@ namespace HyperMsg.Mqtt.Integration
             builder.UseSockets(endPoint);
             builder.RegisterConfigurator((p, s) =>
             {
-                var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
+                //var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
                 var messageInterceptor = new DelegateHandler<Packet>(packet =>
                 {
                     receivedPackets.Add(packet);

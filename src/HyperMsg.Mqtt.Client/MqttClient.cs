@@ -5,20 +5,22 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttClient : IMqttClient, IMessageHandler<Packet>
-    {
-        private readonly IConnectionController connectionController;
+    public class MqttClient : IMqttClient
+    {        
         private readonly IMessageSender<Packet> messageSender;
-        
+
+        private readonly MqttConnection connectionController;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(IConnectionController connectionController, IMessageSender<Packet> messageSender)
+        public MqttClient(AsyncAction<TransportCommand> transportCommandHandler, 
+                          IMessageSender<Packet> messageSender, 
+                          MqttConnectionSettings connectionSettings)
         {
-            this.connectionController = connectionController ?? throw new ArgumentNullException(nameof(connectionController));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-            
+
+            connectionController = new MqttConnection(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingHandler(messageSender);
             publishHandler = new PublishHandler(messageSender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(messageSender);
@@ -52,24 +54,26 @@ namespace HyperMsg.Mqtt.Client
             switch (message)
             {
                 case ConnAck connAck:
-                    return connectionController.HandleAsync(connAck, cancellationToken);
+                    connectionController.Handle(connAck);
+                    break;
 
                 case SubAck subAck:
-                    subscriptionHandler.OnSubAckReceived(subAck);
+                    subscriptionHandler.Handle(subAck);
                     break;
 
                 case UnsubAck unsubAck:
-                    subscriptionHandler.OnUnsubAckReceived(unsubAck);
+                    subscriptionHandler.Handle(unsubAck);
                     break;
 
                 case PubAck pubAck:
-                    return publishHandler.HandleAsync(pubAck);                    
+                    publishHandler.Handle(pubAck);
+                    break;
 
                 case PubRec pubRec:
                     return publishHandler.HandleAsync(pubRec, cancellationToken);
 
                 case PubComp pubComp:
-                    publishHandler.HandleAsync(pubComp);
+                    publishHandler.Handle(pubComp);
                     break;
 
                 case Publish publish:
@@ -79,7 +83,7 @@ namespace HyperMsg.Mqtt.Client
                     return publishHandler.HandleAsync(pubRel, cancellationToken);
 
                 case PingResp _:
-                    pingHandler.OnPingRespReceived();
+                    pingHandler.Handle();
                     break;
             }
 

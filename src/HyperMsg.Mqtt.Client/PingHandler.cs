@@ -25,7 +25,7 @@ namespace HyperMsg.Mqtt.Client
             await pingTsc.Task;
         }
 
-        internal void OnPingRespReceived()
+        internal void Handle()
         {
             if (pingTsc != null)
             {
