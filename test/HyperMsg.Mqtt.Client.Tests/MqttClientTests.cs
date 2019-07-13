@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
 {
     public class MqttClientTests
     {
-        private readonly AsyncHandler<TransportCommand> transportCommandHandler;
+        private readonly AsyncAction<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;
         private readonly MqttConnectionSettings connectionSettings;
         private readonly MqttClient client;
@@ -23,7 +23,7 @@ namespace HyperMsg.Mqtt.Client
 
         public MqttClientTests()
         {
-            transportCommandHandler = A.Fake<AsyncHandler<TransportCommand>>();
+            transportCommandHandler = A.Fake<AsyncAction<TransportCommand>>();
             messageSender = A.Fake<IMessageSender<Packet>>();
             connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             client = new MqttClient(transportCommandHandler, messageSender, connectionSettings);
@@ -245,6 +245,8 @@ namespace HyperMsg.Mqtt.Client
 
         #endregion
 
+        #region Ping tests
+
         [Fact]
         public void PingAsync_Sends_PingReq_Packet()
         {
@@ -265,6 +267,8 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.IsCompleted);
         }
+
+        #endregion
 
         #region HandleAsync tests
 

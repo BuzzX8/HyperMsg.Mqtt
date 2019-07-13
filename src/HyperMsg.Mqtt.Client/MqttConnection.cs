@@ -6,13 +6,13 @@ namespace HyperMsg.Mqtt.Client
 {
     internal class MqttConnection
     {
-        private readonly AsyncHandler<TransportCommand> transportCommandHandler;
+        private readonly AsyncAction<TransportCommand> transportCommandHandler;
         private readonly IMessageSender<Packet> messageSender;        
         private readonly MqttConnectionSettings connectionSettings;
 
         private TaskCompletionSource<SessionState> taskCompletionSource;
 
-        public MqttConnection(AsyncHandler<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
+        public MqttConnection(AsyncAction<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
         {
             this.transportCommandHandler = transportCommandHandler ?? throw new ArgumentNullException(nameof(transportCommandHandler));
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));

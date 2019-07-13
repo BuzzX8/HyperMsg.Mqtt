@@ -14,7 +14,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
 
-        public MqttClient(AsyncHandler<TransportCommand> transportCommandHandler, 
+        public MqttClient(AsyncAction<TransportCommand> transportCommandHandler, 
                           IMessageSender<Packet> messageSender, 
                           MqttConnectionSettings connectionSettings)
         {
