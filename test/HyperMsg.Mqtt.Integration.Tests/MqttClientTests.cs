@@ -9,6 +9,7 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Integration
 {
+    [Collection("Integration")]
     public class MqttClientTests : IDisposable
     {
         private readonly IPEndPoint endPoint;
@@ -24,22 +25,18 @@ namespace HyperMsg.Mqtt.Integration
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             receivedPackets = new List<Packet>();
 
-            var builder = new ConfigurableBuilder<IMqttClient>();
+            var builder = new ConfigurableServiceProvider();
             builder.UseCoreServices<Packet>(1024, 1024);
             builder.UseMqttSerializer();
             builder.UseMqttClient(settings);
             builder.UseSockets(endPoint);
             builder.RegisterConfigurator((p, s) =>
             {
-                //var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
-                var messageInterceptor = new DelegateHandler<Packet>(packet =>
-                {
-                    receivedPackets.Add(packet);
-                });
-                //repository.Register(messageInterceptor);
+                var repository = (IMessageHandlerRegistry<Packet>)p.GetService(typeof(IMessageHandlerRegistry<Packet>));                
+                repository.Register(m => receivedPackets.Add(m));
             });
 
-            client = builder.Build();
+            client = builder.GetService<IMqttClient>();
         }
         
         [Fact]
@@ -108,7 +105,7 @@ namespace HyperMsg.Mqtt.Integration
             var request = new PublishRequest(topic, message, QosLevel.Qos2);
             Connect();
 
-            client.PublishAsync(request).Wait();
+            client.PublishAsync(request).Wait(waitTimeout);
 
             Assert.Equal(3, receivedPackets.Count);
             Assert.IsType<PubRec>(receivedPackets[1]);
