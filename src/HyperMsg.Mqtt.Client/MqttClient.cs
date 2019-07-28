@@ -9,7 +9,7 @@ namespace HyperMsg.Mqtt.Client
     {        
         private readonly IMessageSender<Packet> messageSender;
 
-        private readonly MqttConnection connectionController;
+        private readonly ConnectionComponent connectionController;
         private readonly PingHandler pingHandler;
         private readonly PublishHandler publishHandler;
         private readonly SubscriptionHandler subscriptionHandler;        
@@ -20,7 +20,7 @@ namespace HyperMsg.Mqtt.Client
         {
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
 
-            connectionController = new MqttConnection(transportCommandHandler, messageSender, connectionSettings);
+            connectionController = new ConnectionComponent(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingHandler(messageSender);
             publishHandler = new PublishHandler(messageSender, OnPublishReceived);
             subscriptionHandler = new SubscriptionHandler(messageSender);
