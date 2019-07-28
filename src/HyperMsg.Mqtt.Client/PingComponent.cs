@@ -3,29 +3,29 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    internal class PingHandler
+    public class PingComponent
     {
         private readonly IMessageSender<Packet> sender;
         private TaskCompletionSource<bool> pingTsc;
 
-        internal PingHandler(IMessageSender<Packet> sender)
+        public PingComponent(IMessageSender<Packet> sender)
         {
             this.sender = sender;
         }
 
-        internal async Task SendPingReqAsync(CancellationToken token)
+        public async Task PingAsync(CancellationToken cancellationToken)
         {
             if (pingTsc != null)
             {
                 return;
             }
 
-            await sender.SendAsync(PingReq.Instance, token);
+            await sender.SendAsync(PingReq.Instance, cancellationToken);
             pingTsc = new TaskCompletionSource<bool>();
             await pingTsc.Task;
         }
 
-        internal void Handle()
+        public void Handle(PingResp _)
         {
             if (pingTsc != null)
             {

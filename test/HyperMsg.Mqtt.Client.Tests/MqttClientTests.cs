@@ -143,31 +143,6 @@ namespace HyperMsg.Mqtt.Client
 
         #endregion
 
-        #region Ping tests
-
-        [Fact]
-        public void PingAsync_Sends_PingReq_Packet()
-        {
-            var task = client.PingAsync();
-
-            var pingReq = sentPacket as PingReq;
-            Assert.NotNull(pingReq);
-            Assert.False(task.IsCompleted);
-        }
-
-        [Fact]
-        public async Task PingAsync_Completes_Task_When_PingResp_Received()
-        {
-            var task = client.PingAsync();
-            packetSentEvent.Wait(waitTimeout);
-
-            await client.HandleAsync(PingResp.Instance);
-
-            Assert.True(task.IsCompleted);
-        }
-
-        #endregion
-
         #region HandleAsync tests
 
         [Fact]
