@@ -1,6 +1,5 @@
 using FakeItEasy;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -37,67 +36,6 @@ namespace HyperMsg.Mqtt.Client
                 })
                 .Returns(Task.CompletedTask);
         }
-
-        #region Subscription tests
-
-        [Fact]
-        public void SubscribeAsync_Sends_Correct_Subscribe_Request()
-        {
-            var request = Enumerable.Range(1, 5)
-                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-                .ToArray();
-            _ = client.SubscribeAsync(request);
-            packetSentEvent.Wait(waitTimeout);
-
-            var subscribePacket = sentPacket as Subscribe;
-            Assert.NotNull(subscribePacket);
-        }
-
-        [Fact]
-        public async Task SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
-        {
-            var request = Enumerable.Range(1, 5)
-                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-                .ToArray();
-            var task = client.SubscribeAsync(request);
-            packetSentEvent.Wait(waitTimeout);
-            var packetId = ((Subscribe)sentPacket).Id;
-            var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
-
-            await client.HandleAsync(subAck);
-
-            Assert.True(task.IsCompleted);
-            Assert.Equal(subAck.Results, task.Result);
-        }
-
-        [Fact]
-        public void UnsubscribeAsync_Sends_Unsubscription_Request()
-        {
-            var topics = new[] { "topic-1", "topic-2" };
-
-            client.UnsubscribeAsync(topics);
-            packetSentEvent.Wait(waitTimeout);
-
-            var unsubscribe = sentPacket as Unsubscribe;
-
-            Assert.NotNull(unsubscribe);
-            Assert.Equal(topics, unsubscribe.Topics);
-        }
-
-        [Fact]
-        public async Task UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
-        {
-            var topics = new[] { "topic-1", "topic-2" };
-            var task = client.UnsubscribeAsync(topics);
-            packetSentEvent.Wait(waitTimeout);
-            var unsubscribe = sentPacket as Unsubscribe;
-
-            await client.HandleAsync(new UnsubAck(unsubscribe.Id));
-
-            Assert.True(task.IsCompleted);
-        }
-
-        #endregion
 
         #region Publish tests
 

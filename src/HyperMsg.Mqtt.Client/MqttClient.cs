@@ -11,7 +11,7 @@ namespace HyperMsg.Mqtt.Client
 
         private readonly ConnectionComponent connectionController;
         private readonly PingComponent pingHandler;
-        private readonly PublishHandler publishHandler;
+        private readonly PublishComponent publishHandler;
         private readonly SubscriptionComponent subscriptionHandler;        
 
         public MqttClient(AsyncAction<TransportCommand> transportCommandHandler, 
@@ -22,7 +22,7 @@ namespace HyperMsg.Mqtt.Client
 
             connectionController = new ConnectionComponent(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingComponent(messageSender);
-            publishHandler = new PublishHandler(messageSender, OnPublishReceived);
+            publishHandler = new PublishComponent(messageSender, OnPublishReceived);
             subscriptionHandler = new SubscriptionComponent(messageSender);
         }
 

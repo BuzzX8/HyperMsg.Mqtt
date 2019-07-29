@@ -61,8 +61,7 @@ namespace HyperMsg.Mqtt.Client
         {
             var topics = new[] { "topic-1", "topic-2" };
 
-            subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);
-            //packetSentEvent.Wait(waitTimeout);
+            _ = subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);
 
             var unsubscribe = sentPacket as Unsubscribe;
 
@@ -71,11 +70,10 @@ namespace HyperMsg.Mqtt.Client
         }
 
         [Fact]
-        public async Task UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
+        public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
         {
             var topics = new[] { "topic-1", "topic-2" };
-            var task = subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);
-            //packetSentEvent.Wait(waitTimeout);
+            var task = subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);            
             var unsubscribe = sentPacket as Unsubscribe;
 
             subscriptionComponent.Handle(new UnsubAck(unsubscribe.Id));
