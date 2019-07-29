@@ -24,22 +24,22 @@ namespace HyperMsg.Mqtt.Integration
             settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             receivedPackets = new List<Packet>();
 
-            var builder = new ConfigurableBuilder<IMqttClient>();
-            builder.UseCoreServices<Packet>(1024, 1024);
-            builder.UseMqttSerializer();
-            builder.UseMqttClient(settings);
-            builder.UseSockets(endPoint);
-            builder.RegisterConfigurator((p, s) =>
-            {
-                //var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
-                var messageInterceptor = new DelegateHandler<Packet>(packet =>
-                {
-                    receivedPackets.Add(packet);
-                });
-                //repository.Register(messageInterceptor);
-            });
+            //var builder = new ConfigurableBuilder<IMqttClient>();
+            //builder.UseCoreServices<Packet>(1024, 1024);
+            //builder.UseMqttSerializer();
+            //builder.UseMqttClient(settings);
+            //builder.UseSockets(endPoint);
+            //builder.RegisterConfigurator((p, s) =>
+            //{
+            //    //var repository = (IHandlerRegistry)p.GetService(typeof(IHandlerRegistry));
+            //    var messageInterceptor = new DelegateHandler<Packet>(packet =>
+            //    {
+            //        receivedPackets.Add(packet);
+            //    });
+            //    //repository.Register(messageInterceptor);
+            //});
 
-            client = builder.Build();
+            //client = builder.Build();
         }
         
         [Fact]

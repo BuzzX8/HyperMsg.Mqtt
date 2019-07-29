@@ -7,23 +7,23 @@ using UnsubscribeDictionary = System.Collections.Concurrent.ConcurrentDictionary
 
 namespace HyperMsg.Mqtt.Client
 {
-    internal class SubscriptionHandler
+    public class SubscriptionComponent
     {
         private readonly RequestDictionary pendingRequests;
         private readonly UnsubscribeDictionary unsubscribeDictionary;
         private readonly IMessageSender<Packet> sender;
 
-        internal SubscriptionHandler(IMessageSender<Packet> sender)
+        public SubscriptionComponent(IMessageSender<Packet> sender)
         {
             this.sender = sender;
             pendingRequests = new RequestDictionary();
             unsubscribeDictionary = new UnsubscribeDictionary();
         }
 
-        internal async Task<IEnumerable<SubscriptionResult>> SendSubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken token)
+        public async Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
         {
             var request = CreateSubscribeRequest(requests);
-            await sender.SendAsync(request, token);
+            await sender.SendAsync(request, cancellationToken);
 
             var tsc = new TaskCompletionSource<IEnumerable<SubscriptionResult>>();
             pendingRequests.AddOrUpdate(request.Id, tsc, (k, v) => v);
@@ -32,7 +32,7 @@ namespace HyperMsg.Mqtt.Client
 
         private Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
 
-        internal async Task SendUnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
+        public async Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
         {
             var request = CreateUnsubscribeRequest(topics);
             await sender.SendAsync(request, token);
@@ -44,7 +44,7 @@ namespace HyperMsg.Mqtt.Client
 
         private Unsubscribe CreateUnsubscribeRequest(IEnumerable<string> topics) => new Unsubscribe(PacketId.New(), topics);
 
-        internal void Handle(SubAck subAck)
+        public void Handle(SubAck subAck)
         {
             if (pendingRequests.TryRemove(subAck.Id, out var tsc))
             {
@@ -52,7 +52,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal void Handle(UnsubAck unsubAck)
+        public void Handle(UnsubAck unsubAck)
         {
             if (unsubscribeDictionary.TryRemove(unsubAck.Id, out var tsc))
             {

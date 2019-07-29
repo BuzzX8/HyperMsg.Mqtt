@@ -12,7 +12,7 @@ namespace HyperMsg.Mqtt.Client
         private readonly ConnectionComponent connectionController;
         private readonly PingComponent pingHandler;
         private readonly PublishHandler publishHandler;
-        private readonly SubscriptionHandler subscriptionHandler;        
+        private readonly SubscriptionComponent subscriptionHandler;        
 
         public MqttClient(AsyncAction<TransportCommand> transportCommandHandler, 
                           IMessageSender<Packet> messageSender, 
@@ -23,7 +23,7 @@ namespace HyperMsg.Mqtt.Client
             connectionController = new ConnectionComponent(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingComponent(messageSender);
             publishHandler = new PublishHandler(messageSender, OnPublishReceived);
-            subscriptionHandler = new SubscriptionHandler(messageSender);
+            subscriptionHandler = new SubscriptionComponent(messageSender);
         }
 
         public Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default) => connectionController.ConnectAsync(cleanSession, cancellationToken);
@@ -41,13 +41,13 @@ namespace HyperMsg.Mqtt.Client
         public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {
             _ = requests ?? throw new ArgumentNullException(nameof(requests));
-            return subscriptionHandler.SendSubscribeAsync(requests, cancellationToken);
+            return subscriptionHandler.SubscribeAsync(requests, cancellationToken);
         }
 
         public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellationToken = default)
         {
             _ = topics ?? throw new ArgumentNullException(nameof(topics));
-            return subscriptionHandler.SendUnsubscribeAsync(topics, cancellationToken);
+            return subscriptionHandler.UnsubscribeAsync(topics, cancellationToken);
         }
         public Task HandleAsync(Packet message, CancellationToken cancellationToken = default)
         {
