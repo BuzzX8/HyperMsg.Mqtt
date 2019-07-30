@@ -10,23 +10,21 @@ namespace HyperMsg.Mqtt.Client
     public class PublishComponent
     {
         private readonly IMessageSender<Packet> messageSender;
-        private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
         private readonly Qos2Dictionary qos2Requests;
 
         private readonly Qos2Publish qos2Receive;
 
-        public PublishComponent(IMessageSender<Packet> messageSender, Action<PublishReceivedEventArgs> receiveHandler)
+        public PublishComponent(IMessageSender<Packet> messageSender)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
             qos2Receive = new Qos2Publish();
-            this.receiveHandler = receiveHandler;
             this.messageSender = messageSender;
         }
 
-        public async Task SendPublishAsync(PublishRequest request, CancellationToken token)
+        public async Task PublishAsync(PublishRequest request, CancellationToken token)
         {
             var publishPacket = CreatePublishPacket(request);
             await messageSender.SendAsync(publishPacket, token);
@@ -81,13 +79,13 @@ namespace HyperMsg.Mqtt.Client
         {
             if (publish.Qos == QosLevel.Qos0)
             {
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos1)
             {
                 await messageSender.SendAsync(new PubAck(publish.Id), cancellationToken);
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
@@ -102,8 +100,12 @@ namespace HyperMsg.Mqtt.Client
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
                 await messageSender.SendAsync(new PubComp(pubRel.Id), cancellationToken);
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }
+
+        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);
+
+        public event EventHandler<PublishReceivedEventArgs> PublishReceived;
     }
 }

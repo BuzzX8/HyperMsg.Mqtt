@@ -22,7 +22,7 @@ namespace HyperMsg.Mqtt.Client
 
             connectionController = new ConnectionComponent(transportCommandHandler, messageSender, connectionSettings);
             pingHandler = new PingComponent(messageSender);
-            publishHandler = new PublishComponent(messageSender, OnPublishReceived);
+            publishHandler = new PublishComponent(messageSender);
             subscriptionHandler = new SubscriptionComponent(messageSender);
         }
 
@@ -35,7 +35,7 @@ namespace HyperMsg.Mqtt.Client
         public Task PublishAsync(PublishRequest request, CancellationToken cancellationToken = default)
         {
             _ = request ?? throw new ArgumentNullException(nameof(request));
-            return publishHandler.SendPublishAsync(request, cancellationToken);
+            return publishHandler.PublishAsync(request, cancellationToken);
         }
 
         public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
