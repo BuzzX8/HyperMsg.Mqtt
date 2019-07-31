@@ -90,8 +90,11 @@ namespace HyperMsg.Mqtt.Client
             return Task.CompletedTask;
         }
 
-        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);        
-
-        public event EventHandler<PublishReceivedEventArgs> PublishReceived;
+        public event EventHandler<PublishReceivedEventArgs> PublishReceived
+        {
+            add => publishHandler.PublishReceived += value;
+            
+            remove => publishHandler.PublishReceived -= value;
+        }
     }
 }
