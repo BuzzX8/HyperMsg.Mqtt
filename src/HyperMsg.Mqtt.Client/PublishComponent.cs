@@ -24,10 +24,10 @@ namespace HyperMsg.Mqtt.Client
             this.messageSender = messageSender;
         }
 
-        public async Task PublishAsync(PublishRequest request, CancellationToken token)
+        public async Task PublishAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             var publishPacket = CreatePublishPacket(request);
-            await messageSender.SendAsync(publishPacket, token);
+            await messageSender.SendAsync(publishPacket, cancellationToken);
 
             if(request.Qos == QosLevel.Qos1)
             {

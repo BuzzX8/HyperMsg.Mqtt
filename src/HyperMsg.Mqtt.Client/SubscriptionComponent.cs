@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,11 +12,11 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly RequestDictionary pendingRequests;
         private readonly UnsubscribeDictionary unsubscribeDictionary;
-        private readonly IMessageSender<Packet> sender;
+        private readonly IMessageSender<Packet> messageSender;
 
-        public SubscriptionComponent(IMessageSender<Packet> sender)
+        public SubscriptionComponent(IMessageSender<Packet> messageSender)
         {
-            this.sender = sender;
+            this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
             pendingRequests = new RequestDictionary();
             unsubscribeDictionary = new UnsubscribeDictionary();
         }
@@ -23,7 +24,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
         {
             var request = CreateSubscribeRequest(requests);
-            await sender.SendAsync(request, cancellationToken);
+            await messageSender.SendAsync(request, cancellationToken);
 
             var tsc = new TaskCompletionSource<IEnumerable<SubscriptionResult>>();
             pendingRequests.AddOrUpdate(request.Id, tsc, (k, v) => v);
@@ -35,7 +36,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
         {
             var request = CreateUnsubscribeRequest(topics);
-            await sender.SendAsync(request, token);
+            await messageSender.SendAsync(request, token);
 
             var tsc = new TaskCompletionSource<bool>();
             unsubscribeDictionary.AddOrUpdate(request.Id, tsc, (k, v) => v);

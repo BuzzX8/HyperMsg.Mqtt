@@ -1,16 +1,17 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
     public class PingComponent
     {
-        private readonly IMessageSender<Packet> sender;
+        private readonly IMessageSender<Packet> messageSender;
         private TaskCompletionSource<bool> pingTsc;
 
-        public PingComponent(IMessageSender<Packet> sender)
+        public PingComponent(IMessageSender<Packet> messageSender)
         {
-            this.sender = sender;
+            this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
         }
 
         public async Task PingAsync(CancellationToken cancellationToken)
@@ -20,7 +21,7 @@ namespace HyperMsg.Mqtt.Client
                 return;
             }
 
-            await sender.SendAsync(PingReq.Instance, cancellationToken);
+            await messageSender.SendAsync(PingReq.Instance, cancellationToken);
             pingTsc = new TaskCompletionSource<bool>();
             await pingTsc.Task;
         }
