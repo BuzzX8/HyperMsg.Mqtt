@@ -7,29 +7,27 @@ using Qos2Publish = System.Collections.Concurrent.ConcurrentDictionary<ushort, H
 
 namespace HyperMsg.Mqtt.Client
 {
-    internal class PublishHandler
+    public class PublishComponent
     {
         private readonly IMessageSender<Packet> messageSender;
-        private readonly Action<PublishReceivedEventArgs> receiveHandler;
 
         private readonly Qos1Dictionary qos1Requests;
         private readonly Qos2Dictionary qos2Requests;
 
         private readonly Qos2Publish qos2Receive;
 
-        internal PublishHandler(IMessageSender<Packet> messageSender, Action<PublishReceivedEventArgs> receiveHandler)
+        public PublishComponent(IMessageSender<Packet> messageSender)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
             qos2Receive = new Qos2Publish();
-            this.receiveHandler = receiveHandler;
             this.messageSender = messageSender;
         }
 
-        internal async Task SendPublishAsync(PublishRequest request, CancellationToken token)
+        public async Task PublishAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             var publishPacket = CreatePublishPacket(request);
-            await messageSender.SendAsync(publishPacket, token);
+            await messageSender.SendAsync(publishPacket, cancellationToken);
 
             if(request.Qos == QosLevel.Qos1)
             {
@@ -51,7 +49,7 @@ namespace HyperMsg.Mqtt.Client
             return new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
         }
 
-        internal void Handle(PubAck pubAck)
+        public void Handle(PubAck pubAck)
         {
             if (qos1Requests.TryRemove(pubAck.Id, out var tsc))
             {
@@ -59,7 +57,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
+        public async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
         {
             if (qos2Requests.TryGetValue(pubRec.Id, out var request))
             {
@@ -69,7 +67,7 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal void Handle(PubComp pubComp)
+        public void Handle(PubComp pubComp)
         {
             if (qos2Requests.TryGetValue(pubComp.Id, out var request) && request.Item2 && qos2Requests.TryRemove(pubComp.Id, out _))
             {
@@ -77,17 +75,17 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal async Task HandleAsync(Publish publish, CancellationToken cancellationToken)
+        public async Task HandleAsync(Publish publish, CancellationToken cancellationToken)
         {
             if (publish.Qos == QosLevel.Qos0)
             {
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos1)
             {
                 await messageSender.SendAsync(new PubAck(publish.Id), cancellationToken);
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
@@ -97,13 +95,17 @@ namespace HyperMsg.Mqtt.Client
             }
         }
 
-        internal async Task HandleAsync(PubRel pubRel, CancellationToken cancellationToken)
+        public async Task HandleAsync(PubRel pubRel, CancellationToken cancellationToken)
         {
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
                 await messageSender.SendAsync(new PubComp(pubRel.Id), cancellationToken);
-                receiveHandler(new PublishReceivedEventArgs(publish.Topic, publish.Message));
+                OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }
+
+        private void OnPublishReceived(PublishReceivedEventArgs args) => PublishReceived?.Invoke(this, args);
+
+        public event EventHandler<PublishReceivedEventArgs> PublishReceived;
     }
 }
