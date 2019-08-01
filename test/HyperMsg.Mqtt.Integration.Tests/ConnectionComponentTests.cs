@@ -1,32 +1,25 @@
-﻿using HyperMsg.Integration;
-using HyperMsg.Mqtt.Client;
-using HyperMsg.Mqtt.Serialization;
-using System;
+﻿using HyperMsg.Mqtt.Client;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Integration
 {
-    public class ConnectionComponentTests : SocketTransportFixtureBase<Packet>
+    public class ConnectionComponentTests : MqttComponentTestsBase
     {
-        private readonly ConnectionComponent connectionComponent;
-        private readonly MqttConnectionSettings connectionSettings;
+        private readonly CancellationToken cancellationToken;
 
-        public ConnectionComponentTests() : base(1883)
+        public ConnectionComponentTests()
         {
-            connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            connectionComponent = new ConnectionComponent(Transport.ProcessCommandAsync, MessageSender, connectionSettings);
-            HandlerRegistry.Register(new Action<Packet>(p => connectionComponent.Handle(p as ConnAck)));
+            cancellationToken = new CancellationToken();
         }
 
         [Fact]
         public async Task ConnectAsync_Establishes_Connection()
         {
-            var sessionState = await connectionComponent.ConnectAsync();
+            var sessionState = await ConnectAsync(true, cancellationToken);
 
-            Assert.Equal(SessionState.Present, sessionState);
+            Assert.Equal(SessionState.Clean, sessionState);
         }
-
-        protected override void ConfigureSerializer(IConfigurable configurable) => configurable.UseMqttSerializer();
     }
 }
