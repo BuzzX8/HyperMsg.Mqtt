@@ -11,29 +11,21 @@ using Xunit;
 namespace HyperMsg.Mqtt.Integration
 {
     [Collection("Integration")]
-    public abstract class MqttComponentTestsBase : SocketTransportFixtureBase<Packet>, IDisposable
+    public abstract class MqttClientIntegrationTestsBase : SocketTransportFixtureBase<Packet>, IDisposable
     {
         const int MqttPort = 1883;
 
         protected readonly string ClientId = Guid.NewGuid().ToString();
-        private readonly ConnectionComponent connectionComponent;
         private readonly List<Packet> responses;
 
-        public MqttComponentTestsBase() : base(MqttPort)
+        public MqttClientIntegrationTestsBase() : base(MqttPort)
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
-            connectionComponent = new ConnectionComponent(Transport.ProcessCommandAsync, MessageSender, ConnectionSettings);
             responses = new List<Packet>();
-
-            HandlerRegistry.Register(new Action<Packet>(p =>
-            {
-                if (p is ConnAck connAck)
-                {
-                    connectionComponent.Handle(connAck);
-                }
-            }));
             HandlerRegistry.Register(p => responses.Add(p));
         }
+
+        protected IMqttClient Client => GetService<IMqttClient>();
 
         protected IReadOnlyList<Packet> Responses => responses;
 
@@ -43,9 +35,15 @@ namespace HyperMsg.Mqtt.Integration
 
         protected override void ConfigureSerializer(IConfigurable configurable) => configurable.UseMqttSerializer();
 
-        protected Task<SessionState> ConnectAsync(bool cleanSession, CancellationToken cancellationToken) => connectionComponent.ConnectAsync(cleanSession, cancellationToken);
+        protected override void ConfigureServices(IConfigurable configurable)
+        {
+            base.ConfigureServices(configurable);
+            configurable.UseMqttClient(ConnectionSettings);
+        }
 
-        protected Task DisconnectAsync(CancellationToken cancellationToken) => connectionComponent.DisconnectAsync(cancellationToken);
+        protected Task<SessionState> ConnectAsync(bool cleanSession, CancellationToken cancellationToken) => Client.ConnectAsync(cleanSession, cancellationToken);
+
+        protected Task DisconnectAsync(CancellationToken cancellationToken) => Client.DisconnectAsync(cancellationToken);
 
         public void Dispose() => DisconnectAsync(default).Wait();
     }

@@ -5,11 +5,11 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Integration
 {
-    public class ConnectionComponentTests : MqttComponentTestsBase
+    public class ConnectionTests : MqttClientIntegrationTestsBase
     {
         private readonly CancellationToken cancellationToken;
 
-        public ConnectionComponentTests()
+        public ConnectionTests()
         {
             cancellationToken = new CancellationToken();
         }
@@ -20,6 +20,7 @@ namespace HyperMsg.Mqtt.Integration
             var sessionState = await ConnectAsync(true, cancellationToken);
 
             Assert.Equal(SessionState.Clean, sessionState);
+            Assert.IsType<ConnAck>(LastResponse);
         }
     }
 }
