@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PublishComponentTests
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
         private readonly PublishComponent publishComponent;
 
         private readonly CancellationToken cancellationToken;
@@ -18,7 +18,7 @@ namespace HyperMsg.Mqtt.Client
 
         public PublishComponentTests()
         {
-            messageSender = A.Fake<IMessageSender<Packet>>();
+            messageSender = A.Fake<IMessageSender>();
             publishComponent = new PublishComponent(messageSender);
             publishComponent.PublishReceived += (s, e) => receiveEventArgs = e;
             A.CallTo(() => messageSender.SendAsync(A<Packet>._, A<CancellationToken>._))

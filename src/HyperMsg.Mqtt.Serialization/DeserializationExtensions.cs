@@ -28,7 +28,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-	    internal static DeserializationResult<Packet> ReadMqttPacket(this ReadOnlySequence<byte> buffer)
+	    public static (int, Packet) ReadMqttPacket(this ReadOnlySequence<byte> buffer)
 	    {
             var span = buffer.First.Span;
             var code = span[0];
@@ -39,22 +39,22 @@ namespace HyperMsg.Mqtt.Serialization
             if ((code & 0xf0) == 0x30)
             {
                 var publish = ReadPublish(buffer.First.Slice(count), code, length);
-                return new DeserializationResult<Packet>(consumed, publish);
+                return (consumed, publish);
             }
 
             if (TwoBytePackets.ContainsKey(code))
             {
                 var packet = GetTwoBytePacket(code, length);
-                return new DeserializationResult<Packet>(consumed, packet);
+                return (consumed, packet);
             }
 
             if (Readers.ContainsKey(code))
             {
                 var packet = Readers[code](buffer.First.Slice(count), length);
-                return new DeserializationResult<Packet>(consumed, packet);
+                return (consumed, packet);
             }
             
-            throw new DeserializationException();
+            return (0, null);
         }
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
@@ -90,7 +90,7 @@ namespace HyperMsg.Mqtt.Serialization
 	    {
 		    if (length != 0)
 		    {
-			    throw new DeserializationException();
+			    throw new FormatException();
 		    }
 
 		    return TwoBytePackets[code];
@@ -190,7 +190,7 @@ namespace HyperMsg.Mqtt.Serialization
 
                 if (i == sizeof(int) && value >= 0x80)
                 {
-                    throw new DeserializationException();
+                    throw new FormatException();
                 }
             }
 		    while ((value & 0x80) == 0x80);

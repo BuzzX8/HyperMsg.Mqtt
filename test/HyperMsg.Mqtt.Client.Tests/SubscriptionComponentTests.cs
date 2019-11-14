@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt.Client
 {
     public class SubscriptionComponentTests
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
         private readonly SubscriptionComponent subscriptionComponent;
         private readonly CancellationToken cancellationToken;
 
@@ -16,7 +16,7 @@ namespace HyperMsg.Mqtt.Client
 
         public SubscriptionComponentTests()
         {
-            messageSender = A.Fake<IMessageSender<Packet>>();
+            messageSender = A.Fake<IMessageSender>();
             subscriptionComponent = new SubscriptionComponent(messageSender);
             cancellationToken = new CancellationToken();
 

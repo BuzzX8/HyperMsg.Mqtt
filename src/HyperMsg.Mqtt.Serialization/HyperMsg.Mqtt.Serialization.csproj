@@ -13,10 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg" Version="0.10.0-alpha" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\HyperMsg.Mqtt\HyperMsg.Mqtt.csproj" />
   </ItemGroup>
 

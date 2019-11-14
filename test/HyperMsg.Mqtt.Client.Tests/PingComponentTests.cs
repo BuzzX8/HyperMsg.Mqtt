@@ -6,13 +6,13 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PingComponentTests
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
         private readonly CancellationToken cancellationToken;
         private readonly PingComponent pingComponent;
 
         public PingComponentTests()
         {
-            messageSender = A.Fake<IMessageSender<Packet>>();
+            messageSender = A.Fake<IMessageSender>();
             cancellationToken = new CancellationToken();
             pingComponent = new PingComponent(messageSender);
         }

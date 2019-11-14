@@ -6,10 +6,10 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PingComponent
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
         private TaskCompletionSource<bool> pingTsc;
 
-        public PingComponent(IMessageSender<Packet> messageSender)
+        public PingComponent(IMessageSender messageSender)
         {
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
         }

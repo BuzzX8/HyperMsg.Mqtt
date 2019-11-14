@@ -6,20 +6,18 @@ using Xunit;
 namespace HyperMsg.Mqtt.Client
 {
     public class ConnectionComponentTests
-    {
-        private readonly AsyncAction<TransportCommand> transportCommandHandler;
-        private readonly IMessageSender<Packet> messageSender;
+    {        
+        private readonly IMessageSender messageSender;
         private readonly MqttConnectionSettings connectionSettings;
         private readonly ConnectionComponent connectionComponent;
 
         private readonly CancellationToken cancellationToken;
 
         public ConnectionComponentTests()
-        {
-            transportCommandHandler = A.Fake<AsyncAction<TransportCommand>>();
-            messageSender = A.Fake<IMessageSender<Packet>>();
+        {            
+            messageSender = A.Fake<IMessageSender>();
             connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            connectionComponent = new ConnectionComponent(transportCommandHandler, messageSender, connectionSettings);
+            connectionComponent = new ConnectionComponent(messageSender, connectionSettings);
         }
 
         [Fact]
@@ -27,7 +25,7 @@ namespace HyperMsg.Mqtt.Client
         {
             _ = connectionComponent.ConnectAsync(false, cancellationToken);
 
-            A.CallTo(() => transportCommandHandler.Invoke(TransportCommand.Open, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(TransportCommand.Open, cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -37,7 +35,7 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync(false, cancellationToken);
 
-            A.CallTo(() => transportCommandHandler.Invoke(TransportCommand.SetTransportLevelSecurity, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken)).MustHaveHappened();
         }
 
         [Fact]

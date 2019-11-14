@@ -9,14 +9,14 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PublishComponent
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
 
         private readonly Qos1Dictionary qos1Requests;
         private readonly Qos2Dictionary qos2Requests;
 
         private readonly Qos2Publish qos2Receive;
 
-        public PublishComponent(IMessageSender<Packet> messageSender)
+        public PublishComponent(IMessageSender messageSender)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();

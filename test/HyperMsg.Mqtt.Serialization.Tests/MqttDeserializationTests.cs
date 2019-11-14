@@ -55,15 +55,15 @@ namespace HyperMsg.Mqtt.Serialization
 				0x05); //Code of response				
 		}
 
-        private static object[] TestCase(Packet expected, params byte[] serialized) => new object[] { serialized, new DeserializationResult<Packet>(serialized.Length, expected) };
+        private static object[] TestCase(Packet expected, params byte[] serialized) => new object[] { serialized, (serialized.Length, expected) };
 
         [Theory(DisplayName = "Deserialize return correct DeserializationResult")]
 	    [MemberData(nameof(DeserializeTestCases))]
-		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, DeserializationResult<Packet> expected)
+		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int, Packet) expected)
 	    {
             var serializer = new MqttSerializer();
 
-            var actual = serializer.Deserialize(new ReadOnlySequence<byte>(serialized));
+            var actual = new ReadOnlySequence<byte>(serialized).ReadMqttPacket();
 
 			Assert.Equal(expected, actual);
 	    }
@@ -103,7 +103,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
 		    var buffer = new ReadOnlyMemory<byte>(data);
 
-		    Assert.Throws<DeserializationException>(() => buffer.ReadRemainingLength());
+		    Assert.Throws<FormatException>(() => buffer.ReadRemainingLength());
 	    }
 
 

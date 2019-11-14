@@ -12,9 +12,9 @@ namespace HyperMsg.Mqtt.Client
     {
         private readonly RequestDictionary pendingRequests;
         private readonly UnsubscribeDictionary unsubscribeDictionary;
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
 
-        public SubscriptionComponent(IMessageSender<Packet> messageSender)
+        public SubscriptionComponent(IMessageSender messageSender)
         {
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
             pendingRequests = new RequestDictionary();
