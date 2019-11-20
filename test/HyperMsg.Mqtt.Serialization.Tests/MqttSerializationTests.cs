@@ -325,11 +325,10 @@ namespace HyperMsg.Mqtt.Serialization
 	    }
 
 		private void VerifySerialization(Packet packet, params byte[] expected)
-	    {
-            var serializer = new MqttSerializer();
+	    {            
             var writer = new ByteBufferWriter(new byte[1000]);
 
-            serializer.Serialize(writer, packet);
+            //serializer.Serialize(writer, packet);
 
             Assert.Equal(expected, writer.CommitedMemory.ToArray());
 		}
