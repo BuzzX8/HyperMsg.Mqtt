@@ -9,14 +9,14 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PublishComponent
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly IMessageSender messageSender;
 
         private readonly Qos1Dictionary qos1Requests;
         private readonly Qos2Dictionary qos2Requests;
 
         private readonly Qos2Publish qos2Receive;
 
-        public PublishComponent(IMessageSender<Packet> messageSender)
+        public PublishComponent(IMessageSender messageSender)
         {
             qos1Requests = new Qos1Dictionary();
             qos2Requests = new Qos2Dictionary();
@@ -27,7 +27,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task PublishAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             var publishPacket = CreatePublishPacket(request);
-            await messageSender.SendAsync(publishPacket, cancellationToken);
+            await messageSender.TransmitAsync(publishPacket, cancellationToken);
 
             if(request.Qos == QosLevel.Qos1)
             {
@@ -61,7 +61,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Requests.TryGetValue(pubRec.Id, out var request))
             {
-                await messageSender.SendAsync(new PubRel(pubRec.Id), cancellationToken);
+                await messageSender.TransmitAsync(new PubRel(pubRec.Id), cancellationToken);
                 var newRequest = (request.Item1, true);
                 qos2Requests.TryUpdate(pubRec.Id, newRequest, request);
             }
@@ -84,13 +84,13 @@ namespace HyperMsg.Mqtt.Client
 
             if (publish.Qos == QosLevel.Qos1)
             {
-                await messageSender.SendAsync(new PubAck(publish.Id), cancellationToken);
+                await messageSender.TransmitAsync(new PubAck(publish.Id), cancellationToken);
                 OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
 
             if (publish.Qos == QosLevel.Qos2)
             {
-                await messageSender.SendAsync(new PubRec(publish.Id), cancellationToken);
+                await messageSender.TransmitAsync(new PubRec(publish.Id), cancellationToken);
                 qos2Receive.TryAdd(publish.Id, publish);
             }
         }
@@ -99,7 +99,7 @@ namespace HyperMsg.Mqtt.Client
         {
             if (qos2Receive.TryRemove(pubRel.Id, out var publish))
             {
-                await messageSender.SendAsync(new PubComp(pubRel.Id), cancellationToken);
+                await messageSender.TransmitAsync(new PubComp(pubRel.Id), cancellationToken);
                 OnPublishReceived(new PublishReceivedEventArgs(publish.Topic, publish.Message));
             }
         }
