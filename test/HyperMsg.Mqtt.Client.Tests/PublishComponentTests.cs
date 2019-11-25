@@ -1,5 +1,4 @@
-﻿using FakeItEasy;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -8,32 +7,29 @@ namespace HyperMsg.Mqtt.Client
 {
     public class PublishComponentTests
     {
-        private readonly IMessageSender<Packet> messageSender;
+        private readonly FakeMessageSender messageSender;
         private readonly PublishComponent publishComponent;
 
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationTokenSource tokenSource;
 
         private PublishReceivedEventArgs receiveEventArgs;
-        private Packet sentPacket;
 
         public PublishComponentTests()
         {
-            messageSender = A.Fake<IMessageSender<Packet>>();
+            messageSender = new FakeMessageSender();
             publishComponent = new PublishComponent(messageSender);
             publishComponent.PublishReceived += (s, e) => receiveEventArgs = e;
-            A.CallTo(() => messageSender.SendAsync(A<Packet>._, A<CancellationToken>._))
-                .Invokes(foc => sentPacket = foc.GetArgument<Packet>(0))
-                .Returns(Task.CompletedTask);
+            tokenSource = new CancellationTokenSource();
         }
 
         [Fact]
-        public void PublishAsync_Sends_Publish_Packet()
+        public async Task PublishAsync_Sends_Publish_Packet()
         {
             var request = CreatePublishRequest();
 
-            _ = publishComponent.PublishAsync(request, cancellationToken);
+            await publishComponent.PublishAsync(request, tokenSource.Token);
 
-            var publishPacket = sentPacket as Publish;
+            var publishPacket = messageSender.GetLastTransmit<Publish>();
 
             Assert.NotNull(publishPacket);
             Assert.Equal(request.TopicName, publishPacket.Topic);
@@ -46,9 +42,12 @@ namespace HyperMsg.Mqtt.Client
         {
             var request = CreatePublishRequest(QosLevel.Qos0);
 
-            var task = publishComponent.PublishAsync(request, cancellationToken);
+            var task = publishComponent.PublishAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
+            var sentMessage = messageSender.GetLastTransmit<Publish>();
             Assert.True(task.IsCompleted);
+            Assert.NotNull(sentMessage);
         }
 
         [Fact]
@@ -56,9 +55,10 @@ namespace HyperMsg.Mqtt.Client
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
 
-            var task = publishComponent.PublishAsync(request, cancellationToken);
+            var task =  publishComponent.PublishAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            var publishPacket = sentPacket as Publish;
+            var publishPacket = messageSender.GetLastTransmit<Publish>();
             Assert.NotNull(publishPacket);
             Assert.False(task.IsCompleted);
         }
@@ -67,10 +67,12 @@ namespace HyperMsg.Mqtt.Client
         public void Handle_Completes_Task_For_Qos1_Publish()
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
-            var task = publishComponent.PublishAsync(request, cancellationToken);
-            var publishPacket = sentPacket as Publish;
+            var task = publishComponent.PublishAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
+            var publishPacket = messageSender.GetLastTransmit<Publish>();
 
             publishComponent.Handle(new PubAck(publishPacket.Id));
+            messageSender.WaitMessageToSent();
 
             Assert.True(task.IsCompleted);
         }
@@ -79,14 +81,16 @@ namespace HyperMsg.Mqtt.Client
         public async Task HandleAsync_Sends_PubRel_After_Receiving_PubRec()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
-            var task = publishComponent.PublishAsync(request, cancellationToken);
+            var task = publishComponent.PublishAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
             
-            var publishPacket = sentPacket as Publish;
+            var publishPacket = messageSender.GetLastTransmit<Publish>();
 
-            await publishComponent.HandleAsync(new PubRec(publishPacket.Id), cancellationToken);
+            await publishComponent.HandleAsync(new PubRec(publishPacket.Id), tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
             Assert.False(task.IsCompleted);
-            var pubRel = sentPacket as PubRel;
+            var pubRel = messageSender.GetLastTransmit<PubRel>();
             Assert.NotNull(pubRel);
             Assert.Equal(publishPacket.Id, pubRel.Id);
         }
@@ -95,10 +99,11 @@ namespace HyperMsg.Mqtt.Client
         public async Task HandleAsync_Completes_Task_For_Qos2_After_Receiving_PubComp()
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
-            var task = publishComponent.PublishAsync(request, cancellationToken);
-            
-            var publishPacket = sentPacket as Publish;
-            await publishComponent.HandleAsync(new PubRec(publishPacket.Id), cancellationToken);
+            var task = publishComponent.PublishAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
+
+            var publishPacket = messageSender.GetLastTransmit<Publish>();
+            await publishComponent.HandleAsync(new PubRec(publishPacket.Id), tokenSource.Token);
 
             publishComponent.Handle(new PubComp(publishPacket.Id));
 
@@ -110,7 +115,7 @@ namespace HyperMsg.Mqtt.Client
         {
             var publish = CreatePublishPacket();
 
-            await publishComponent.HandleAsync(publish, cancellationToken);
+            await publishComponent.HandleAsync(publish, tokenSource.Token);
 
             Assert.NotNull(receiveEventArgs);
         }
@@ -120,9 +125,10 @@ namespace HyperMsg.Mqtt.Client
         {
             var publish = CreatePublishPacket(QosLevel.Qos1);
 
-            await publishComponent.HandleAsync(publish, cancellationToken);
+            await publishComponent.HandleAsync(publish, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            var pubAck = sentPacket as PubAck;
+            var pubAck = messageSender.GetLastTransmit<PubAck>();
             Assert.Equal(publish.Id, pubAck.Id);
             Assert.NotNull(receiveEventArgs);
             Assert.NotNull(pubAck);
@@ -133,9 +139,9 @@ namespace HyperMsg.Mqtt.Client
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
 
-            await publishComponent.HandleAsync(publish, cancellationToken);
+            await publishComponent.HandleAsync(publish, tokenSource.Token);
 
-            var pubRec = sentPacket as PubRec;
+            var pubRec = messageSender.GetLastTransmit<PubRec>();
             Assert.Null(receiveEventArgs);
             Assert.NotNull(pubRec);
             Assert.Equal(publish.Id, pubRec.Id);
@@ -145,11 +151,11 @@ namespace HyperMsg.Mqtt.Client
         public async Task HandleAsync_Sends_PubCom_And_Rises_PublishReceived_After_Receiving_PubRel_Packet()
         {
             var publish = CreatePublishPacket(QosLevel.Qos2);
-            await publishComponent.HandleAsync(publish, cancellationToken);
+            await publishComponent.HandleAsync(publish, tokenSource.Token);
 
-            await publishComponent.HandleAsync(new PubRel(publish.Id), cancellationToken);
+            await publishComponent.HandleAsync(new PubRel(publish.Id), tokenSource.Token);
 
-            var pubCom = sentPacket as PubComp;
+            var pubCom = messageSender.GetLastTransmit<PubComp>();
             Assert.NotNull(pubCom);
             Assert.NotNull(receiveEventArgs);
         }

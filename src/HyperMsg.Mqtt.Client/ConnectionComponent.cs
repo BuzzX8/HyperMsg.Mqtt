@@ -5,31 +5,29 @@ using System.Threading.Tasks;
 namespace HyperMsg.Mqtt.Client
 {
     public class ConnectionComponent
-    {
-        private readonly AsyncAction<TransportCommand> transportCommandHandler;
-        private readonly IMessageSender<Packet> messageSender;        
+    {        
+        private readonly IMessageSender messageSender;        
         private readonly MqttConnectionSettings connectionSettings;
 
         private TaskCompletionSource<SessionState> taskCompletionSource;
 
-        public ConnectionComponent(AsyncAction<TransportCommand> transportCommandHandler, IMessageSender<Packet> messageSender, MqttConnectionSettings connectionSettings)
-        {
-            this.transportCommandHandler = transportCommandHandler ?? throw new ArgumentNullException(nameof(transportCommandHandler));
+        public ConnectionComponent(IMessageSender messageSender, MqttConnectionSettings connectionSettings)
+        {            
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
             this.connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
         }
 
         public async Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default)
         {
-            await transportCommandHandler.Invoke(TransportCommand.Open, cancellationToken);
+            await messageSender.SendAsync(TransportCommand.Open, cancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await transportCommandHandler.Invoke(TransportCommand.SetTransportLevelSecurity, cancellationToken);
+                await messageSender.SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken);
             }
 
             var connectPacket = CreateConnectPacket(cleanSession);
-            await messageSender.SendAsync(connectPacket, cancellationToken);
+            await messageSender.TransmitAsync(connectPacket, cancellationToken);
 
             taskCompletionSource = new TaskCompletionSource<SessionState>();
 
@@ -38,8 +36,8 @@ namespace HyperMsg.Mqtt.Client
 
         public async Task DisconnectAsync(CancellationToken cancellationToken = default)
         {
-            await messageSender.SendAsync(Disconnect.Instance, cancellationToken);
-            await transportCommandHandler.Invoke(TransportCommand.Close, cancellationToken);
+            await messageSender.TransmitAsync(Disconnect.Instance, cancellationToken);
+            await messageSender.SendAsync(TransportCommand.Close, cancellationToken);
         }
 
         private Connect CreateConnectPacket(bool cleanSession)
