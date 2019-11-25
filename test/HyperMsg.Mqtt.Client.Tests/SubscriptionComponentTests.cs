@@ -8,24 +8,17 @@ namespace HyperMsg.Mqtt.Client
 {
     public class SubscriptionComponentTests
     {
-        private readonly IMessageSender messageSender;
+        private readonly FakeMessageSender messageSender;
         private readonly SubscriptionComponent subscriptionComponent;
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationTokenSource tokenSource;
 
         private Packet sentPacket;
 
         public SubscriptionComponentTests()
         {
-            messageSender = A.Fake<IMessageSender>();
+            messageSender = new FakeMessageSender();
             subscriptionComponent = new SubscriptionComponent(messageSender);
-            cancellationToken = new CancellationToken();
-
-            A.CallTo(() => messageSender.SendAsync(A<Packet>._, A<CancellationToken>._))
-                .Invokes(foc =>
-                {
-                    sentPacket = foc.GetArgument<Packet>(0);
-                })
-                .Returns(Task.CompletedTask);
+            tokenSource = new CancellationTokenSource();
         }
 
         [Fact]
@@ -34,9 +27,10 @@ namespace HyperMsg.Mqtt.Client
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
-            _ = subscriptionComponent.SubscribeAsync(request, cancellationToken);
+            _ = subscriptionComponent.SubscribeAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            var subscribePacket = sentPacket as Subscribe;
+            var subscribePacket = messageSender.GetLastTransmit<Subscribe>();
             Assert.NotNull(subscribePacket);
         }
 
@@ -46,8 +40,9 @@ namespace HyperMsg.Mqtt.Client
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
-            var task = subscriptionComponent.SubscribeAsync(request, cancellationToken);
-            var packetId = ((Subscribe)sentPacket).Id;
+            var task = subscriptionComponent.SubscribeAsync(request, tokenSource.Token);
+            messageSender.WaitMessageToSent();
+            var packetId = messageSender.GetLastTransmit<Subscribe>().Id;
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
             subscriptionComponent.Handle(subAck);
@@ -61,9 +56,9 @@ namespace HyperMsg.Mqtt.Client
         {
             var topics = new[] { "topic-1", "topic-2" };
 
-            _ = subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);
+            _ = subscriptionComponent.UnsubscribeAsync(topics, tokenSource.Token);
 
-            var unsubscribe = sentPacket as Unsubscribe;
+            var unsubscribe = messageSender.GetLastTransmit<Unsubscribe>();
 
             Assert.NotNull(unsubscribe);
             Assert.Equal(topics, unsubscribe.Topics);
@@ -73,8 +68,8 @@ namespace HyperMsg.Mqtt.Client
         public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
         {
             var topics = new[] { "topic-1", "topic-2" };
-            var task = subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);            
-            var unsubscribe = sentPacket as Unsubscribe;
+            var task = subscriptionComponent.UnsubscribeAsync(topics, tokenSource.Token);            
+            var unsubscribe = messageSender.GetLastTransmit<Unsubscribe>();
 
             subscriptionComponent.Handle(new UnsubAck(unsubscribe.Id));
 

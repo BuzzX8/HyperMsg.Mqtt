@@ -24,7 +24,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
         {
             var request = CreateSubscribeRequest(requests);
-            await messageSender.SendAsync(request, cancellationToken);
+            await messageSender.TransmitAsync(request, cancellationToken);
 
             var tsc = new TaskCompletionSource<IEnumerable<SubscriptionResult>>();
             pendingRequests.AddOrUpdate(request.Id, tsc, (k, v) => v);
@@ -36,7 +36,7 @@ namespace HyperMsg.Mqtt.Client
         public async Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
         {
             var request = CreateUnsubscribeRequest(topics);
-            await messageSender.SendAsync(request, token);
+            await messageSender.TransmitAsync(request, token);
 
             var tsc = new TaskCompletionSource<bool>();
             unsubscribeDictionary.AddOrUpdate(request.Id, tsc, (k, v) => v);

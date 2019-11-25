@@ -327,8 +327,8 @@ namespace HyperMsg.Mqtt.Serialization
 		private void VerifySerialization(Packet packet, params byte[] expected)
 	    {            
             var writer = new ByteBufferWriter(new byte[1000]);
-
-            //serializer.Serialize(writer, packet);
+                        
+            writer.WriteMqttPacket(packet);
 
             Assert.Equal(expected, writer.CommitedMemory.ToArray());
 		}

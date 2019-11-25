@@ -47,9 +47,9 @@ namespace HyperMsg.Mqtt.Client
             _ = topics ?? throw new ArgumentNullException(nameof(topics));
             return subscriptionHandler.UnsubscribeAsync(topics, cancellationToken);
         }
-        public Task HandleAsync(Packet message, CancellationToken cancellationToken = default)
+        public Task HandleAsync(Received<Packet> message, CancellationToken cancellationToken = default)
         {
-            switch (message)
+            switch ((Packet)message)
             {
                 case ConnAck connAck:
                     connectionController.Handle(connAck);

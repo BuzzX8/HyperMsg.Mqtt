@@ -48,7 +48,7 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync(false, cancellationToken);
 
-            A.CallTo(() => messageSender.SendAsync(expectedPacket, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -62,7 +62,7 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync(true, cancellationToken);
 
-            A.CallTo(() => messageSender.SendAsync(expectedPacket, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync();
 
-            A.CallTo(() => messageSender.SendAsync(expectedPacket, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync();
 
-            A.CallTo(() => messageSender.SendAsync(expectedPacket, cancellationToken)).MustHaveHappened();
+            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
         }
 
         [Fact]
