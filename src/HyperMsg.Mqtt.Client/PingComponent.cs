@@ -21,7 +21,7 @@ namespace HyperMsg.Mqtt.Client
                 return;
             }
 
-            await messageSender.SendAsync(PingReq.Instance, cancellationToken);
+            await messageSender.TransmitAsync(PingReq.Instance, cancellationToken);
             pingTsc = new TaskCompletionSource<bool>();
             await pingTsc.Task;
         }

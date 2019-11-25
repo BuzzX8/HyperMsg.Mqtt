@@ -1,34 +1,35 @@
-﻿using FakeItEasy;
-using System.Threading;
+﻿using System.Threading;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Client
 {
     public class PingComponentTests
     {
-        private readonly IMessageSender messageSender;
-        private readonly CancellationToken cancellationToken;
+        private readonly FakeMessageSender messageSender;
+        private readonly CancellationTokenSource tokenSource;
         private readonly PingComponent pingComponent;
 
         public PingComponentTests()
         {
-            messageSender = A.Fake<IMessageSender>();
-            cancellationToken = new CancellationToken();
+            messageSender = new FakeMessageSender();
+            tokenSource = new CancellationTokenSource();
             pingComponent = new PingComponent(messageSender);
         }
 
         [Fact]
         public void PingAsync_Sends_PingReq_Packet()
         {
-            var task = pingComponent.PingAsync(cancellationToken);
+            var task = pingComponent.PingAsync(tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(PingReq.Instance, cancellationToken)).MustHaveHappened();
+            var pingReq = messageSender.GetLastTransmit<PingReq>();
+            Assert.NotNull(pingReq);
         }
 
         [Fact]
         public void PingAsync_Completes_Task_When_PingResp_Received()
         {
-            var task = pingComponent.PingAsync(cancellationToken);
+            var task = pingComponent.PingAsync(tokenSource.Token);
 
             pingComponent.Handle(PingResp.Instance);
 

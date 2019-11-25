@@ -13,7 +13,11 @@ namespace HyperMsg.Mqtt.Client
 
         public IReadOnlyList<object> SentMessages => sentMessages;
 
+        public T GetFirstMessage<T>() => (T)sentMessages.First();
+
         public T GetLastMessage<T>() => (T)sentMessages.Last();
+
+        public T GetSentMessage<T>(int order) => (T)sentMessages[order];
 
         public T GetLastTransmit<T>()
         {

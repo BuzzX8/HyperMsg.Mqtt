@@ -7,25 +7,28 @@ namespace HyperMsg.Mqtt.Client
 {
     public class ConnectionComponentTests
     {        
-        private readonly IMessageSender messageSender;
+        private readonly FakeMessageSender messageSender;
         private readonly MqttConnectionSettings connectionSettings;
         private readonly ConnectionComponent connectionComponent;
 
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationTokenSource tokenSource;
 
         public ConnectionComponentTests()
         {            
-            messageSender = A.Fake<IMessageSender>();
+            messageSender = new FakeMessageSender();
             connectionSettings = new MqttConnectionSettings(Guid.NewGuid().ToString());
             connectionComponent = new ConnectionComponent(messageSender, connectionSettings);
+            tokenSource = new CancellationTokenSource();
         }
 
         [Fact]
         public void ConnectAsync_Sends_Open_TransportCommand()
         {
-            _ = connectionComponent.ConnectAsync(false, cancellationToken);
+            _ = connectionComponent.ConnectAsync(false, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(TransportCommand.Open, cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetFirstMessage<TransportCommand>();
+            Assert.Equal(TransportCommand.Open, actual);
         }
 
         [Fact]
@@ -33,9 +36,11 @@ namespace HyperMsg.Mqtt.Client
         {
             connectionSettings.UseTls = true;
 
-            _ = connectionComponent.ConnectAsync(false, cancellationToken);
+            _ = connectionComponent.ConnectAsync(false, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetFirstMessage<TransportCommand>();
+            Assert.Equal(TransportCommand.Open, actual);
         }
 
         [Fact]
@@ -46,9 +51,11 @@ namespace HyperMsg.Mqtt.Client
                 ClientId = connectionSettings.ClientId
             };
 
-            _ = connectionComponent.ConnectAsync(false, cancellationToken);
+            _ = connectionComponent.ConnectAsync(false, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetLastTransmit<Connect>();
+            Assert.Equal(expectedPacket, actual);
         }
 
         [Fact]
@@ -60,9 +67,11 @@ namespace HyperMsg.Mqtt.Client
                 Flags = ConnectFlags.CleanSession
             };
 
-            _ = connectionComponent.ConnectAsync(true, cancellationToken);
+            _ = connectionComponent.ConnectAsync(true, tokenSource.Token);
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetLastTransmit<Connect>();
+            Assert.Equal(expectedPacket, actual);
         }
 
         [Fact]
@@ -77,7 +86,8 @@ namespace HyperMsg.Mqtt.Client
 
             _ = connectionComponent.ConnectAsync();
 
-            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetLastTransmit<Connect>();
+            Assert.Equal(expectedPacket, actual);
         }
 
         [Fact]
@@ -95,8 +105,10 @@ namespace HyperMsg.Mqtt.Client
             };
 
             _ = connectionComponent.ConnectAsync();
+            messageSender.WaitMessageToSent();
 
-            A.CallTo(() => messageSender.SendAsync(new Transmit<Connect>(expectedPacket), cancellationToken)).MustHaveHappened();
+            var actual = messageSender.GetLastTransmit<Connect>();
+            Assert.Equal(expectedPacket, actual);
         }
 
         [Fact]
