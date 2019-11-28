@@ -1,7 +1,7 @@
 ﻿using HyperMsg.Integration;
 using HyperMsg.Mqtt.Client;
 using HyperMsg.Mqtt.Serialization;
-using HyperMsg.Transport.Socket;
+using HyperMsg.Socket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,17 +15,18 @@ namespace HyperMsg.Mqtt.Integration
     [Collection("Integration")]
     public abstract class MqttClientIntegrationTestsBase : IntegrationFixtureBase, IDisposable
     {
+        const int DefaultBufferSize = 2048;
         const int MqttPort = 1883;
 
         protected readonly string ClientId = Guid.NewGuid().ToString();
+        protected readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, MqttPort);
         private readonly List<Packet> responses;
 
-        public MqttClientIntegrationTestsBase()
+        public MqttClientIntegrationTestsBase() : base(DefaultBufferSize, DefaultBufferSize)
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
             responses = new List<Packet>();
-            Configurable.UseCoreServices(2048, 2048);
-            Configurable.UseSockets(new IPEndPoint(IPAddress.Loopback, MqttPort));
+            Configurable.UseSockets(EndPoint);
             Configurable.UseMqttSerialization();
             Configurable.UseMqttClient(ConnectionSettings);
             HandlerRegistry.Register<Received<Packet>>(p => responses.Add(p.Message));
@@ -44,15 +45,5 @@ namespace HyperMsg.Mqtt.Integration
         protected Task DisconnectAsync(CancellationToken cancellationToken) => Client.DisconnectAsync(cancellationToken);
 
         public void Dispose() => DisconnectAsync(default).Wait();
-
-        protected override void ConfigureSerializer(IConfigurable configurable)
-        {
-            
-        }
-
-        protected override void ConfigureTransport(IConfigurable configurable)
-        {
-            
-        }
     }
 }
