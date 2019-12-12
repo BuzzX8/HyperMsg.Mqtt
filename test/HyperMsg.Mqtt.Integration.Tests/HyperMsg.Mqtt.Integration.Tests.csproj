@@ -11,12 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg.Core" Version="1.0.0" />
-    <PackageReference Include="HyperMsg.Integration" Version="1.0.1" />
+    <PackageReference Include="HyperMsg.Core" Version="0.9.0-alpha" />
+    <PackageReference Include="HyperMsg.Integration" Version="0.9.0-alpha" />
     <PackageReference Include="HyperMsg.Socket" Version="1.0.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0-preview-20191115-01" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
