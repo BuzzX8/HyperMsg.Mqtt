@@ -12,7 +12,7 @@
                 var handlerRegistry = (IMessageHandlerRegistry)p.GetService(typeof(IMessageHandlerRegistry));
 
                 var serializer = new SerializationComponent(transmittingBuffer);
-                handlerRegistry.Register<Transmit<Packet>>(serializer.Handle);
+                handlerRegistry.Register<Transmit<Connect>>(serializer.HandleAsync);
 
                 var deserializer = new DeserializationComponent(messageSender);
                 receivingBuffer.FlushRequested += deserializer.ProcessBufferFlushAsync;

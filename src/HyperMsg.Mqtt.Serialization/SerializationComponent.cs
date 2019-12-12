@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Serialization
 {
@@ -14,6 +16,12 @@ namespace HyperMsg.Mqtt.Serialization
         internal void Handle(Transmit<Packet> transmit)
         {
             buffer.Writer.WriteMqttPacket(transmit);
+        }
+
+        internal async Task HandleAsync(Transmit<Connect> transmit, CancellationToken cancellationToken)
+        {
+            buffer.Writer.WriteMqttPacket(transmit);
+            await buffer.FlushAsync(cancellationToken);
         }
     }
 }
