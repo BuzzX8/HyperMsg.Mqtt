@@ -26,10 +26,10 @@ namespace HyperMsg.Mqtt.Integration
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
             responses = new List<Packet>();
-            Configurable.UseSockets(EndPoint, true);
+            Configurable.UseSockets(EndPoint, false);
             Configurable.UseMqttSerialization();
             Configurable.UseMqttClient(ConnectionSettings);
-            HandlerRegistry.Register<Received<Packet>>(p => responses.Add(p.Message));
+            //HandlerRegistry.Register<Received<Packet>>(p => responses.Add(p.Message));
         }
 
         protected IMqttClient Client => GetService<IMqttClient>();
