@@ -16,31 +16,6 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    const byte ConnectCode = 0b00010000;
 
-	    private static readonly Dictionary<Type, Action<IBufferWriter<byte>, Packet>> writers;
-
-	    static SerializationsExtensions()
-	    {
-		    writers = new Dictionary<Type, Action<IBufferWriter<byte>, Packet>>();
-		    AddWriter<Connect>(Write);
-		    AddWriter<ConnAck>(Write);
-		    AddWriter<Publish>(Write);
-		    AddWriter<PubAck>(Write);
-		    AddWriter<PubRec>(Write);
-		    AddWriter<PubRel>(Write);
-		    AddWriter<PubComp>(Write);
-		    AddWriter<Subscribe>(Write);
-		    AddWriter<SubAck>(Write);
-		    AddWriter<Unsubscribe>(Write);
-		    AddWriter<UnsubAck>(Write);
-		    AddWriter<PingReq>(Write);
-		    AddWriter<PingResp>(Write);
-		    AddWriter<Disconnect>(Write);
-		}
-
-	    private static void AddWriter<T>(Action<IBufferWriter<byte>, T> writer) where T : Packet => writers.Add(typeof(T), (w, p) => writer(w, (T)p));
-
-        public static void WriteMqttPacket(this IBufferWriter<byte> writer, Packet packet) => writers[packet.GetType()](writer, packet);
-
         public static void Write(this IBufferWriter<byte> writer, Connect connect)
 	    {
             var contentLength = 10 + GetStringByteCount(connect.ClientId);

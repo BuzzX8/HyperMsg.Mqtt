@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,60 +14,72 @@ namespace HyperMsg.Mqtt.Serialization
             this.buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
         }
 
-        internal async Task HandleAsync(Transmit<Connect> connect, CancellationToken cancellationToken)
+        private IBufferWriter<byte> Writer => buffer.Writer;
+
+        internal Task HandleAsync(Transmit<Connect> connect, CancellationToken cancellationToken)
         {
-            buffer.Writer.WriteMqttPacket(connect);
-            await buffer.FlushAsync(cancellationToken);
+            Writer.Write(connect);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<ConnAck> conAck, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<ConnAck> conAck, CancellationToken cancellationToken)
         {
-
+            Writer.Write(conAck);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<Subscribe> subscribe, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<Subscribe> subscribe, CancellationToken cancellationToken)
         {
-
+            Writer.Write(subscribe);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<SubAck> subAck, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<SubAck> subAck, CancellationToken cancellationToken)
         {
-
+            Writer.Write(subAck);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<Publish> publish, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<Publish> publish, CancellationToken cancellationToken)
         {
-
+            Writer.Write(publish);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PubAck> pubAck, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PubAck> pubAck, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pubAck);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PubRec> pubRec, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PubRec> pubRec, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pubRec);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PubRel> pubRel, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PubRel> pubRel, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pubRel);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PubComp> pubComp, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PubComp> pubComp, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pubComp);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PingReq> pingReq, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PingReq> pingReq, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pingReq);
+            return buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<PingResp> pingResp, CancellationToken cancellationToken)
+        internal Task HandleAsync(Transmit<PingResp> pingResp, CancellationToken cancellationToken)
         {
-
+            Writer.Write(pingResp);
+            return buffer.FlushAsync(cancellationToken);
         }
     }
 }
