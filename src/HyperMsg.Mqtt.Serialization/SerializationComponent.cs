@@ -13,15 +13,25 @@ namespace HyperMsg.Mqtt.Serialization
             this.buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
         }
 
-        internal void Handle(Transmit<Packet> transmit)
+        internal async Task HandleAsync(Transmit<Connect> connect, CancellationToken cancellationToken)
         {
-            buffer.Writer.WriteMqttPacket(transmit);
+            buffer.Writer.WriteMqttPacket(connect);
+            await buffer.FlushAsync(cancellationToken);
         }
 
-        internal async Task HandleAsync(Transmit<Connect> transmit, CancellationToken cancellationToken)
+        internal async Task HandleAsync(Transmit<ConnAck> conAck, CancellationToken cancellationToken)
         {
-            buffer.Writer.WriteMqttPacket(transmit);
-            await buffer.FlushAsync(cancellationToken);
+
+        }
+
+        internal async Task HandleAsync(Transmit<Subscribe> subscribe, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<SubAck> subAck, CancellationToken cancellationToken)
+        {
+
         }
     }
 }

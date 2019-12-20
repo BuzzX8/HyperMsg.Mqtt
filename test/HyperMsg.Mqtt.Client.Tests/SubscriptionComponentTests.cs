@@ -1,7 +1,5 @@
-﻿using FakeItEasy;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Client
@@ -11,8 +9,6 @@ namespace HyperMsg.Mqtt.Client
         private readonly FakeMessageSender messageSender;
         private readonly SubscriptionComponent subscriptionComponent;
         private readonly CancellationTokenSource tokenSource;
-
-        private Packet sentPacket;
 
         public SubscriptionComponentTests()
         {
