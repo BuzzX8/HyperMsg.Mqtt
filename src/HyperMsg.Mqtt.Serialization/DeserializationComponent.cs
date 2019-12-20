@@ -16,6 +16,12 @@ namespace HyperMsg.Mqtt.Serialization
         public Task ProcessBufferFlushAsync(IBufferReader<byte> reader, CancellationToken cancellationToken)
         {
             var buffer = reader.Read();
+
+            if (buffer.Length == 0)
+            {
+                return Task.CompletedTask;
+            }
+
             var packetRead = buffer.ReadMqttPacket();
 
             if (packetRead.Item1 == 0)
