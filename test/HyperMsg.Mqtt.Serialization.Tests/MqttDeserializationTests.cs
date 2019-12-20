@@ -55,11 +55,11 @@ namespace HyperMsg.Mqtt.Serialization
 				0x05); //Code of response				
 		}
 
-        private static object[] TestCase(Packet expected, params byte[] serialized) => new object[] { serialized, (serialized.Length, expected) };
+        private static object[] TestCase(object expected, params byte[] serialized) => new object[] { serialized, (serialized.Length, expected) };
 
-        [Theory(DisplayName = "Deserialize return correct DeserializationResult")]
+        [Theory(DisplayName = "Deserialize return correct deserialization result")]
 	    [MemberData(nameof(DeserializeTestCases))]
-		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int, Packet) expected)
+		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int BytesConsumed, object Packet) expected)
 	    {
             var actual = new ReadOnlySequence<byte>(serialized).ReadMqttPacket();
 

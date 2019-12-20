@@ -12,9 +12,7 @@
                 var handlerRegistry = (IMessageHandlerRegistry)p.GetService(typeof(IMessageHandlerRegistry));
                 
                 RegisterSerializationHandlers(transmittingBuffer, handlerRegistry);
-
-                var deserializer = new DeserializationComponent(messageSender);
-                receivingBuffer.FlushRequested += deserializer.ProcessBufferFlushAsync;
+                RegisterDeserializationHandler(receivingBuffer, messageSender);
             });
         }
 
@@ -32,6 +30,12 @@
             handlerRegistry.Register<Transmit<PubComp>>(serializer.HandleAsync);
             handlerRegistry.Register<Transmit<PingReq>>(serializer.HandleAsync);
             handlerRegistry.Register<Transmit<PingResp>>(serializer.HandleAsync);
+        }
+
+        private static void RegisterDeserializationHandler(IBuffer buffer, IMessageSender messageSender)
+        {
+            var deserializer = new DeserializationComponent(messageSender);
+            buffer.FlushRequested += deserializer.ProcessBufferFlushAsync;
         }
     }
 }

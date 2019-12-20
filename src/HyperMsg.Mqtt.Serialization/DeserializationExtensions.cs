@@ -28,7 +28,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-	    public static (int, Packet) ReadMqttPacket(this ReadOnlySequence<byte> buffer)
+	    public static (int BytesConsumed, object Packet) ReadMqttPacket(this ReadOnlySequence<byte> buffer)
 	    {
             var span = buffer.First.Span;
             var code = span[0];
