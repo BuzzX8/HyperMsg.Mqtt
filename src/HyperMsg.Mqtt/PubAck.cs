@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class PubAck : Packet, IEquatable<PubAck>
+    public class PubAck : IEquatable<PubAck>
     {
 	    public PubAck(ushort id)
 	    {

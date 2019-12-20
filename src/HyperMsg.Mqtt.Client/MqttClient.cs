@@ -6,93 +6,67 @@ using System.Threading.Tasks;
 namespace HyperMsg.Mqtt.Client
 {
     public class MqttClient : IMqttClient
-    {        
-        private readonly IMessageSender messageSender;
-
-        private readonly ConnectionComponent connectionController;
-        private readonly PingComponent pingHandler;
-        private readonly PublishComponent publishHandler;
-        private readonly SubscriptionComponent subscriptionHandler;        
+    {
+        private readonly ConnectionComponent connectionComponent;
+        private readonly PingComponent pingComponent;
+        private readonly PublishComponent publishComponent;
+        private readonly SubscriptionComponent subscriptionComponent;        
 
         public MqttClient(IMessageSender messageSender, MqttConnectionSettings connectionSettings)
         {
-            this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-
-            connectionController = new ConnectionComponent(messageSender, connectionSettings);
-            pingHandler = new PingComponent(messageSender);
-            publishHandler = new PublishComponent(messageSender);
-            subscriptionHandler = new SubscriptionComponent(messageSender);
+            connectionComponent = new ConnectionComponent(messageSender, connectionSettings);
+            pingComponent = new PingComponent(messageSender);
+            publishComponent = new PublishComponent(messageSender);
+            subscriptionComponent = new SubscriptionComponent(messageSender);
         }
 
-        public Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default) => connectionController.ConnectAsync(cleanSession, cancellationToken);
+        public Task<SessionState> ConnectAsync(bool cleanSession = false, CancellationToken cancellationToken = default) => connectionComponent.ConnectAsync(cleanSession, cancellationToken);
 
-        public Task DisconnectAsync(CancellationToken cancellationToken = default) => connectionController.DisconnectAsync(cancellationToken);
+        public Task DisconnectAsync(CancellationToken cancellationToken = default) => connectionComponent.DisconnectAsync(cancellationToken);
 
-        public Task PingAsync(CancellationToken cancellationToken = default) => pingHandler.PingAsync(cancellationToken);
+        public Task PingAsync(CancellationToken cancellationToken = default) => pingComponent.PingAsync(cancellationToken);
 
         public Task PublishAsync(PublishRequest request, CancellationToken cancellationToken = default)
         {
             _ = request ?? throw new ArgumentNullException(nameof(request));
-            return publishHandler.PublishAsync(request, cancellationToken);
+            return publishComponent.PublishAsync(request, cancellationToken);
         }
 
         public Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {
             _ = requests ?? throw new ArgumentNullException(nameof(requests));
-            return subscriptionHandler.SubscribeAsync(requests, cancellationToken);
+            return subscriptionComponent.SubscribeAsync(requests, cancellationToken);
         }
 
         public Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken cancellationToken = default)
         {
             _ = topics ?? throw new ArgumentNullException(nameof(topics));
-            return subscriptionHandler.UnsubscribeAsync(topics, cancellationToken);
+            return subscriptionComponent.UnsubscribeAsync(topics, cancellationToken);
         }
-        public Task HandleAsync(Received<Packet> message, CancellationToken cancellationToken = default)
-        {
-            switch ((Packet)message)
-            {
-                case ConnAck connAck:
-                    connectionController.Handle(connAck);
-                    break;
 
-                case SubAck subAck:
-                    subscriptionHandler.Handle(subAck);
-                    break;
+        internal void Handle(Received<ConnAck> connAck) => connectionComponent.Handle(connAck);
 
-                case UnsubAck unsubAck:
-                    subscriptionHandler.Handle(unsubAck);
-                    break;
+        internal void Handle(Received<SubAck> subAck) => subscriptionComponent.Handle(subAck);
 
-                case PubAck pubAck:
-                    publishHandler.Handle(pubAck);
-                    break;
+        internal void Handle(Received<UnsubAck> unsubAck) => subscriptionComponent.Handle(unsubAck);
 
-                case PubRec pubRec:
-                    return publishHandler.HandleAsync(pubRec, cancellationToken);
+        internal Task HandleAsync(Received<Publish> publish, CancellationToken cancellationToken) => publishComponent.HandleAsync(publish, cancellationToken);
 
-                case PubComp pubComp:
-                    publishHandler.Handle(pubComp);
-                    break;
+        internal void Handle(Received<PubAck> pubAck) => publishComponent.Handle(pubAck);
 
-                case Publish publish:
-                    return publishHandler.HandleAsync(publish, cancellationToken);
+        internal Task HandleAsync(Received<PubRec> pubRec, CancellationToken cancellationToken) => publishComponent.HandleAsync(pubRec, cancellationToken);
 
-                case PubRel pubRel:
-                    return publishHandler.HandleAsync(pubRel, cancellationToken);
+        internal Task HandleAsync(Received<PubRel> pubRel, CancellationToken cancellationToken) => publishComponent.HandleAsync(pubRel, cancellationToken);
 
-                case PingResp pingResp:
-                    pingHandler.Handle(pingResp);
-                    break;
-            }
+        internal void Handle(Received<PubComp> pubComp) => publishComponent.Handle(pubComp);
 
-            return Task.CompletedTask;
-        }
+        internal void Handle(Received<PingResp> pingResp) => pingComponent.Handle(pingResp);
 
         public event EventHandler<PublishReceivedEventArgs> PublishReceived
         {
-            add => publishHandler.PublishReceived += value;
+            add => publishComponent.PublishReceived += value;
             
-            remove => publishHandler.PublishReceived -= value;
+            remove => publishComponent.PublishReceived -= value;
         }
     }
 }

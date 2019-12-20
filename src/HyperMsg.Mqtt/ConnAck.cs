@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class ConnAck : Packet, IEquatable<ConnAck>
+    public class ConnAck : IEquatable<ConnAck>
     {
 		public ConnAck(ConnectionResult resultCode, bool sessionPresent = false)
 		{

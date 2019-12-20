@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class PubComp : Packet, IEquatable<PubComp>
+    public class PubComp : IEquatable<PubComp>
     {
 	    public PubComp(ushort packetId)
 	    {

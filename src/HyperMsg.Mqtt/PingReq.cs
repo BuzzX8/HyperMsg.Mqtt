@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-	public class PingReq : Packet, IEquatable<PingReq>
+	public class PingReq : IEquatable<PingReq>
 	{
         public static readonly PingReq Instance = new PingReq();
 

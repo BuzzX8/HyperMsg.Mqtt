@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
-    public class Unsubscribe : Packet, IEquatable<Unsubscribe>
+    public class Unsubscribe : IEquatable<Unsubscribe>
     {
         public Unsubscribe(ushort id, IEnumerable<string> topics)
         {
