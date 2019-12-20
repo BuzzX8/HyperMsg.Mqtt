@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class MqttClient : IMqttClient
+    internal class MqttClient : IMqttClient
     {
         private readonly ConnectionComponent connectionComponent;
         private readonly PingComponent pingComponent;
