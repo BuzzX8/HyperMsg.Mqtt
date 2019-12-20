@@ -33,5 +33,40 @@ namespace HyperMsg.Mqtt.Serialization
         {
 
         }
+
+        internal async Task HandleAsync(Transmit<Publish> publish, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PubAck> pubAck, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PubRec> pubRec, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PubRel> pubRel, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PubComp> pubComp, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PingReq> pingReq, CancellationToken cancellationToken)
+        {
+
+        }
+
+        internal async Task HandleAsync(Transmit<PingResp> pingResp, CancellationToken cancellationToken)
+        {
+
+        }
     }
 }

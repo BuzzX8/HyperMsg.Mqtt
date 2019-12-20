@@ -41,7 +41,7 @@ namespace HyperMsg.Mqtt.Serialization
 
         public static void WriteMqttPacket(this IBufferWriter<byte> writer, Packet packet) => writers[packet.GetType()](writer, packet);
 
-        private static void Write(IBufferWriter<byte> writer, Connect connect)
+        public static void Write(this IBufferWriter<byte> writer, Connect connect)
 	    {
             var contentLength = 10 + GetStringByteCount(connect.ClientId);
 
@@ -102,7 +102,7 @@ namespace HyperMsg.Mqtt.Serialization
             }
         }
 
-        private static void Write(IBufferWriter<byte> writer, ConnAck connAck)
+        public static void Write(this IBufferWriter<byte> writer, ConnAck connAck)
 	    {
 		    var span = writer.GetSpan(4);
 
@@ -114,7 +114,7 @@ namespace HyperMsg.Mqtt.Serialization
 			writer.Advance(4);
 		}
 
-	    private static void Write(IBufferWriter<byte> writer, Publish publish)
+	    public static void Write(this IBufferWriter<byte> writer, Publish publish)
 	    {
 			byte header = 0b00110000;
 
@@ -148,15 +148,15 @@ namespace HyperMsg.Mqtt.Serialization
 			writer.Advance(publish.Message.Length + sizeof(ushort));
 	    }
 
-	    private static void Write(IBufferWriter<byte> writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);
+	    public static void Write(this IBufferWriter<byte> writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);
 
-	    private static void Write(IBufferWriter<byte> writer, PubRec pubRec) => WriteShortPacket(writer, PacketCodes.Pubrec, pubRec.Id);
+	    public static void Write(this IBufferWriter<byte> writer, PubRec pubRec) => WriteShortPacket(writer, PacketCodes.Pubrec, pubRec.Id);
 
-	    private static void Write(IBufferWriter<byte> writer, PubRel pubRel) => WriteShortPacket(writer, PacketCodes.Pubrel, pubRel.Id);
+	    public static void Write(this IBufferWriter<byte> writer, PubRel pubRel) => WriteShortPacket(writer, PacketCodes.Pubrel, pubRel.Id);
 
-		private static void Write(IBufferWriter<byte> writer, PubComp pubComp) => WriteShortPacket(writer, PacketCodes.Pubcomp, pubComp.Id);
+		public static void Write(this IBufferWriter<byte> writer, PubComp pubComp) => WriteShortPacket(writer, PacketCodes.Pubcomp, pubComp.Id);
 
-	    private static void Write(IBufferWriter<byte> writer, Subscribe subscribe)
+	    public static void Write(this IBufferWriter<byte> writer, Subscribe subscribe)
 	    {
 		    var contentLength = GetSubscriptionsByteCount(subscribe.Subscriptions) + sizeof(ushort);//ID + subscriptions
 		    WriteHeaderWithLength(writer, PacketCodes.Subscribe, subscribe.Id, contentLength);
@@ -173,7 +173,7 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static int GetSubscriptionsByteCount(IEnumerable<(string, QosLevel)> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.Item1) + 1);
 
-		private static void Write(IBufferWriter<byte> writer, SubAck subAck)
+		public static void Write(this IBufferWriter<byte> writer, SubAck subAck)
 		{
             var results = subAck.Results.ToArray();
 			var contentLength = results.Length + sizeof(ushort);
@@ -189,7 +189,7 @@ namespace HyperMsg.Mqtt.Serialization
 			writer.Advance(results.Length);
 		}
 
-	    private static void Write(IBufferWriter<byte> writer, Unsubscribe unsubscribe)
+	    public static void Write(this IBufferWriter<byte> writer, Unsubscribe unsubscribe)
 	    {
 		    var contentLength = GetTopicsByteCount(unsubscribe.Topics) + sizeof(ushort);//ID + topics
 		    WriteHeaderWithLength(writer, PacketCodes.Unsubscribe, unsubscribe.Id, contentLength);
@@ -219,7 +219,7 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static int GetStringByteCount(string str) => string.IsNullOrEmpty(str) ? 0 : Encoding.UTF8.GetByteCount(str) + sizeof(ushort);
 
-		private static void Write(IBufferWriter<byte> writer, UnsubAck unsubAck) => WriteShortPacket(writer, PacketCodes.UnsubAck, unsubAck.Id);
+		public static void Write(this IBufferWriter<byte> writer, UnsubAck unsubAck) => WriteShortPacket(writer, PacketCodes.UnsubAck, unsubAck.Id);
 
 	    private static void WriteShortPacket(IBufferWriter<byte> writer, byte code, ushort packetId)
 	    {
@@ -232,11 +232,11 @@ namespace HyperMsg.Mqtt.Serialization
 		    writer.Advance(4);
 	    }
 
-		private static void Write(IBufferWriter<byte> writer, PingReq pingReq) => writer.Write(PingReq);
+		public static void Write(this IBufferWriter<byte> writer, PingReq pingReq) => writer.Write(PingReq);
 
-	    private static void Write(IBufferWriter<byte> writer, PingResp pingResp) => writer.Write(PingResp);
+	    public static void Write(this IBufferWriter<byte> writer, PingResp pingResp) => writer.Write(PingResp);
 
-		private static void Write(IBufferWriter<byte> writer, Disconnect disconnect) => writer.Write(Disconnect);
+		public static void Write(this IBufferWriter<byte> writer, Disconnect disconnect) => writer.Write(Disconnect);
 
 	    public static int WriteRemainingLength(this Memory<byte> buffer, int length)
 	    {
