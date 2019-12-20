@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
-    public class SubAck : Packet, IEquatable<SubAck>
+    public class SubAck : IEquatable<SubAck>
     {
         public SubAck(ushort id, IEnumerable<SubscriptionResult> results)
         {

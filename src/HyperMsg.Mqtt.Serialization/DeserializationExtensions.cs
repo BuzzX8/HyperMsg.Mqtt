@@ -8,14 +8,14 @@ namespace HyperMsg.Mqtt.Serialization
 {
     public static class DeserializationExtensions
     {
-	    private static readonly Dictionary<byte, Packet> TwoBytePackets = new Dictionary<byte, Packet>
+	    private static readonly Dictionary<byte, object> TwoBytePackets = new Dictionary<byte, object>
 	    {
 		    {PacketCodes.PingReq, new PingReq()},
 		    {PacketCodes.PingResp, new PingResp()},
 		    {PacketCodes.Disconnect, new Disconnect()}
 	    };
 
-	    private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, Packet>> Readers = new Dictionary<byte, Func<ReadOnlyMemory<byte>, int, Packet>>
+	    private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>> Readers = new Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>>
 	    {
 		    {PacketCodes.ConAck, ReadConAck },
 		    {PacketCodes.Subscribe, ReadSubscribe},
@@ -86,7 +86,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    };
 	    }
 
-		private static Packet GetTwoBytePacket(byte code, int length)
+		private static object GetTwoBytePacket(byte code, int length)
 	    {
 		    if (length != 0)
 		    {
@@ -96,7 +96,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    return TwoBytePackets[code];
 	    }
 
-	    private static Packet ReadSubscribe(ReadOnlyMemory<byte> buffer, int length)
+	    private static object ReadSubscribe(ReadOnlyMemory<byte> buffer, int length)
 	    {
 		    return ReadPacketWithItems<(string, QosLevel)>(buffer, length, ReadTopicFilter, (id, items) => new Subscribe(id, items));
 	    }
@@ -111,7 +111,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    return Encoding.UTF8.GetByteCount(topic) + 3;
 	    }
 
-	    private static Packet ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
+	    private static object ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
 	    {
 		    return ReadPacketWithItems<SubscriptionResult>(buffer, length, ReadSubsResult, (id, res) => new SubAck(id, res));
 	    }
@@ -123,7 +123,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    return 1;
 	    }
 
-	    private static Packet ReadUnsubscribe(ReadOnlyMemory<byte> buffer, int length)
+	    private static object ReadUnsubscribe(ReadOnlyMemory<byte> buffer, int length)
 	    {
 		    return ReadPacketWithItems<string>(buffer, length, ReadTopic, (id, items) => new Unsubscribe(id, items));
 	    }
@@ -134,7 +134,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    return Encoding.UTF8.GetByteCount(filter) + 2;
 	    }
 
-	    private static Packet ReadPacketWithItems<T>(ReadOnlyMemory<byte> buffer, int length, Func<ReadOnlyMemory<byte>, Action<T>, int> readItem, Func<ushort, T[], Packet> createResult)
+	    private static object ReadPacketWithItems<T>(ReadOnlyMemory<byte> buffer, int length, Func<ReadOnlyMemory<byte>, Action<T>, int> readItem, Func<ushort, T[], object> createResult)
 	    {
             var span = buffer.Span;
             ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
@@ -152,17 +152,17 @@ namespace HyperMsg.Mqtt.Serialization
 		    return createResult(id, items.ToArray());
 	    }
 
-		private static Packet ReadPuback(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubAck(id));
+		private static object ReadPuback(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubAck(id));
 
-	    private static Packet ReadUnsubAck(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new UnsubAck(id));
+	    private static object ReadUnsubAck(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new UnsubAck(id));
 
-	    private static Packet ReadPubcomp(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubComp(id));
+	    private static object ReadPubcomp(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubComp(id));
 
-	    private static Packet ReadPubrel(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRel(id));
+	    private static object ReadPubrel(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRel(id));
 
-	    private static Packet ReadPubrec(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRec(id));
+	    private static object ReadPubrec(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRec(id));
 
-	    private static Packet ReadPacketWithIdOnly(ReadOnlyMemory<byte> buffer, int length, Func<ushort, Packet> packetCreate)
+	    private static object ReadPacketWithIdOnly(ReadOnlyMemory<byte> buffer, int length, Func<ushort, object> packetCreate)
 	    {
 		    if (length != 2)
 		    {

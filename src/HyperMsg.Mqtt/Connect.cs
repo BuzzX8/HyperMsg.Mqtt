@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class Connect : Packet, IEquatable<Connect>
+    public class Connect : IEquatable<Connect>
     {
 		public ConnectFlags Flags { get; set; }
 

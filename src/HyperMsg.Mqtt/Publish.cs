@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class Publish : Packet, IEquatable<Publish>
+    public class Publish : IEquatable<Publish>
     {
         public Publish(ushort packetId, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
         {

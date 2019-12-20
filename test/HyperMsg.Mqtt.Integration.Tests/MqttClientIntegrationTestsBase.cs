@@ -20,12 +20,12 @@ namespace HyperMsg.Mqtt.Integration
 
         protected readonly string ClientId = Guid.NewGuid().ToString();
         protected readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, MqttPort);
-        private readonly List<Packet> responses;
+        private readonly List<object> responses;
 
         public MqttClientIntegrationTestsBase() : base(DefaultBufferSize, DefaultBufferSize)
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
-            responses = new List<Packet>();
+            responses = new List<object>();
             Configurable.UseSockets(EndPoint, false);
             Configurable.UseMqttSerialization();
             Configurable.UseMqttClient(ConnectionSettings);
@@ -34,9 +34,9 @@ namespace HyperMsg.Mqtt.Integration
 
         protected IMqttClient Client => GetService<IMqttClient>();
 
-        protected IReadOnlyList<Packet> Responses => responses;
+        protected IReadOnlyList<object> Responses => responses;
 
-        protected Packet LastResponse => responses.LastOrDefault();
+        protected object LastResponse => responses.LastOrDefault();
 
         protected MqttConnectionSettings ConnectionSettings { get; }
 

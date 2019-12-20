@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-	public class Disconnect : Packet, IEquatable<Disconnect>
+	public class Disconnect : IEquatable<Disconnect>
 	{
         public static readonly Disconnect Instance = new Disconnect();
 

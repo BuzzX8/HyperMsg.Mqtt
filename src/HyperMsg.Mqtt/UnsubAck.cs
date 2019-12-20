@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class UnsubAck : Packet, IEquatable<UnsubAck>
+    public class UnsubAck : IEquatable<UnsubAck>
     {
 	    public UnsubAck(ushort id)
 	    {

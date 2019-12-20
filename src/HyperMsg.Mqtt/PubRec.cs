@@ -2,7 +2,7 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class PubRec : Packet, IEquatable<PubRec>
+    public class PubRec : IEquatable<PubRec>
     {
 	    public PubRec(ushort id)
 	    {

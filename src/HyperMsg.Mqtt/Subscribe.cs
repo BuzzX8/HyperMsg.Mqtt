@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt
 {
-    public class Subscribe : Packet, IEquatable<Subscribe>
+    public class Subscribe : IEquatable<Subscribe>
 	{
         public Subscribe(ushort packetId, IEnumerable<(string, QosLevel)> subscriptions)
         {
