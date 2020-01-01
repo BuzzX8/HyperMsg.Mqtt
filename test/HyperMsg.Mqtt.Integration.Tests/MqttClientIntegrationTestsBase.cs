@@ -26,7 +26,7 @@ namespace HyperMsg.Mqtt.Integration
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
             responses = new List<object>();
-            Configurable.UseSockets(EndPoint, false);
+            Configurable.UseSockets(EndPoint);
             Configurable.UseMqttSerialization();
             Configurable.UseMqttClient(ConnectionSettings);
             //HandlerRegistry.Register<Received<Packet>>(p => responses.Add(p.Message));

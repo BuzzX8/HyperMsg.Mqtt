@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="HyperMsg.Core" Version="0.9.1-alpha" />
     <PackageReference Include="HyperMsg.Integration" Version="0.9.1-alpha" />
-    <PackageReference Include="HyperMsg.Socket" Version="1.0.2" />
+    <PackageReference Include="HyperMsg.Socket" Version="0.9.1-alpha" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0-preview-20191115-01" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
