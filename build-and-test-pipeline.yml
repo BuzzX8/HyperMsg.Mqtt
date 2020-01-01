@@ -13,9 +13,16 @@ steps:
     inputs:
       command: build
       projects: src/**/*.csproj
+  - task: DockerCompose@0
+    name: DockerCompose
+    inputs:
+      containerregistrytype: 'Container Registry'
+      dockerComposeFile: 'test/**/docker-compose.yml'
+      action: 'Run a Docker Compose command'
+      dockerComposeCommand: 'up'
   - task: DotNetCoreCLI@2
     name: test
     displayName: Test
     inputs:
       command: test
-      projects: test/**/*Client.Tests.csproj;test/**/*Serialization.Tests.csproj
+      projects: test/**/*.csproj
