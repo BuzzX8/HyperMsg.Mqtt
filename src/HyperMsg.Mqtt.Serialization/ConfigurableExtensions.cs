@@ -6,13 +6,12 @@
         {
             configurable.RegisterConfigurator((p, s) =>
             {
-                var transmittingBuffer = (ITransmittingBuffer)p.GetService(typeof(ITransmittingBuffer));
-                var receivingBuffer = (IReceivingBuffer)p.GetService(typeof(IReceivingBuffer));
-                var messageSender = (IMessageSender)p.GetService(typeof(IMessageSender));
-                var handlerRegistry = (IMessageHandlerRegistry)p.GetService(typeof(IMessageHandlerRegistry));
+                var bufferContext = p.GetRequiredService<IBufferContext>();
+                var messageSender = p.GetRequiredService<IMessageSender>();
+                var handlerRegistry = p.GetRequiredService<IMessageHandlerRegistry>();
                 
-                RegisterSerializationHandlers(transmittingBuffer, handlerRegistry);
-                RegisterDeserializationHandler(receivingBuffer, messageSender);
+                RegisterSerializationHandlers(bufferContext.TransmittingBuffer, handlerRegistry);
+                RegisterDeserializationHandler(bufferContext.ReceivingBuffer, messageSender);
             });
         }
 

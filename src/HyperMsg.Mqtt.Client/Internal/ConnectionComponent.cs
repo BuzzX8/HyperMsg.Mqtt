@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HyperMsg.Transport;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
