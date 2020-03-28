@@ -2,14 +2,12 @@
 {
     public static class ConfigurableExtensions
     {
-        public static void UseMqttClient(this IConfigurable configurable, MqttConnectionSettings connectionSettings)
-        {
-            configurable.AddSetting(nameof(MqttConnectionSettings), connectionSettings);
-            configurable.RegisterService(typeof(IMqttClient), (p, s) =>
+        public static void AddMqttClient(this IConfigurable configurable, MqttConnectionSettings connectionSettings)
+        {            
+            configurable.AddService(provider =>
             {               
-                var messageSender = (IMessageSender)p.GetService(typeof(IMessageSender));
-                var registry = (IMessageHandlerRegistry)p.GetService(typeof(IMessageHandlerRegistry));
-                var settings = (MqttConnectionSettings)s[nameof(MqttConnectionSettings)];
+                var messageSender = provider.GetRequiredService<IMessageSender>();
+                var registry = provider.GetService<IMessageHandlerRegistry>();
 
                 return RegisterClient(messageSender, registry, connectionSettings);
             });

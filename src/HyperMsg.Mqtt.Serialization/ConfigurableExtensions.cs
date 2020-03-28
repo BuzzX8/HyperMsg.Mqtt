@@ -4,11 +4,11 @@
     {
         public static void UseMqttSerialization(this IConfigurable configurable)
         {
-            configurable.RegisterConfigurator((p, s) =>
+            configurable.AddInitializer(provider =>
             {
-                var bufferContext = p.GetRequiredService<IBufferContext>();
-                var messageSender = p.GetRequiredService<IMessageSender>();
-                var handlerRegistry = p.GetRequiredService<IMessageHandlerRegistry>();
+                var bufferContext = provider.GetRequiredService<IBufferContext>();
+                var messageSender = provider.GetRequiredService<IMessageSender>();
+                var handlerRegistry = provider.GetRequiredService<IMessageHandlerRegistry>();
                 
                 RegisterSerializationHandlers(bufferContext.TransmittingBuffer, handlerRegistry);
                 RegisterDeserializationHandler(bufferContext.ReceivingBuffer, messageSender);
