@@ -10,10 +10,13 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public async Task ConnectAsync_Establishes_Connection()
         {
+            var connAck = default(ConnAck);
+            var observable = GetService<IMessageObservable>();
+            observable.Subscribe<Received<ConnAck>>(r => connAck = r);
             var sessionState = await ConnectAsync(true, CancellationToken.None);
 
             Assert.Equal(SessionState.Clean, sessionState);
-            Assert.IsType<ConnAck>(LastResponse);
+            Assert.NotNull(connAck);
         }
     }
 }

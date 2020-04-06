@@ -7,25 +7,25 @@
             configurable.AddService(provider =>
             {               
                 var messageSender = provider.GetRequiredService<IMessageSender>();
-                var registry = provider.GetService<IMessageHandlerRegistry>();
+                var observable = provider.GetService<IMessageObservable>();
 
-                return RegisterClient(messageSender, registry, connectionSettings);
+                return RegisterClient(messageSender, observable, connectionSettings);
             });
         }
 
-        private static IMqttClient RegisterClient(IMessageSender messageSender, IMessageHandlerRegistry registry, MqttConnectionSettings connectionSettings)
+        private static IMqttClient RegisterClient(IMessageSender messageSender, IMessageObservable observable, MqttConnectionSettings connectionSettings)
         {
             var client = new MqttClient(messageSender, connectionSettings);
 
-            registry.Register<Received<ConnAck>>(client.Handle);
-            registry.Register<Received<Publish>>(client.HandleAsync);
-            registry.Register<Received<PubAck>>(client.Handle);
-            registry.Register<Received<PubRec>>(client.HandleAsync);
-            registry.Register<Received<PubRel>>(client.HandleAsync);
-            registry.Register<Received<PubComp>>(client.Handle);
-            registry.Register<Received<SubAck>>(client.Handle);
-            registry.Register<Received<PingResp>>(client.Handle);
-            registry.Register<Received<UnsubAck>>(client.Handle);
+            observable.Subscribe<Received<ConnAck>>(client.Handle);
+            observable.Subscribe<Received<Publish>>(client.HandleAsync);
+            observable.Subscribe<Received<PubAck>>(client.Handle);
+            observable.Subscribe<Received<PubRec>>(client.HandleAsync);
+            observable.Subscribe<Received<PubRel>>(client.HandleAsync);
+            observable.Subscribe<Received<PubComp>>(client.Handle);
+            observable.Subscribe<Received<SubAck>>(client.Handle);
+            observable.Subscribe<Received<PingResp>>(client.Handle);
+            observable.Subscribe<Received<UnsubAck>>(client.Handle);
 
             return client;
         }

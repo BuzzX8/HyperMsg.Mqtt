@@ -1,10 +1,7 @@
-﻿using HyperMsg.Integration;
-using HyperMsg.Mqtt.Client;
+﻿using HyperMsg.Mqtt.Client;
 using HyperMsg.Mqtt.Serialization;
-using HyperMsg.Socket;
+using HyperMsg.Transport.Sockets;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,30 +10,29 @@ using Xunit;
 namespace HyperMsg.Mqtt.Integration
 {
     [Collection("Integration")]
-    public abstract class MqttClientIntegrationTestsBase : IntegrationFixtureBase, IDisposable
+    public abstract class MqttClientIntegrationTestsBase : IDisposable
     {
         const int DefaultBufferSize = 2048;
         const int MqttPort = 1883;
 
         protected readonly string ClientId = Guid.NewGuid().ToString();
         protected readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, MqttPort);
-        private readonly List<object> responses;
 
-        public MqttClientIntegrationTestsBase() : base(DefaultBufferSize, DefaultBufferSize)
+        private readonly ServiceProvider serviceProvider;
+
+        public MqttClientIntegrationTestsBase()
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
-            responses = new List<object>();
-            Configurable.UseSockets(EndPoint, false);
-            Configurable.UseMqttSerialization();
-            Configurable.AddMqttClient(ConnectionSettings);
-            //HandlerRegistry.Register<Received<Packet>>(p => responses.Add(p.Message));
+            serviceProvider = new ServiceProvider();
+            serviceProvider.AddCoreServices(DefaultBufferSize, DefaultBufferSize);
+            serviceProvider.AddSocketTransceiver(EndPoint);
+            serviceProvider.AddMqttSerialization();
+            serviceProvider.AddMqttClient(ConnectionSettings);
         }
 
+        protected T GetService<T>() where T : class => serviceProvider.GetRequiredService<T>();
+
         protected IMqttClient Client => GetService<IMqttClient>();
-
-        protected IReadOnlyList<object> Responses => responses;
-
-        protected object LastResponse => responses.LastOrDefault();
 
         protected MqttConnectionSettings ConnectionSettings { get; }
 
