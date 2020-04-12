@@ -15,20 +15,21 @@
             });
         }
 
-        private static void AddSerializationComponent(IBuffer buffer, IMessageObservable handlerRegistry)
+        private static void AddSerializationComponent(IBuffer buffer, IMessageObservable observable)
         {
             var serializer = new SerializationComponent(buffer);
-            handlerRegistry.Subscribe<Transmit<Connect>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<ConnAck>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<Subscribe>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<SubAck>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<Publish>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PubAck>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PubRec>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PubRel>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PubComp>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PingReq>>(serializer.HandleAsync);
-            handlerRegistry.Subscribe<Transmit<PingResp>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Connect>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<ConnAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Disconnect>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Subscribe>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<SubAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Publish>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubRec>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubRel>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubComp>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PingReq>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PingResp>>(serializer.HandleAsync);
         }
 
         private static void AddDeserializationComponent(IBuffer buffer, IMessageSender messageSender)

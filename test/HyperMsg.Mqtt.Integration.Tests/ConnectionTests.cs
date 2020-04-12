@@ -12,7 +12,7 @@ namespace HyperMsg.Mqtt.Integration
         {
             var connAck = default(ConnAck);
             var observable = GetService<IMessageObservable>();
-            observable.Subscribe<Received<ConnAck>>(r => connAck = r);
+            observable.SubscribeReceiver<ConnAck>(r => connAck = r);
             var sessionState = await ConnectAsync(true, CancellationToken.None);
 
             Assert.Equal(SessionState.Clean, sessionState);
