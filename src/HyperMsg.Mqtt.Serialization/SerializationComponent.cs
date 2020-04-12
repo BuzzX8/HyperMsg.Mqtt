@@ -28,6 +28,12 @@ namespace HyperMsg.Mqtt.Serialization
             return buffer.FlushAsync(cancellationToken);
         }
 
+        internal Task HandleAsync(Transmit<Disconnect> disconnect, CancellationToken cancellationToken)
+        {
+            Writer.Write(disconnect);
+            return buffer.FlushAsync(cancellationToken);
+        }
+
         internal Task HandleAsync(Transmit<Subscribe> subscribe, CancellationToken cancellationToken)
         {
             Writer.Write(subscribe);

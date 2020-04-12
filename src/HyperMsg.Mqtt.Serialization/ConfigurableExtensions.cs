@@ -2,37 +2,37 @@
 {
     public static class ConfigurableExtensions
     {
-        public static void UseMqttSerialization(this IConfigurable configurable)
+        public static void AddMqttSerialization(this IConfigurable configurable)
         {
-            configurable.RegisterConfigurator((p, s) =>
+            configurable.AddInitializer(provider =>
             {
-                var transmittingBuffer = (ITransmittingBuffer)p.GetService(typeof(ITransmittingBuffer));
-                var receivingBuffer = (IReceivingBuffer)p.GetService(typeof(IReceivingBuffer));
-                var messageSender = (IMessageSender)p.GetService(typeof(IMessageSender));
-                var handlerRegistry = (IMessageHandlerRegistry)p.GetService(typeof(IMessageHandlerRegistry));
+                var bufferContext = provider.GetRequiredService<IBufferContext>();
+                var messageSender = provider.GetRequiredService<IMessageSender>();
+                var observable = provider.GetRequiredService<IMessageObservable>();
                 
-                RegisterSerializationHandlers(transmittingBuffer, handlerRegistry);
-                RegisterDeserializationHandler(receivingBuffer, messageSender);
+                AddSerializationComponent(bufferContext.TransmittingBuffer, observable);
+                AddDeserializationComponent(bufferContext.ReceivingBuffer, messageSender);
             });
         }
 
-        private static void RegisterSerializationHandlers(IBuffer buffer, IMessageHandlerRegistry handlerRegistry)
+        private static void AddSerializationComponent(IBuffer buffer, IMessageObservable observable)
         {
             var serializer = new SerializationComponent(buffer);
-            handlerRegistry.Register<Transmit<Connect>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<ConnAck>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<Subscribe>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<SubAck>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<Publish>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PubAck>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PubRec>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PubRel>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PubComp>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PingReq>>(serializer.HandleAsync);
-            handlerRegistry.Register<Transmit<PingResp>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Connect>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<ConnAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Disconnect>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Subscribe>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<SubAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<Publish>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubAck>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubRec>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubRel>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PubComp>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PingReq>>(serializer.HandleAsync);
+            observable.Subscribe<Transmit<PingResp>>(serializer.HandleAsync);
         }
 
-        private static void RegisterDeserializationHandler(IBuffer buffer, IMessageSender messageSender)
+        private static void AddDeserializationComponent(IBuffer buffer, IMessageSender messageSender)
         {
             var deserializer = new DeserializationComponent(messageSender);
             buffer.FlushRequested += deserializer.ProcessBufferFlushAsync;

@@ -1,4 +1,4 @@
-﻿using FakeItEasy;
+﻿using HyperMsg.Transport;
 using System;
 using System.Threading;
 using Xunit;
