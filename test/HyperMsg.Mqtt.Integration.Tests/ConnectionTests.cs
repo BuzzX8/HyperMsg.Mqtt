@@ -1,4 +1,6 @@
 ﻿using HyperMsg.Mqtt.Client;
+using HyperMsg.Transport;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -8,15 +10,9 @@ namespace HyperMsg.Mqtt.Integration
     public class ConnectionTests : MqttClientIntegrationTestsBase
     {
         [Fact]
-        public async Task ConnectAsync_Establishes_Connection()
+        public void ConnectAsync_Establishes_Connection()
         {
-            var connAck = default(ConnAck);
-            var observable = GetService<IMessageObservable>();
-            observable.SubscribeReceiver<ConnAck>(r => connAck = r);
-            var sessionState = await ConnectAsync(true, CancellationToken.None);
-
-            Assert.Equal(SessionState.Clean, sessionState);
-            Assert.NotNull(connAck);
+            Assert.False(true);
         }
     }
 }

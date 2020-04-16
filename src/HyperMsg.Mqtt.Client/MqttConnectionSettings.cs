@@ -9,6 +9,8 @@ namespace HyperMsg.Mqtt.Client
             ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
         }
 
+        public bool CleanSession { get; set; }
+
         /// <summary>
         /// Unique ID of client for server.
         /// </summary>
