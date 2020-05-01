@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt.Serialization
         [Fact]
         public void UseMqttSerializer_Registers_Serializer_Service()
         {
-            var configurable = A.Fake<IConfigurable>();
+            //var configurable = A.Fake<IConfigurable>();
 
             //configurable.UseMqttSerializer();
 

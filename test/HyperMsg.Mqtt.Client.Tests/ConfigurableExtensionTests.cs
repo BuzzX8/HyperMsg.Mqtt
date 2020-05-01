@@ -10,11 +10,11 @@ namespace HyperMsg.Mqtt.Client
         public void AddMqttClient_Adds_Configurator_Which_Registers_IMqttClient_Service()
         {
             var settings = new MqttConnectionSettings(Guid.NewGuid().ToString());
-            var configurable = A.Fake<IConfigurable>();
+            var configurable = A.Fake<IServiceRegistry>();
 
             configurable.AddMqttClient(settings);
 
-            A.CallTo(() => configurable.AddService(typeof(IMqttClient), A<Func<IServiceProvider, object>>._)).MustHaveHappened();
+            A.CallTo(() => configurable.Add(typeof(IMqttClient), A<Func<IServiceProvider, object>>._)).MustHaveHappened();
         }
     }
 }

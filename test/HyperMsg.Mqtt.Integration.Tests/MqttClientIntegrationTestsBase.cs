@@ -18,15 +18,15 @@ namespace HyperMsg.Mqtt.Integration
         protected readonly string ClientId = Guid.NewGuid().ToString();
         protected readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, MqttPort);
 
-        private readonly ServiceProvider serviceProvider;
+        private readonly ServiceContainer serviceProvider;
 
         public MqttClientIntegrationTestsBase()
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
-            serviceProvider = new ServiceProvider();
+            serviceProvider = new ServiceContainer();
             serviceProvider.AddCoreServices(DefaultBufferSize, DefaultBufferSize);
-            serviceProvider.AddSocketTransceiver(EndPoint);
-            serviceProvider.AddMqttSerialization();
+            serviceProvider.AddSocketTransport(EndPoint);
+            //serviceProvider.AddMqttSerialization();
             serviceProvider.AddMqttClient(ConnectionSettings);
         }
 

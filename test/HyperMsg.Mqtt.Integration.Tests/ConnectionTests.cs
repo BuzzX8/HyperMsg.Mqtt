@@ -12,6 +12,8 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public void ConnectAsync_Establishes_Connection()
         {
+            var context = GetService<IMessagingContext>();
+            context.ConnectAsync(ConnectionSettings, default);
             Assert.False(true);
         }
     }

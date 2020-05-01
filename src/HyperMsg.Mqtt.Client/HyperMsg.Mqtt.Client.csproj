@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg" Version="0.9.15-alpha" />
-    <PackageReference Include="HyperMsg.Extensions" Version="0.9.15-alpha" />
-    <PackageReference Include="HyperMsg.Transport" Version="0.9.13" />
+    <PackageReference Include="HyperMsg" Version="0.9.21-alpha" />
+    <PackageReference Include="HyperMsg.Extensions" Version="0.9.21-alpha" />
+    <PackageReference Include="HyperMsg.Transport" Version="0.9.14-alpha" />
   </ItemGroup>
 
   <ItemGroup>

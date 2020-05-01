@@ -2,7 +2,7 @@
 {
     public static class ConfigurableExtensions
     {
-        public static void AddMqttClient(this IConfigurable configurable, MqttConnectionSettings connectionSettings)
+        public static void AddMqttClient(this IServiceRegistry configurable, MqttConnectionSettings connectionSettings)
         {            
             configurable.AddService(provider =>
             {               
