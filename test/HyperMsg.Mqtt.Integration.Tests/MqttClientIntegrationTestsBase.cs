@@ -1,5 +1,6 @@
 ﻿using HyperMsg.Mqtt.Client;
 using HyperMsg.Mqtt.Serialization;
+using HyperMsg.Transport;
 using HyperMsg.Transport.Sockets;
 using System;
 using System.Net;
@@ -18,27 +19,34 @@ namespace HyperMsg.Mqtt.Integration
         protected readonly string ClientId = Guid.NewGuid().ToString();
         protected readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, MqttPort);
 
-        private readonly ServiceContainer serviceProvider;
+        private readonly ServiceContainer serviceContainer;
 
         public MqttClientIntegrationTestsBase()
         {
             ConnectionSettings = new MqttConnectionSettings(ClientId);
-            serviceProvider = new ServiceContainer();
-            serviceProvider.AddCoreServices(DefaultBufferSize, DefaultBufferSize);
-            serviceProvider.AddSocketTransport(EndPoint);
-            serviceProvider.AddMqttSerialization();
-            serviceProvider.AddMqttClient(ConnectionSettings);
+            serviceContainer = new ServiceContainer();
+            serviceContainer.AddCoreServices(DefaultBufferSize, DefaultBufferSize);
+            serviceContainer.AddSocketTransport(EndPoint);
+            serviceContainer.AddMqttSerialization();
+            serviceContainer.AddMqttClient(ConnectionSettings);
         }
 
-        protected T GetService<T>() where T : class => serviceProvider.GetRequiredService<T>();
+        protected T GetService<T>() where T : class => serviceContainer.GetRequiredService<T>();
 
-        protected IMqttClient Client => GetService<IMqttClient>();
+        protected IMessagingContext MessagingContext => GetService<IMessagingContext>();
 
         protected MqttConnectionSettings ConnectionSettings { get; }
 
-        protected Task<SessionState> ConnectAsync(bool cleanSession, CancellationToken cancellationToken) => Client.ConnectAsync(cleanSession, cancellationToken);
+        protected async Task<SessionState> ConnectAsync(CancellationToken cancellationToken = default)
+        {
+            var context = GetService<IMessagingContext>();
+            await context.Sender.SendAsync(TransportCommand.Open, cancellationToken);
+            return await await context.StartConnectAsync(ConnectionSettings, cancellationToken);
+        }
 
-        protected Task DisconnectAsync(CancellationToken cancellationToken) => Client.DisconnectAsync(cancellationToken);
+        protected async Task DisconnectAsync(CancellationToken cancellationToken) 
+        { 
+        }
 
         public void Dispose() => DisconnectAsync(default).Wait();
     }

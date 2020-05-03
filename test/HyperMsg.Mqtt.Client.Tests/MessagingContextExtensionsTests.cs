@@ -1,5 +1,4 @@
-﻿using FakeItEasy;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -30,6 +29,33 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.Completion.IsCompleted);
             Assert.Equal(SessionState.Clean, task.Completion.Result);
+        }
+
+        [Fact]
+        public async Task StartSubscriptionAsync_Sends_Subscribe_Message()
+        {
+            var message = default(Subscribe);
+            broker.OnTransmit<Subscribe>(m => message = m);
+            var request = new[] { (Guid.NewGuid().ToString(), QosLevel.Qos0) };
+
+            await broker.StartSubscriptionAsync(request, default);
+
+            Assert.NotNull(message);
+            Assert.Equal(request, message.Subscriptions);
+        }
+
+        [Fact]
+        public async Task Received_SubAck_Completes_Task_With_Corect_Result()
+        {
+            var message = default(Subscribe);
+            broker.OnTransmit<Subscribe>(m => message = m);
+            var task = await broker.StartSubscriptionAsync(new[] { (Guid.NewGuid().ToString(), QosLevel.Qos0) }, default);
+            var expected = new[] { SubscriptionResult.SuccessQos0 };
+
+            broker.Received(new SubAck(message.Id, expected));
+
+            Assert.True(task.Completion.IsCompleted);
+            Assert.Equal(expected, task.Completion.Result);
         }
     }
 }

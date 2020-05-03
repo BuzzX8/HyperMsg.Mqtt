@@ -10,20 +10,20 @@ namespace HyperMsg.Mqtt.Integration
         [Fact]
         public async Task Subscribe_Receives_SubAck()
         {
-            var subscriptionRequest = new SubscriptionRequest(Guid.NewGuid().ToString(), QosLevel.Qos0);
-            await ConnectAsync(false, default);
+            await ConnectAsync(default);
+            var subscriptionRequest = new[] { (Guid.NewGuid().ToString(), QosLevel.Qos0) };
 
-            var result = await Client.SubscribeAsync(new[] { subscriptionRequest });
+            await await MessagingContext.StartSubscriptionAsync(subscriptionRequest, default);            
 
-            Assert.Single(result);
+            //Assert.Single(result);
         }
 
         [Fact]
         public async Task Unsubscribe_Receives_UnsubAck()
         {
-            await ConnectAsync(false, default);
+            await ConnectAsync(default);
 
-            await Client.UnsubscribeAsync(new[] { Guid.NewGuid().ToString() });
+            
             
             //Assert.IsType<UnsubAck>(LastResponse);
         }

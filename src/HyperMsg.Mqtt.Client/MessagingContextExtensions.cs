@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
@@ -9,6 +10,13 @@ namespace HyperMsg.Mqtt.Client
         {
             var task = new ConnectTask(messagingContext.Observable);
             await task.RunAsync(messagingContext.Sender, connectionSettings, cancellationToken);
+            return task;
+        }
+
+        public static async Task<SubscriptionTask> StartSubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<(string, QosLevel)> requests, CancellationToken cancellationToken)
+        {
+            var task = new SubscriptionTask(messagingContext.Observable);
+            await task.RunAsync(messagingContext.Sender, requests, cancellationToken);
             return task;
         }
     }

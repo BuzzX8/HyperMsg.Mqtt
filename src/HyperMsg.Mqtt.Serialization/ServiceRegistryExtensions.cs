@@ -15,6 +15,7 @@
         private static void AddSerializers(IServiceRegistry serviceRegistry)
         {
             serviceRegistry.AddSerializer<Connect>(SerializationsExtensions.Write);
+            serviceRegistry.AddSerializer<Subscribe>(SerializationsExtensions.Write);
         }
     }
 }
