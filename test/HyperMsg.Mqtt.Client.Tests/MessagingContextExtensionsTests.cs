@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -56,6 +57,32 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.Completion.IsCompleted);
             Assert.Equal(expected, task.Completion.Result);
+        }
+
+        [Fact]
+        public async Task StartUnsubscriptionAsync_Sends_Unsubscribe_Message()
+        {
+            var message = default(Unsubscribe);
+            broker.OnTransmit<Unsubscribe>(m => message = m);
+            var topics = Enumerable.Range(0, 9).Select(i => Guid.NewGuid().ToString()).ToArray();
+
+            await broker.StartUnsubscriptionAsync(topics, default);
+
+            Assert.NotNull(message);
+            Assert.Equal(topics, message.Topics);
+        }
+
+        [Fact]
+        public async Task Received_UnsubAck_Completes_Task_With_Correct_Result()
+        {
+            var message = default(Unsubscribe);
+            broker.OnTransmit<Unsubscribe>(m => message = m);
+            var topics = Enumerable.Range(0, 9).Select(i => Guid.NewGuid().ToString()).ToArray();
+            var task = await broker.StartUnsubscriptionAsync(topics, default);
+
+            broker.Received(new UnsubAck(message.Id));
+
+            Assert.True(task.Completion.IsCompleted);
         }
     }
 }

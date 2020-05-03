@@ -19,5 +19,12 @@ namespace HyperMsg.Mqtt.Client
             await task.RunAsync(messagingContext.Sender, requests, cancellationToken);
             return task;
         }
+
+        public static async Task<UnsubscriptionTask> StartUnsubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken cancellationToken)
+        {
+            var task = new UnsubscriptionTask(messagingContext.Observable);
+            await task.RunAsync(messagingContext.Sender, topics, cancellationToken);
+            return task;
+        }
     }
 }
