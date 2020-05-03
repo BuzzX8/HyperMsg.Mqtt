@@ -1,26 +1,31 @@
 ﻿using System;
-using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectTask
-    {        
-        private readonly CancellationToken cancellationToken;        
+    public class ConnectTask : IDisposable
+    {
         private readonly IDisposable conAckSubscription;
-        private readonly IDisposable cancelSubscription;
+        private IDisposable cancelSubscription;
         private readonly TaskCompletionSource<SessionState> completionSource;
 
-        internal ConnectTask(IMessageObservable messageObservable, CancellationToken cancellationToken)
+        internal ConnectTask(IMessageObservable messageObservable)
         {
             completionSource = new TaskCompletionSource<SessionState>();
-            conAckSubscription = messageObservable.OnReceived<ConnAck>(OnConAckReceived);
-            cancelSubscription = cancellationToken.Register(Dispose);
+            conAckSubscription = messageObservable.OnReceived<ConnAck>(OnConAckReceived);            
         }
 
-        internal Task<SessionState> Task => completionSource.Task;
+        public Task<SessionState> Completion => completionSource.Task;
+
+        public TaskAwaiter<SessionState> GetAwaiter() => completionSource.Task.GetAwaiter();
+
+        internal async Task RunAsync(IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
+        {
+            await messageSender.TransmitConnectAsync(connectionSettings, cancellationToken);
+            cancelSubscription = cancellationToken.Register(Dispose);
+        }
 
         private void OnConAckReceived(ConnAck connAck)
         {

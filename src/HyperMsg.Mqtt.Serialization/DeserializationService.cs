@@ -4,25 +4,27 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Serialization
 {
-    public class DeserializationComponent
+    public class DeserializationService : IDisposable
     {
         private readonly IMessageSender messageSender;
+        private readonly IDisposable subscription;
 
-        public DeserializationComponent(IMessageSender messageSender)
+        public DeserializationService(IMessageSender messageSender, IMessageObservable messageObservable)
         {
             this.messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
+            subscription = messageObservable.OnBufferReceivedData(HandleAsync);
         }
 
-        public Task ProcessBufferFlushAsync(IBufferReader<byte> reader, CancellationToken cancellationToken)
+        public Task HandleAsync(IBuffer buffer, CancellationToken cancellationToken)
         {
-            var buffer = reader.Read();
+            var bytes = buffer.Reader.Read();
 
-            if (buffer.Length == 0)
+            if (bytes.Length == 0)
             {
                 return Task.CompletedTask;
             }
 
-            var packetRead = buffer.ReadMqttPacket();
+            var packetRead = bytes.ReadMqttPacket();
 
             if (packetRead.BytesConsumed == 0)
             {
@@ -70,5 +72,7 @@ namespace HyperMsg.Mqtt.Serialization
 
             throw new NotSupportedException();
         }
+
+        public void Dispose() => subscription.Dispose();
     }
 }

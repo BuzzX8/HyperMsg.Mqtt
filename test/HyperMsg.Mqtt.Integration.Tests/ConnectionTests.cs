@@ -10,10 +10,12 @@ namespace HyperMsg.Mqtt.Integration
     public class ConnectionTests : MqttClientIntegrationTestsBase
     {
         [Fact]
-        public void ConnectAsync_Establishes_Connection()
+        public async Task ConnectAsync_Establishes_Connection()
         {
             var context = GetService<IMessagingContext>();
-            context.ConnectAsync(ConnectionSettings, default);
+            await context.Sender.SendAsync(TransportCommand.Open, default);
+            var sessionState = await await context.StartConnectAsync(ConnectionSettings, default);
+
             Assert.False(true);
         }
     }

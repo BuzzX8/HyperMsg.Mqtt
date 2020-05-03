@@ -3,7 +3,7 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Serialization
 {
-    public class ConfigurableExtensionTests
+    public class ServiceRegistryExtensionTests
     {
         [Fact]
         public void UseMqttSerializer_Registers_Serializer_Service()

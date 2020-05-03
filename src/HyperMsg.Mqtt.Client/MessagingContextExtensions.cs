@@ -5,10 +5,11 @@ namespace HyperMsg.Mqtt.Client
 {
     public static class MessagingContextExtensions
     {
-        public static async Task<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
+        public static async Task<ConnectTask> StartConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
         {
-            await messagingContext.Sender.TransmitConnectAsync(connectionSettings, cancellationToken);
-            return await new ConnectTask(messagingContext.Observable, cancellationToken).Task;
+            var task = new ConnectTask(messagingContext.Observable);
+            await task.RunAsync(messagingContext.Sender, connectionSettings, cancellationToken);
+            return task;
         }
     }
 }

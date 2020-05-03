@@ -26,7 +26,7 @@ namespace HyperMsg.Mqtt.Integration
             serviceProvider = new ServiceContainer();
             serviceProvider.AddCoreServices(DefaultBufferSize, DefaultBufferSize);
             serviceProvider.AddSocketTransport(EndPoint);
-            //serviceProvider.AddMqttSerialization();
+            serviceProvider.AddMqttSerialization();
             serviceProvider.AddMqttClient(ConnectionSettings);
         }
 
