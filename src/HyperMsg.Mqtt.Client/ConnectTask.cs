@@ -1,43 +1,28 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class ConnectTask : IDisposable
+    public class ConnectTask : MessagingTask<SessionState>
     {
-        private readonly IDisposable conAckSubscription;
-        private IDisposable cancelSubscription;
-        private readonly TaskCompletionSource<SessionState> completionSource;
+        private readonly MqttConnectionSettings connectionSettings;
 
-        internal ConnectTask(IMessageObservable messageObservable)
+        internal ConnectTask(IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(messagingContext, cancellationToken)
         {
-            completionSource = new TaskCompletionSource<SessionState>();
-            conAckSubscription = messageObservable.OnReceived<ConnAck>(OnConAckReceived);            
+            this.connectionSettings = connectionSettings;
         }
 
-        public Task<SessionState> Completion => completionSource.Task;
-
-        public TaskAwaiter<SessionState> GetAwaiter() => completionSource.Task.GetAwaiter();
-
-        internal async Task RunAsync(IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
+        internal async Task<ConnectTask> RunAsync()
         {
-            await messageSender.TransmitConnectAsync(connectionSettings, cancellationToken);
-            cancelSubscription = cancellationToken.Register(Dispose);
+            RegisterReceiveHandler<ConnAck>(OnConAckReceived);
+            await Sender.TransmitConnectAsync(connectionSettings, CancellationToken);
+            return this;
         }
 
         private void OnConAckReceived(ConnAck connAck)
         {
             var result = connAck.SessionPresent ? SessionState.Present : SessionState.Clean;
-            completionSource.SetResult(result);
-            conAckSubscription.Dispose();
-        }
-
-        public void Dispose()
-        {
-            conAckSubscription.Dispose();
-            cancelSubscription.Dispose();
+            SetResult(result);
         }
     }
 }
