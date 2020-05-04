@@ -1,33 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Client
 {
-    public class UnsubscriptionTask : IDisposable
+    public class UnsubscriptionTask : MessagingTask
     {
-        private readonly IDisposable subscription;
-        private readonly TaskCompletionSource<bool> tsc;
+        private readonly IEnumerable<string> topics;
         private readonly ushort packetId;
-        private IDisposable cancelSubscription;
 
-        public UnsubscriptionTask(IMessageObservable messageObservable)
+        public UnsubscriptionTask(IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken cancellationToken) : base(messagingContext, cancellationToken)
         {
-            subscription = messageObservable.OnReceived<UnsubAck>(Handle);
-            tsc = new TaskCompletionSource<bool>();
+            this.topics = topics;
             packetId = PacketId.New();
         }
 
-        public Task Completion => tsc.Task;
-
-        public TaskAwaiter GetAwaiter() => Completion.GetAwaiter();
-
-        internal async Task RunAsync(IMessageSender messageSender, IEnumerable<string> topics, CancellationToken cancellationToken)
+        internal async Task<UnsubscriptionTask> RunAsync()
         {
-            await messageSender.TransmitUnsubscribeAsync(packetId, topics, cancellationToken);
-            cancelSubscription = cancellationToken.Register(Dispose);
+            RegisterReceiveHandler<UnsubAck>(Handle);
+            await Sender.TransmitUnsubscribeAsync(packetId, topics, CancellationToken);
+            return this;
         }
 
         private void Handle(UnsubAck unsubAck)
@@ -37,13 +29,7 @@ namespace HyperMsg.Mqtt.Client
                 return;
             }
 
-            tsc.SetResult(true);
-        }
-
-        public void Dispose()
-        {
-            subscription.Dispose();
-            cancelSubscription.Dispose();
+            SetCompleted();
         }
     }
 }

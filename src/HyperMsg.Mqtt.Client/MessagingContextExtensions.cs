@@ -11,18 +11,14 @@ namespace HyperMsg.Mqtt.Client
             return new ConnectTask(messagingContext, connectionSettings, cancellationToken).RunAsync();
         }
 
-        public static async Task<SubscriptionTask> StartSubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<(string, QosLevel)> requests, CancellationToken cancellationToken)
+        public static Task<SubscriptionTask> StartSubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<(string, QosLevel)> requests, CancellationToken cancellationToken)
         {
-            var task = new SubscriptionTask(messagingContext.Observable);
-            await task.RunAsync(messagingContext.Sender, requests, cancellationToken);
-            return task;
+            return new SubscriptionTask(messagingContext, requests, cancellationToken).RunAsync();
         }
 
-        public static async Task<UnsubscriptionTask> StartUnsubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken cancellationToken)
+        public static Task<UnsubscriptionTask> StartUnsubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken cancellationToken)
         {
-            var task = new UnsubscriptionTask(messagingContext.Observable);
-            await task.RunAsync(messagingContext.Sender, topics, cancellationToken);
-            return task;
+            return new UnsubscriptionTask(messagingContext, topics, cancellationToken).RunAsync();
         }
     }
 }
