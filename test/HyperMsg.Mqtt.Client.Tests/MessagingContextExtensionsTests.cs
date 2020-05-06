@@ -84,5 +84,18 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.Completion.IsCompleted);
         }
+
+        [Fact]
+        public async Task StartPublishAsync_Sends_Publish_Message_And_Completes_Task_For_Qos0()
+        {
+            var request = new PublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+            var message = default(Publish);
+            broker.OnTransmit<Publish>(m => message = m);
+
+            var task = await broker.StartPublishAsync(request, default);
+
+            Assert.NotNull(message);
+            Assert.True(task.Completion.IsCompleted);
+        }
     }
 }

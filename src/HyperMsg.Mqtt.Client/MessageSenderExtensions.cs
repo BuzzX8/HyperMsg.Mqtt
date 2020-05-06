@@ -56,12 +56,12 @@ namespace HyperMsg.Mqtt.Client
             return messageSender.TransmitAsync(request, cancellationToken);
         }
 
-        public static Task TransmitPublishAsync(this IMessageSender messageSender, ushort packetId, string topic, QosLevel qosLevel, ReadOnlyMemory<byte> message, bool retain, bool dup, CancellationToken cancellationToken)
+        public static Task TransmitPublishAsync(this IMessageSender messageSender, ushort packetId, PublishRequest request, CancellationToken cancellationToken)
         {
-            var publish = new Publish(packetId, topic, message, qosLevel)
+            var publish = new Publish(packetId, request.TopicName, request.Message, request.Qos)
             {
-                Dup = dup,
-                Retain = retain
+                Dup = false,
+                Retain = request.IsRetain
             };
             return messageSender.TransmitAsync(publish, cancellationToken);
         }

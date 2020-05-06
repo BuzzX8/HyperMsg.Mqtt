@@ -111,8 +111,9 @@ namespace HyperMsg.Mqtt.Client
         public async Task TransmitPublishAsync_Transmits_Correct_Publish_Packet()
         {
             var expectedMessage = new Publish(0x8080, Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            var request = new PublishRequest(expectedMessage.Topic, expectedMessage.Message, expectedMessage.Qos);
 
-            await messageSender.TransmitPublishAsync(expectedMessage.Id, expectedMessage.Topic, expectedMessage.Qos, expectedMessage.Message, false, false, default);
+            await messageSender.TransmitPublishAsync(expectedMessage.Id, request, default);
 
             A.CallTo(() => messageSender.SendAsync(new Transmit<Publish>(expectedMessage), default)).MustHaveHappened();
         }

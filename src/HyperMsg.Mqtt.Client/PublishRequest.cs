@@ -17,6 +17,6 @@ namespace HyperMsg.Mqtt.Client
 
         public QosLevel Qos { get; }
 
-        public bool RetainMessage { get; }
+        public bool IsRetain { get; }
     }
 }

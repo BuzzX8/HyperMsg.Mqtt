@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,11 @@ namespace HyperMsg.Mqtt.Client
         public static Task<UnsubscriptionTask> StartUnsubscriptionAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken cancellationToken)
         {
             return new UnsubscriptionTask(messagingContext, topics, cancellationToken).RunAsync();
+        }
+
+        public static Task<PublishTask> StartPublishAsync(this IMessagingContext messagingContext, PublishRequest request, CancellationToken cancellationToken)
+        {
+            return new PublishTask(messagingContext, request, cancellationToken).StartAsync();
         }
     }
 }
