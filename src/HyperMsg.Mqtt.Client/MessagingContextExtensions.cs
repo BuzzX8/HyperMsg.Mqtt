@@ -24,7 +24,7 @@ namespace HyperMsg.Mqtt.Client
 
         public static Task<PublishTask> StartPublishAsync(this IMessagingContext messagingContext, PublishRequest request, CancellationToken cancellationToken)
         {
-            return new PublishTask(messagingContext, request, cancellationToken).StartAsync();
+            return new PublishTask(messagingContext, request, cancellationToken).RunAsync();
         }
     }
 }

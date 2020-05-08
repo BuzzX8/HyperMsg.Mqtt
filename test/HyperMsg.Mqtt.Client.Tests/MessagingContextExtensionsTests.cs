@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FakeItEasy.Sdk;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -88,7 +89,7 @@ namespace HyperMsg.Mqtt.Client
         [Fact]
         public async Task StartPublishAsync_Sends_Publish_Message_And_Completes_Task_For_Qos0()
         {
-            var request = new PublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+            var request = CreatePublishRequest(QosLevel.Qos0);
             var message = default(Publish);
             broker.OnTransmit<Publish>(m => message = m);
 
@@ -101,7 +102,7 @@ namespace HyperMsg.Mqtt.Client
         [Fact]
         public async Task Received_PubAck_Completes_Task_For_Qos1_Publish()
         {
-            var request = new PublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            var request = CreatePublishRequest(QosLevel.Qos1);
             var message = default(Publish);
             broker.OnTransmit<Publish>(m => message = m);
             var task = await broker.StartPublishAsync(request, default);
@@ -111,5 +112,23 @@ namespace HyperMsg.Mqtt.Client
 
             Assert.True(task.Completion.IsCompleted);
         }
+
+        [Fact]
+        public async Task Received_PubRec_Transmits_PubRel()
+        {
+            var request = CreatePublishRequest(QosLevel.Qos2);
+            var publish = default(Publish);
+            var message = default(PubRel);
+            broker.OnTransmit<Publish>(m => publish = m);
+            broker.OnTransmit<PubRel>(m => message = m);
+
+            var task = await broker.StartPublishAsync(request, default);
+            broker.Received(new PubRec(publish.Id));
+
+            Assert.NotNull(message);
+            Assert.False(task.Completion.IsCompleted);
+        }
+
+        private PublishRequest CreatePublishRequest(QosLevel qosLevel) => new PublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), qosLevel);
     }
 }
