@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
@@ -20,8 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HyperMsg.Mqtt.Serialization\HyperMsg.Mqtt.Serialization.csproj" />
     <ProjectReference Include="..\..\src\HyperMsg.Mqtt\HyperMsg.Mqtt.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="HyperMsg">
+      <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.dll</HintPath>
+    </Reference>
+    <Reference Include="HyperMsg.Core">
+      <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

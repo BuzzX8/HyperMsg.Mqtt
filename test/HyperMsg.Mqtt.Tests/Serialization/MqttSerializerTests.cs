@@ -8,9 +8,17 @@ using Xunit;
 
 namespace HyperMsg.Mqtt.Serialization
 {
-    public class MqttSerializationTests
-    {
-		private readonly ByteBufferWriter writer = new ByteBufferWriter(new byte[1000]);
+    public class MqttSerializerTests
+    {		
+		private readonly Buffer buffer;
+		private readonly IBufferWriter<byte> bufferWriter;
+
+		public MqttSerializerTests()
+        {
+			var memoryOwner = MemoryPool<byte>.Shared.Rent();
+			buffer = new Buffer(memoryOwner);
+			bufferWriter = buffer.Writer;
+        }
 
 		[Fact(DisplayName = "Serializes Connect packet with Password flag")]
 		public void Serializes_Connect_With_Password_Flag()
@@ -26,7 +34,7 @@ namespace HyperMsg.Mqtt.Serialization
 			AddBinary(expected, password);
 			SetRemainingLength(expected);
 
-			writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -45,7 +53,7 @@ namespace HyperMsg.Mqtt.Serialization
 			AddString(expected, username);
 			SetRemainingLength(expected);
 
-			writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -67,7 +75,7 @@ namespace HyperMsg.Mqtt.Serialization
 			AddBinary(expected, willMessage);
 			SetRemainingLength(expected);
 
-			writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -80,7 +88,6 @@ namespace HyperMsg.Mqtt.Serialization
 			yield return new object[] { ConnectFlags.Qos0 };
 			yield return new object[] { ConnectFlags.Qos1 };
 			yield return new object[] { ConnectFlags.Qos2 };
-
 			yield return new object[] { ConnectFlags.CleanSession | ConnectFlags.WillRetain };
 		}
 
@@ -99,7 +106,7 @@ namespace HyperMsg.Mqtt.Serialization
 			var expected = CreateConnectHeader(packet);
 			SetRemainingLength(expected);
 
-			writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -160,7 +167,7 @@ namespace HyperMsg.Mqtt.Serialization
 				(byte)result
 			};
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -198,7 +205,7 @@ namespace HyperMsg.Mqtt.Serialization
 			expected.Add((byte)packetId);
 			expected.AddRange(payload);
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -215,7 +222,7 @@ namespace HyperMsg.Mqtt.Serialization
 			    0x81, 0x78 //Packet ID
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -232,7 +239,7 @@ namespace HyperMsg.Mqtt.Serialization
 			    0x81, 0x79 //Packet ID
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -249,7 +256,7 @@ namespace HyperMsg.Mqtt.Serialization
 			    0x80, 0x79 //Packet ID
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -266,7 +273,7 @@ namespace HyperMsg.Mqtt.Serialization
 			    0x89, 0x89 //Packet ID
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -285,7 +292,7 @@ namespace HyperMsg.Mqtt.Serialization
 			    0, 3, 0x63, 0x2f, 0x64, 2 //Filter "c/d" Qos2
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -303,9 +310,9 @@ namespace HyperMsg.Mqtt.Serialization
 			    0, 0x02, 0x80 //Response codes
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
-		    VerifySerialization(expected);
+			VerifySerialization(expected);
 	    }
 
 		[Fact(DisplayName = "Serializes Unsubscribe packet")]
@@ -322,9 +329,9 @@ namespace HyperMsg.Mqtt.Serialization
 			    0, 3, 0x63, 0x2f, 0x64	//Filter "c/d"
 		    };
 
-            writer.Write(packet);
+			MqttSerializer.Serialize(bufferWriter, packet);
 
-		    VerifySerialization(expected);
+			VerifySerialization(expected);
 	    }
 
 		[Fact(DisplayName = "Serializes UnsubAck packet")]
@@ -333,15 +340,15 @@ namespace HyperMsg.Mqtt.Serialization
 		    ushort packetId = 0x0990;
 			var packet = new UnsubAck(packetId);
 
-            writer.Write(packet);
-			
+			MqttSerializer.Serialize(bufferWriter, packet);
+
 			VerifySerialization(0b10110000, 0b00000010, 0x09, 0x90);
 	    }
 
 		[Fact(DisplayName = "Serializes PingReq packet")]
 	    public void Serializes_PingReq_Packet()
 	    {
-            writer.Write(new PingReq());
+			MqttSerializer.Serialize(bufferWriter, new PingReq());
 
 		    VerifySerialization(0b11000000, 0b00000000);
 	    }
@@ -349,7 +356,7 @@ namespace HyperMsg.Mqtt.Serialization
 		[Fact(DisplayName = "Serialzies PingResp packet")]
 	    public void Serializes_PingResp_Packet()
 	    {
-            writer.Write(new PingResp());
+			MqttSerializer.Serialize(bufferWriter, new PingResp());
 
 		    VerifySerialization(0b11010000, 0b00000000);
 	    }
@@ -357,14 +364,15 @@ namespace HyperMsg.Mqtt.Serialization
 		[Fact(DisplayName = "Serialzies Disconnect packet")]
 	    public void Serializes_Disconnect_Packet()
 	    {
-            writer.Write(new Disconnect());
+			MqttSerializer.Serialize(bufferWriter, new Disconnect());
 
 		    VerifySerialization(0b11100000, 0b00000000);
 	    }
 
 		private void VerifySerialization(params byte[] expected)
 	    {
-            Assert.Equal(expected, writer.CommitedMemory.ToArray());
+			var actual = buffer.Reader.Read().ToArray();
+            Assert.Equal(expected, actual);
 		}
 
 	    public static IEnumerable<object[]> GetTestCasesForWriteRemaningLength()
@@ -387,15 +395,14 @@ namespace HyperMsg.Mqtt.Serialization
 		[Theory(DisplayName = "WriteRemainingLength serializes value for remaining length")]
 		[MemberData(nameof(GetTestCasesForWriteRemaningLength))]
 		public void WriteRemainingLength_Serializes_Value_For_Remaining_Length(int value, byte[] expected)
-		{
-            var writer = new ByteBufferWriter(new byte[100]);
-            var buffer = writer.GetMemory(expected.Length);
+		{            
+            var memory = bufferWriter.GetMemory(expected.Length);
 
-            int bytesWritten = buffer.WriteRemainingLength(value);
-            writer.Advance(bytesWritten);
+            int bytesWritten = memory.WriteRemainingLength(value);
+            bufferWriter.Advance(bytesWritten);
 
             Assert.Equal(expected.Length, bytesWritten);
-            Assert.Equal(expected, writer.CommitedMemory.ToArray());
+            Assert.Equal(expected, buffer.Reader.Read().ToArray());
         }
 
         [Fact(DisplayName = "WriteString correctly serializes string")]
@@ -403,11 +410,11 @@ namespace HyperMsg.Mqtt.Serialization
 		{			
 			string value = Guid.NewGuid().ToString();
 			byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
-            var writer = new ByteBufferWriter(new byte[100]);
-            writer.WriteString(value);
-			writer.Advance(expected.Length);
+            
+            bufferWriter.WriteString(value);
+			bufferWriter.Advance(expected.Length);
             			
-			Assert.Equal(expected, writer.CommitedMemory.ToArray());
+			Assert.Equal(expected, buffer.Reader.Read().ToArray());
 		}
 	}
 }
