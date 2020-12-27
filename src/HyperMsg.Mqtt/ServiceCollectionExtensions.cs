@@ -25,9 +25,24 @@ namespace HyperMsg.Mqtt
                 .AddSerializationComponent<Disconnect>(Serialize);
         }
 
-        public static IServiceCollection AddMqttDeserializer(this IServiceCollection services)
+        public static IServiceCollection AddMqttDeserializers(this IServiceCollection services)
         {
             return services.AddDeserializationComponent(Deserialize);
+        }
+
+        public static IServiceCollection AddMqttSettings(this IServiceCollection services, MqttConnectionSettings connectionSettings) => services.AddSingleton(connectionSettings);
+
+        public static IServiceCollection AddMqttComponents(this IServiceCollection services)
+        {
+            return services.AddObserver<ConnectionComponent, ConnAck>(component => component.Handle);
+        }
+
+        public static IServiceCollection AddMqttServices(this IServiceCollection services, MqttConnectionSettings connectionSettings)
+        {
+            return services.AddMqttSerializers()
+                .AddMqttDeserializers()
+                .AddMqttComponents()
+                .AddMqttSettings(connectionSettings);
         }
     }
 }

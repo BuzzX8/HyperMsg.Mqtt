@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net5</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="FakeItEasy" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
@@ -29,6 +31,9 @@
     </Reference>
     <Reference Include="HyperMsg.Core">
       <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="HyperMsg.Transport">
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport\bin\Debug\netstandard2.0\HyperMsg.Transport.dll</HintPath>
     </Reference>
   </ItemGroup>
 
