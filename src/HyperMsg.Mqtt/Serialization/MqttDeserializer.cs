@@ -6,7 +6,7 @@ using System.Text;
 
 namespace HyperMsg.Mqtt.Serialization
 {
-    public static class DeserializationExtensions
+    public static class MqttDeserializer
     {
 	    private static readonly Dictionary<byte, object> TwoBytePackets = new Dictionary<byte, object>
 	    {
@@ -28,7 +28,7 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-	    public static (int BytesConsumed, object Packet) ReadMqttPacket(this ReadOnlySequence<byte> buffer)
+	    public static (int BytesConsumed, object Packet) Deserialize(ReadOnlySequence<byte> buffer)
 	    {
             var span = buffer.First.Span;
             var code = span[0];

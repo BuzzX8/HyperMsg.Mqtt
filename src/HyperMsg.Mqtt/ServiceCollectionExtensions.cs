@@ -1,6 +1,7 @@
 ﻿using HyperMsg.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using static HyperMsg.Mqtt.Serialization.MqttSerializer;
+using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
 
 namespace HyperMsg.Mqtt
 {
@@ -22,7 +23,11 @@ namespace HyperMsg.Mqtt
                 .AddSerializationComponent<PingReq>(Serialize)
                 .AddSerializationComponent<PingResp>(Serialize)
                 .AddSerializationComponent<Disconnect>(Serialize);
+        }
 
+        public static IServiceCollection AddMqttDeserializer(this IServiceCollection services)
+        {
+            return services.AddDeserializationComponent(Deserialize);
         }
     }
 }

@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HyperMsg.Mqtt.Client\HyperMsg.Mqtt.Client.csproj" />
-    <ProjectReference Include="..\..\src\HyperMsg.Mqtt.Serialization\HyperMsg.Mqtt.Serialization.csproj" />
     <ProjectReference Include="..\..\src\HyperMsg.Mqtt\HyperMsg.Mqtt.csproj" />
   </ItemGroup>
 
