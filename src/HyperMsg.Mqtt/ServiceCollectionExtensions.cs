@@ -35,7 +35,11 @@ namespace HyperMsg.Mqtt
 
         public static IServiceCollection AddMqttComponents(this IServiceCollection services)
         {
-            return services.AddObserver<ConnectionComponent, ConnAck>(component => component.Handle);
+            return services.AddObserver<ConnectionComponent, ConnAck>(component => component.Handle)
+                .AddObserver<PingComponent, PingResp>(component => component.Handle)
+                .AddObserver<SubscriptionComponent, SubAck>(component => component.Handle)
+                .AddObserver<SubscriptionComponent, UnsubAck>(component => component.Handle)
+                .AddObserver<PublishComponent, PubAck>(component => component.Handle);
         }
 
         public static IServiceCollection AddMqttServices(this IServiceCollection services, MqttConnectionSettings connectionSettings)

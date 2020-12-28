@@ -1,4 +1,5 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 using RequestDictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<System.Collections.Generic.IEnumerable<HyperMsg.Mqtt.Packets.SubscriptionResult>>>;
 using UnsubscribeDictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<bool>>;
 
-namespace HyperMsg.Mqtt.Client
+namespace HyperMsg.Mqtt
 {
     public class SubscriptionComponent
     {
@@ -22,26 +23,26 @@ namespace HyperMsg.Mqtt.Client
             unsubscribeDictionary = new UnsubscribeDictionary();
         }
 
-        public async Task<IEnumerable<SubscriptionResult>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
+        public async Task<Task<IEnumerable<SubscriptionResult>>> SubscribeAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
         {
             var request = CreateSubscribeRequest(requests);
             await messageSender.TransmitAsync(request, cancellationToken);
 
             var tsc = new TaskCompletionSource<IEnumerable<SubscriptionResult>>();
             pendingRequests.AddOrUpdate(request.Id, tsc, (k, v) => v);
-            return await tsc.Task;
+            return tsc.Task;
         }
 
         private Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
 
-        public async Task UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
+        public async Task<Task> UnsubscribeAsync(IEnumerable<string> topics, CancellationToken token)
         {
             var request = CreateUnsubscribeRequest(topics);
             await messageSender.TransmitAsync(request, token);
 
             var tsc = new TaskCompletionSource<bool>();
             unsubscribeDictionary.AddOrUpdate(request.Id, tsc, (k, v) => v);
-            await tsc.Task;
+            return tsc.Task;
         }
 
         private Unsubscribe CreateUnsubscribeRequest(IEnumerable<string> topics) => new Unsubscribe(PacketId.New(), topics);

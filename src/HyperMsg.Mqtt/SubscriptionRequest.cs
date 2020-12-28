@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HyperMsg.Mqtt.Client
+namespace HyperMsg.Mqtt
 {
     public class SubscriptionRequest
     {

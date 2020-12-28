@@ -1,4 +1,5 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Packets;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using Qos1Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort
 using Qos2Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, (System.Threading.Tasks.TaskCompletionSource<bool>, bool)>;
 using Qos2Publish = System.Collections.Concurrent.ConcurrentDictionary<ushort, HyperMsg.Mqtt.Packets.Publish>;
 
-namespace HyperMsg.Mqtt.Client
+namespace HyperMsg.Mqtt
 {
     public class PublishComponent
     {
@@ -25,7 +26,7 @@ namespace HyperMsg.Mqtt.Client
             this.messageSender = messageSender;
         }
 
-        public async Task PublishAsync(PublishRequest request, CancellationToken cancellationToken)
+        public async Task<Task> PublishAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             var publishPacket = CreatePublishPacket(request);
             await messageSender.TransmitAsync(publishPacket, cancellationToken);
@@ -34,15 +35,17 @@ namespace HyperMsg.Mqtt.Client
             {
                 var tsc = new TaskCompletionSource<bool>();
                 qos1Requests.AddOrUpdate(publishPacket.Id, tsc, (k, v) => v);
-                await tsc.Task;
+                return tsc.Task;
             }
 
             if (request.Qos == QosLevel.Qos2)
             {
                 var tsc = new TaskCompletionSource<bool>();
                 qos2Requests.AddOrUpdate(publishPacket.Id, (tsc, false), (k, v) => v);
-                await tsc.Task;
+                return tsc.Task;
             }
+
+            return Task.CompletedTask;
         }
 
         private Publish CreatePublishPacket(PublishRequest request)
