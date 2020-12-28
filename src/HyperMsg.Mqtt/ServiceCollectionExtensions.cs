@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using static HyperMsg.Mqtt.Serialization.MqttSerializer;
 using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
+using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt
 {

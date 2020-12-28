@@ -1,4 +1,5 @@
-﻿using HyperMsg.Transport;
+﻿using HyperMsg.Mqtt.Packets;
+using HyperMsg.Transport;
 using System;
 using System.Threading;
 using Xunit;

@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Packets
 {
-	public class PingReq : IEquatable<PingReq>
+    public class PingReq : IEquatable<PingReq>
 	{
         public static readonly PingReq Instance = new PingReq();
 

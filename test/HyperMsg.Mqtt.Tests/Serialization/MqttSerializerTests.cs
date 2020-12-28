@@ -1,4 +1,5 @@
 ﻿using FakeItEasy;
+using HyperMsg.Mqtt.Packets;
 using System;
 using System.Buffers;
 using System.Collections.Generic;

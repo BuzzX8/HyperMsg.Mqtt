@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;

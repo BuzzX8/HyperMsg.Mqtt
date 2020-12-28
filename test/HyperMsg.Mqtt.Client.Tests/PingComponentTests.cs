@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using HyperMsg.Mqtt.Packets;
+using System.Threading;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Client

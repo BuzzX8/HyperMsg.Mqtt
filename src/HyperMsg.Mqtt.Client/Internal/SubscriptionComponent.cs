@@ -1,9 +1,10 @@
-﻿using System;
+﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RequestDictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<System.Collections.Generic.IEnumerable<HyperMsg.Mqtt.SubscriptionResult>>>;
+using RequestDictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<System.Collections.Generic.IEnumerable<HyperMsg.Mqtt.Packets.SubscriptionResult>>>;
 using UnsubscribeDictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<bool>>;
 
 namespace HyperMsg.Mqtt.Client

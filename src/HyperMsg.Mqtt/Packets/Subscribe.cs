@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Packets
 {
     public class Subscribe : IEquatable<Subscribe>
-	{
+    {
         public Subscribe(ushort packetId, IEnumerable<(string, QosLevel)> subscriptions)
         {
             Id = packetId;
@@ -13,12 +13,12 @@ namespace HyperMsg.Mqtt
 
         public ushort Id { get; }
 
-		public IEnumerable<(string, QosLevel)> Subscriptions { get; }
+        public IEnumerable<(string, QosLevel)> Subscriptions { get; }
 
         public override int GetHashCode() => Id;
 
         public override bool Equals(object obj) => Equals(obj as Subscribe);
 
-		public bool Equals(Subscribe packet) => packet?.Id == Id;
-	}
+        public bool Equals(Subscribe packet) => packet?.Id == Id;
+    }
 }

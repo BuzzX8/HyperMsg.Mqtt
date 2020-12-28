@@ -1,9 +1,10 @@
-﻿using System;
+﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Qos1Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, System.Threading.Tasks.TaskCompletionSource<bool>>;
 using Qos2Dictionary = System.Collections.Concurrent.ConcurrentDictionary<ushort, (System.Threading.Tasks.TaskCompletionSource<bool>, bool)>;
-using Qos2Publish = System.Collections.Concurrent.ConcurrentDictionary<ushort, HyperMsg.Mqtt.Publish>;
+using Qos2Publish = System.Collections.Concurrent.ConcurrentDictionary<ushort, HyperMsg.Mqtt.Packets.Publish>;
 
 namespace HyperMsg.Mqtt.Client
 {

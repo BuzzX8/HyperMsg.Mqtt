@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Packets
 {
     public class SubAck : IEquatable<SubAck>
     {
@@ -13,20 +13,20 @@ namespace HyperMsg.Mqtt
 
         public ushort Id { get; }
 
-		public IEnumerable<SubscriptionResult> Results { get; }
+        public IEnumerable<SubscriptionResult> Results { get; }
 
         public override int GetHashCode() => Id;
 
         public override bool Equals(object obj) => Equals(obj as SubAck);
 
-	    public bool Equals(SubAck packet)
-	    {
-		    if (packet == null)
-		    {
-			    return false;
-		    }
+        public bool Equals(SubAck packet)
+        {
+            if (packet == null)
+            {
+                return false;
+            }
 
-		    return Id == packet.Id;
-	    }
+            return Id == packet.Id;
+        }
     }
 }

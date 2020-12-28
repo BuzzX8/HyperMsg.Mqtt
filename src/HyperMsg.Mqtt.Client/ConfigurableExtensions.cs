@@ -1,4 +1,6 @@
-﻿namespace HyperMsg.Mqtt.Client
+﻿using HyperMsg.Mqtt.Packets;
+
+namespace HyperMsg.Mqtt.Client
 {
     public static class ConfigurableExtensions
     {
