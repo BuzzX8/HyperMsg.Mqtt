@@ -7,7 +7,7 @@ namespace HyperMsg.Mqtt
     {
         public static Task<MessagingTask<SessionState>> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
         {
-            return new ConnectTask(messagingContext, connectionSettings).StartAsync(cancellationToken);
+            return new ConnectTask(messagingContext, connectionSettings, cancellationToken).StartAsync();
         }
     }
 }

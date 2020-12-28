@@ -9,23 +9,23 @@ namespace HyperMsg.Mqtt
     {
         private readonly MqttConnectionSettings connectionSettings;
 
-        public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings) : base(context)
+        public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
             AddReceiver<ConnAck>(Handle);
         }
 
-        internal async Task<MessagingTask<SessionState>> StartAsync(CancellationToken cancellationToken)
+        internal async Task<MessagingTask<SessionState>> StartAsync()
         {
-            await SendAsync(TransportCommand.Open, cancellationToken);
+            await SendAsync(TransportCommand.Open, CancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await SendAsync(TransportCommand.SetTransportLevelSecurity, cancellationToken);
+                await SendAsync(TransportCommand.SetTransportLevelSecurity, CancellationToken);
             }
 
             var connectPacket = CreateConnectPacket(connectionSettings.CleanSession);
-            await TransmitAsync(connectPacket, cancellationToken);
+            await TransmitAsync(connectPacket, CancellationToken);
 
             return this;
         }
