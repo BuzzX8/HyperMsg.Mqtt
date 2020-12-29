@@ -26,5 +26,10 @@ namespace HyperMsg.Mqtt
         {
             return new PublishTask(messagingContext, cancellationToken).StartAsync(request);
         }
+
+        public static Task<MessagingTask<bool>> PingAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
+        {
+            return new PingTask(messagingContext, cancellationToken).StartAsync();
+        }
     }
 }

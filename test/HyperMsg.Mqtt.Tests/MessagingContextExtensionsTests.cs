@@ -262,11 +262,29 @@ namespace HyperMsg.Mqtt.Serialization
             return new PublishRequest(topicName, message, qos);
         }
 
-        private Publish CreatePublishPacket(QosLevel qos = QosLevel.Qos0)
+        #endregion
+
+        #region PingAsync
+
+        [Fact]
+        public async Task PingAsync_Sends_PingReq_Packet()
         {
-            var topicName = Guid.NewGuid().ToString();
-            var message = Guid.NewGuid().ToByteArray();
-            return new Publish(Guid.NewGuid().ToByteArray()[0], topicName, message, qos);
+            var pingReq = default(PingReq);
+            observable.OnTransmit<PingReq>(p => pingReq = p);
+
+            await messagingContext.PingAsync(tokenSource.Token);
+
+            Assert.NotNull(pingReq);
+        }
+
+        [Fact]
+        public async Task PingAsync_Completes_Task_When_PingResp_Received()
+        {
+            var task = await messagingContext.PingAsync(tokenSource.Token);
+
+            messagingContext.Sender.Received(PingResp.Instance);
+
+            Assert.True(task.IsCompleted);
         }
 
         #endregion
