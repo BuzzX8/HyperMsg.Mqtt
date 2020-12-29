@@ -56,9 +56,6 @@ namespace HyperMsg.Mqtt
             return connect;
         }
 
-        private void Handle(ConnAck connAck)
-        {
-            Complete(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
-        }
+        private void Handle(ConnAck connAck) => Complete(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
     }
 }
