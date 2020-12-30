@@ -43,7 +43,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
             var task = await messagingContext.ConnectAsync(connectionSettings);
 
-            responseEvent.Wait(waitTimeout);
+            task.AsTask().Wait(waitTimeout);
 
             Assert.True(task.IsCompleted);
             Assert.NotNull(conAckResponse);
