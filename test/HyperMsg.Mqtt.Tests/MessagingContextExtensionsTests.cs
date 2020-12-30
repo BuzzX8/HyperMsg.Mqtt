@@ -24,7 +24,7 @@ namespace HyperMsg.Mqtt.Serialization
             var services = new ServiceCollection();
             connectionSettings = new MqttConnectionSettings("test-client");
             services.AddMessagingServices();
-            services.AddMqttServices(connectionSettings);
+            services.AddMqttServices();
             host = new Host(services);
             host.StartAsync().Wait();
 
