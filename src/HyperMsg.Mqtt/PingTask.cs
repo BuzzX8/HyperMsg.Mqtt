@@ -18,9 +18,6 @@ namespace HyperMsg.Mqtt
             return this;
         }
 
-        private void Handle(PingResp _)
-        {
-            Complete(true);
-        }
+        private void Handle(PingResp _) => Complete(true);
     }
 }

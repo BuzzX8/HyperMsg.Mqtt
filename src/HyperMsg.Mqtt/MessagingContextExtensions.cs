@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using HyperMsg.Transport;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,12 @@ namespace HyperMsg.Mqtt
         public static Task<MessagingTask<SessionState>> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
         {
             return new ConnectTask(messagingContext, connectionSettings, cancellationToken).StartAsync();
+        }
+
+        public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
+        {            
+            await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
+            await messagingContext.Sender.SendAsync(TransportCommand.Close, cancellationToken);
         }
 
         public static Task<MessagingTask<IEnumerable<SubscriptionResult>>> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
