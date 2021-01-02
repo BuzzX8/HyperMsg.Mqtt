@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Serialization
+namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests
     {
@@ -39,7 +39,7 @@ namespace HyperMsg.Mqtt.Serialization
         public async Task ConnectAsync_Sends_Open_TransportCommand()
         {
             var command = default(TransportCommand);
-            observable.Subscribe<TransportCommand>(c => command = c);
+            observable.AddObserver<TransportCommand>(c => command = c);
             await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
             Assert.Equal(TransportCommand.Open, command);
@@ -50,7 +50,7 @@ namespace HyperMsg.Mqtt.Serialization
         {
             connectionSettings.UseTls = true;
             var command = default(TransportCommand);
-            observable.Subscribe<TransportCommand>(c => command = c);
+            observable.AddObserver<TransportCommand>(c => command = c);
             await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
             Assert.Equal(TransportCommand.SetTransportLevelSecurity, command);
