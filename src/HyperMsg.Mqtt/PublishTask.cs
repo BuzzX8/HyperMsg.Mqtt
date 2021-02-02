@@ -11,9 +11,9 @@ namespace HyperMsg.Mqtt
 
         public PublishTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            AddReceiver<PubAck>(Handle);
-            AddReceiver<PubRec>(HandleAsync);
-            AddReceiver<PubComp>(Handle);
+            RegisterReceiveHandler<PubAck>(Handle);
+            RegisterReceiveHandler<PubRec>(HandleAsync);
+            RegisterReceiveHandler<PubComp>(Handle);
         }
 
         public async Task<MessagingTask<bool>> StartAsync(PublishRequest request)

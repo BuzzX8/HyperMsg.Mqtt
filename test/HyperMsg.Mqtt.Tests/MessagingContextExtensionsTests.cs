@@ -12,24 +12,22 @@ namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests
     {
-        private readonly Host host;
+        private readonly ServiceHost host;
         private readonly MqttConnectionSettings connectionSettings;
         private readonly IMessagingContext messagingContext;
-        private readonly IMessageObservable observable;
+        private readonly IMessageHandlersRegistry observable;
 
         private readonly CancellationTokenSource tokenSource;
 
         public MessagingContextExtensionsTests()
-        {
-            var services = new ServiceCollection();
+        {            
             connectionSettings = new MqttConnectionSettings("test-client");
-            services.AddMessagingServices();
-            services.AddMqttServices();
-            host = new Host(services);
+            
+            host = ServiceHost.CreateDefault(services => services.AddMqttServices());
             host.StartAsync().Wait();
 
-            messagingContext = host.Services.GetRequiredService<IMessagingContext>();
-            observable = host.Services.GetRequiredService<IMessageObservable>();
+            messagingContext = host.GetRequiredService<IMessagingContext>();
+            observable = host.GetRequiredService<IMessageHandlersRegistry>();
             tokenSource = new CancellationTokenSource();
         }
 
@@ -38,22 +36,22 @@ namespace HyperMsg.Mqtt
         [Fact]
         public async Task ConnectAsync_Sends_Open_TransportCommand()
         {
-            var command = default(TransportCommand);
-            observable.AddObserver<TransportCommand>(c => command = c);
+            var command = default(ConnectionCommand);
+            observable.RegisterHandler<ConnectionCommand>(c => command = c);
             await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-            Assert.Equal(TransportCommand.Open, command);
+            Assert.Equal(ConnectionCommand.Open, command);
         }
 
         [Fact]
         public async Task ConnectAsync_Sends_SetTransportLevelSecurity_TransportCommand_If_UseTls_Is_True()
         {
             connectionSettings.UseTls = true;
-            var command = default(TransportCommand);
-            observable.AddObserver<TransportCommand>(c => command = c);
+            var command = default(ConnectionCommand);
+            observable.RegisterHandler<ConnectionCommand>(c => command = c);
             await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-            Assert.Equal(TransportCommand.SetTransportLevelSecurity, command);
+            Assert.Equal(ConnectionCommand.SetTransportLevelSecurity, command);
         }
 
         [Fact]
@@ -70,7 +68,7 @@ namespace HyperMsg.Mqtt
         private async Task VerifyTransmittedConnectPacket(Connect expectedPacket)
         {
             var actualPacket = default(Connect);
-            observable.OnTransmit<Connect>(c => actualPacket = c);
+            observable.RegisterTransmitHandler<Connect>(c => actualPacket = c);
             await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
             Assert.Equal(expectedPacket, actualPacket);
@@ -82,7 +80,7 @@ namespace HyperMsg.Mqtt
             var connAck = new ConnAck(ConnectionResult.Accepted);
             var task = await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-            messagingContext.Sender.Received(connAck);
+            messagingContext.Sender.Receive(connAck);
                         
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Clean, task.Result);
@@ -94,7 +92,7 @@ namespace HyperMsg.Mqtt
             var connAck = new ConnAck(ConnectionResult.Accepted, true);
             var task = await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-            messagingContext.Sender.Received(connAck);
+            messagingContext.Sender.Receive(connAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Present, task.Result);
@@ -108,7 +106,7 @@ namespace HyperMsg.Mqtt
         public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
         {
             var subscribePacket = default(Subscribe);
-            observable.OnTransmit<Subscribe>(s => subscribePacket = s);
+            observable.RegisterTransmitHandler<Subscribe>(s => subscribePacket = s);
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
@@ -121,7 +119,7 @@ namespace HyperMsg.Mqtt
         public async Task SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
         {
             var subscribePacket = default(Subscribe);
-            observable.OnTransmit<Subscribe>(s => subscribePacket = s);
+            observable.RegisterTransmitHandler<Subscribe>(s => subscribePacket = s);
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
@@ -129,7 +127,7 @@ namespace HyperMsg.Mqtt
             var packetId = subscribePacket.Id;
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
-            messagingContext.Sender.Received(subAck);
+            messagingContext.Sender.Receive(subAck);
 
             Assert.True(task.IsCompleted);
             Assert.Equal(subAck.Results, task.Result);
@@ -143,7 +141,7 @@ namespace HyperMsg.Mqtt
         public async Task UnsubscribeAsync_Sends_Unsubscription_Request()
         {
             var unsubscribe = default(Unsubscribe);
-            observable.OnTransmit<Unsubscribe>(s => unsubscribe = s);
+            observable.RegisterTransmitHandler<Unsubscribe>(s => unsubscribe = s);
             var topics = new[] { "topic-1", "topic-2" };
 
             await messagingContext.UnsubscribeAsync(topics, tokenSource.Token);
@@ -156,11 +154,11 @@ namespace HyperMsg.Mqtt
         public async Task UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
         {
             var unsubscribe = default(Unsubscribe);
-            observable.OnTransmit<Unsubscribe>(s => unsubscribe = s);
+            observable.RegisterTransmitHandler<Unsubscribe>(s => unsubscribe = s);
             var topics = new[] { "topic-1", "topic-2" };
             var task = await messagingContext.UnsubscribeAsync(topics, tokenSource.Token);
 
-            messagingContext.Sender.Received(new UnsubAck(unsubscribe.Id));
+            messagingContext.Sender.Receive(new UnsubAck(unsubscribe.Id));
 
             Assert.True(task.IsCompleted);
         }
@@ -174,7 +172,7 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest();
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
 
             await messagingContext.PublishAsync(request, tokenSource.Token);
 
@@ -189,7 +187,7 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos0);
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
 
             var task = await messagingContext.PublishAsync(request, tokenSource.Token);
 
@@ -202,7 +200,7 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
 
             var task = await messagingContext.PublishAsync(request, tokenSource.Token);
 
@@ -215,10 +213,10 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos1);
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
 
             var task = await messagingContext.PublishAsync(request, tokenSource.Token);
-            messagingContext.Sender.Received(new PubAck(publishPacket.Id));
+            messagingContext.Sender.Receive(new PubAck(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
@@ -228,12 +226,12 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
             var pubRel = default(PubRel);
-            observable.OnTransmit<PubRel>(p => pubRel = p);
+            observable.RegisterTransmitHandler<PubRel>(p => pubRel = p);
 
             var task = await messagingContext.PublishAsync(request, tokenSource.Token);
-            await messagingContext.Sender.ReceivedAsync(new PubRec(publishPacket.Id), tokenSource.Token);
+            await messagingContext.Sender.ReceiveAsync(new PubRec(publishPacket.Id), tokenSource.Token);
 
             Assert.False(task.IsCompleted);
             Assert.NotNull(pubRel);
@@ -245,12 +243,12 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var publishPacket = default(Publish);
-            observable.OnTransmit<Publish>(p => publishPacket = p);
+            observable.RegisterTransmitHandler<Publish>(p => publishPacket = p);
             var task = await messagingContext.PublishAsync(request, tokenSource.Token);
 
-            await messagingContext.Sender.ReceivedAsync(new PubRec(publishPacket.Id), tokenSource.Token);
+            await messagingContext.Sender.ReceiveAsync(new PubRec(publishPacket.Id), tokenSource.Token);
 
-            messagingContext.Sender.Received(new PubComp(publishPacket.Id));
+            messagingContext.Sender.Receive(new PubComp(publishPacket.Id));
 
             Assert.True(task.IsCompleted);
         }
@@ -270,7 +268,7 @@ namespace HyperMsg.Mqtt
         public async Task PingAsync_Sends_PingReq_Packet()
         {
             var pingReq = default(PingReq);
-            observable.OnTransmit<PingReq>(p => pingReq = p);
+            observable.RegisterTransmitHandler<PingReq>(p => pingReq = p);
 
             await messagingContext.PingAsync(tokenSource.Token);
 
@@ -282,7 +280,7 @@ namespace HyperMsg.Mqtt
         {
             var task = await messagingContext.PingAsync(tokenSource.Token);
 
-            messagingContext.Sender.Received(PingResp.Instance);
+            messagingContext.Sender.Receive(PingResp.Instance);
 
             Assert.True(task.IsCompleted);
         }

@@ -10,23 +10,23 @@ namespace HyperMsg.Mqtt
     {
         public static IServiceCollection AddMqttSerializers(this IServiceCollection services)
         {
-            return services.AddSerializationComponent<Connect>(Serialize)
-                .AddSerializationComponent<ConnAck>(Serialize)
-                .AddSerializationComponent<Subscribe>(Serialize)
-                .AddSerializationComponent<SubAck>(Serialize)
-                .AddSerializationComponent<Unsubscribe>(Serialize)
-                .AddSerializationComponent<UnsubAck>(Serialize)
-                .AddSerializationComponent<Publish>(Serialize)
-                .AddSerializationComponent<PubAck>(Serialize)
-                .AddSerializationComponent<PubRec>(Serialize)
-                .AddSerializationComponent<PubRel>(Serialize)
-                .AddSerializationComponent<PubComp>(Serialize)
-                .AddSerializationComponent<PingReq>(Serialize)
-                .AddSerializationComponent<PingResp>(Serialize)
-                .AddSerializationComponent<Disconnect>(Serialize);
+            return services.AddSerializer<Connect>(Serialize)
+                .AddSerializer<ConnAck>(Serialize)
+                .AddSerializer<Subscribe>(Serialize)
+                .AddSerializer<SubAck>(Serialize)
+                .AddSerializer<Unsubscribe>(Serialize)
+                .AddSerializer<UnsubAck>(Serialize)
+                .AddSerializer<Publish>(Serialize)
+                .AddSerializer<PubAck>(Serialize)
+                .AddSerializer<PubRec>(Serialize)
+                .AddSerializer<PubRel>(Serialize)
+                .AddSerializer<PubComp>(Serialize)
+                .AddSerializer<PingReq>(Serialize)
+                .AddSerializer<PingResp>(Serialize)
+                .AddSerializer<Disconnect>(Serialize);
         }
 
-        public static IServiceCollection AddMqttDeserializers(this IServiceCollection services) => services.AddDeserializationComponent(Deserialize);
+        public static IServiceCollection AddMqttDeserializers(this IServiceCollection services) => services.AddDeserializer(Deserialize);
 
         public static IServiceCollection AddMqttServices(this IServiceCollection services)
         {

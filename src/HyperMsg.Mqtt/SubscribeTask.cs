@@ -13,7 +13,7 @@ namespace HyperMsg.Mqtt
 
         internal SubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            AddReceiver<SubAck>(Handle);
+            RegisterReceiveHandler<SubAck>(Handle);
         }
 
         internal async Task<MessagingTask<IEnumerable<SubscriptionResult>>> StartAsync(IEnumerable<SubscriptionRequest> requests)

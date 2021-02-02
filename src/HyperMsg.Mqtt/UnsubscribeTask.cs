@@ -11,7 +11,7 @@ namespace HyperMsg.Mqtt
 
         internal UnsubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            AddReceiver<UnsubAck>(Handle);
+            RegisterReceiveHandler<UnsubAck>(Handle);
         }
 
         public async Task<MessagingTask<bool>> StartAsync(IEnumerable<string> topics)

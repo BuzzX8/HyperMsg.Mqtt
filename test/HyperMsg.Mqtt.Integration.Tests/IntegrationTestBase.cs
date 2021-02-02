@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Transport.Sockets;
+﻿using HyperMsg.Transport.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
@@ -9,19 +8,16 @@ namespace HyperMsg.Mqtt.Integration.Tests
     public abstract class IntegrationTestBase
     {
         protected static readonly TimeSpan DefaultWaitTimeout = TimeSpan.FromSeconds(5);
-        private readonly Host host;
+        private readonly ServiceHost host;
 
         protected IntegrationTestBase()
         {
-            var services = new ServiceCollection();
-            ConnectionSettings = new MqttConnectionSettings("HyperMsg");
-            services.AddMessagingServices()
-                .AddMqttServices()
-                .AddSocketTransport("localhost", 1883);
-            host = new Host(services);
+            host = ServiceHost.CreateDefault(services => services.AddMqttServices())
+                    ;//.AddSocketTransport("localhost", 1883));
             host.StartAsync().Wait();
 
-            MessagingContext = host.Services.GetRequiredService<IMessagingContext>();
+            ConnectionSettings = new MqttConnectionSettings("HyperMsg");
+            MessagingContext = host.GetRequiredService<IMessagingContext>();
         }
 
         protected MqttConnectionSettings ConnectionSettings { get; }
@@ -30,9 +26,9 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
         protected IMessageSender MessageSender => MessagingContext.Sender;
 
-        protected IMessageObservable MessageObservable => MessagingContext.Observable;
+        protected IMessageHandlersRegistry MessageObservable => MessagingContext.HandlersRegistry;
 
-        protected T GetRequiredService<T>() => host.Services.GetRequiredService<T>();
+        protected T GetRequiredService<T>() => host.GetRequiredService<T>();
 
         protected async Task ConnectAsync() => await await MessagingContext.ConnectAsync(ConnectionSettings, default);
     }

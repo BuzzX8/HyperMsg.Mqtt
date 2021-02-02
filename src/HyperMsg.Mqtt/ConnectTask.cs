@@ -1,5 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
+using HyperMsg.Connection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,16 +12,16 @@ namespace HyperMsg.Mqtt
         public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
-            AddReceiver<ConnAck>(Handle);
+            RegisterReceiveHandler<ConnAck>(Handle);
         }
 
         internal async Task<MessagingTask<SessionState>> StartAsync()
         {
-            await SendAsync(TransportCommand.Open, CancellationToken);
+            await SendAsync(ConnectionCommand.Open, CancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await SendAsync(TransportCommand.SetTransportLevelSecurity, CancellationToken);
+                await SendAsync(ConnectionCommand.SetTransportLevelSecurity, CancellationToken);
             }
 
             var connectPacket = CreateConnectPacket(connectionSettings.CleanSession);

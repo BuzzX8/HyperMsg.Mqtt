@@ -11,7 +11,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
         public async Task PingAsync_Receives_Ping_Response()
         {
             var pingResp = default(PingResp);
-            MessageObservable.OnReceived<PingResp>(r => pingResp = r);
+            //MessageObservable.OnReceived<PingResp>(r => pingResp = r);
             await ConnectAsync();
 
             var pingTask = MessagingContext.PingAsync();

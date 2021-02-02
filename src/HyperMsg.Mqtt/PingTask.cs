@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt
     {
         public PingTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            AddReceiver<PingResp>(Handle);
+            RegisterReceiveHandler<PingResp>(Handle);
         }
 
         internal async Task<MessagingTask<bool>> StartAsync()
