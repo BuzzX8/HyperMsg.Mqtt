@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using static HyperMsg.Mqtt.Serialization.MqttSerializer;
 using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
 using HyperMsg.Mqtt.Packets;
+using HyperMsg.Mqtt.Serialization;
 
 namespace HyperMsg.Mqtt.Extensions
 {
@@ -10,23 +11,32 @@ namespace HyperMsg.Mqtt.Extensions
     {
         public static IServiceCollection AddMqttSerializers(this IServiceCollection services)
         {
-            return services.AddSerializer<Connect>(Serialize)
-                .AddSerializer<ConnAck>(Serialize)
-                .AddSerializer<Subscribe>(Serialize)
-                .AddSerializer<SubAck>(Serialize)
-                .AddSerializer<Unsubscribe>(Serialize)
-                .AddSerializer<UnsubAck>(Serialize)
-                .AddSerializer<Publish>(Serialize)
-                .AddSerializer<PubAck>(Serialize)
-                .AddSerializer<PubRec>(Serialize)
-                .AddSerializer<PubRel>(Serialize)
-                .AddSerializer<PubComp>(Serialize)
-                .AddSerializer<PingReq>(Serialize)
-                .AddSerializer<PingResp>(Serialize)
-                .AddSerializer<Disconnect>(Serialize);
+            return services.AddTransmittingBufferSerializer<Connect>(Serialize)
+                .AddTransmittingBufferSerializer<ConnAck>(Serialize)
+                .AddTransmittingBufferSerializer<Subscribe>(Serialize)
+                .AddTransmittingBufferSerializer<SubAck>(Serialize)
+                .AddTransmittingBufferSerializer<Unsubscribe>(Serialize)
+                .AddTransmittingBufferSerializer<UnsubAck>(Serialize)
+                .AddTransmittingBufferSerializer<Publish>(Serialize)
+                .AddTransmittingBufferSerializer<PubAck>(Serialize)
+                .AddTransmittingBufferSerializer<PubRec>(Serialize)
+                .AddTransmittingBufferSerializer<PubRel>(Serialize)
+                .AddTransmittingBufferSerializer<PubComp>(Serialize)
+                .AddTransmittingBufferSerializer<PingReq>(Serialize)
+                .AddTransmittingBufferSerializer<PingResp>(Serialize)
+                .AddTransmittingBufferSerializer<Disconnect>(Serialize);
         }
 
-        public static IServiceCollection AddMqttDeserializers(this IServiceCollection services) => services.AddDeserializer(Deserialize);
+        public static IServiceCollection AddMqttDeserializers(this IServiceCollection services)
+        {
+            return services.AddSerializationService()
+                .AddConfigurator(provider =>
+                {
+                    var service = provider.GetRequiredService<BufferTransferingService>();
+                    var messageSender = provider.GetRequiredService<IMessageSender>();
+                    service.AddReceivingBufferReader((buffer, token) => ReadBufferAsync(messageSender, buffer, token));
+                });
+        }
 
         public static IServiceCollection AddMqttServices(this IServiceCollection services)
         {

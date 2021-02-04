@@ -1,8 +1,10 @@
-﻿using HyperMsg.Extensions;
+﻿using HyperMsg.Connection;
+using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
 using MQTTnet;
 using MQTTnet.Client.Options;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,14 +16,27 @@ namespace HyperMsg.Mqtt.Integration.Tests
         public async Task ConnectAsync_Receives_ConAck_Response()
         {            
             var conAckResponse = default(ConnAck);
-            MessageObservable.RegisterReceiveHandler<ConnAck>(c => conAckResponse = c);
+            var responseResult = default(ConnectionResult?);
+            var isSessionPresent = default(bool?);
+            var @event = new ManualResetEventSlim();
 
-            var task = await MessagingContext.ConnectAsync(ConnectionSettings);
+            HandlersRegistry.RegisterReceiveHandler<ConnAck>(response => conAckResponse = response);
+            HandlersRegistry.RegisterConnectionResponseReceiveHandler((result, clean) =>
+            {
+                responseResult = result;
+                isSessionPresent = clean;
+                @event.Set();
+            });
 
-            task.AsTask().Wait(DefaultWaitTimeout);
+            await MessageSender.SendAsync(ConnectionCommand.Open, default);
+            await MessageSender.TransmitConnectionRequestAsync(ConnectionSettings);
 
-            Assert.True(task.IsCompleted);
+            @event.Wait(DefaultWaitTimeout);
+
+            Assert.True(@event.IsSet);
             Assert.NotNull(conAckResponse);
+            Assert.Equal(responseResult, conAckResponse.ResultCode);
+            Assert.Equal(isSessionPresent, conAckResponse.SessionPresent);
         }
 
         [Fact]

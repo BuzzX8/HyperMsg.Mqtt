@@ -26,7 +26,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
         protected IMessageSender MessageSender => MessagingContext.Sender;
 
-        protected IMessageHandlersRegistry MessageObservable => MessagingContext.HandlersRegistry;
+        protected IMessageHandlersRegistry HandlersRegistry => MessagingContext.HandlersRegistry;
 
         protected T GetRequiredService<T>() => host.GetRequiredService<T>();
 
