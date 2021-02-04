@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
 using System.Threading.Tasks;
 using Xunit;

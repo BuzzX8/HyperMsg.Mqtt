@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <RootNamespace>HyperMsg.Mqtt.Serialization</RootNamespace>
+    <RootNamespace>HyperMsg.Mqtt</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,11 +29,11 @@
     <Reference Include="HyperMsg">
       <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.dll</HintPath>
     </Reference>
+    <Reference Include="HyperMsg.Connection">
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Connection\bin\Debug\netstandard2.0\HyperMsg.Connection.dll</HintPath>
+    </Reference>
     <Reference Include="HyperMsg.Core">
       <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="HyperMsg.Transport">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport\bin\Debug\netstandard2.0\HyperMsg.Transport.dll</HintPath>
     </Reference>
   </ItemGroup>
 

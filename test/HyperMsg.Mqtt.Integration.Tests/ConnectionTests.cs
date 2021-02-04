@@ -1,9 +1,8 @@
 ﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
 using MQTTnet;
 using MQTTnet.Client.Options;
-using System;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,13 +14,13 @@ namespace HyperMsg.Mqtt.Integration.Tests
         public async Task ConnectAsync_Receives_ConAck_Response()
         {            
             var conAckResponse = default(ConnAck);
-            //MessageObservable.OnReceived<ConnAck>(c => conAckResponse = c);
+            MessageObservable.RegisterReceiveHandler<ConnAck>(c => conAckResponse = c);
 
-            //var task = await MessagingContext.ConnectAsync(ConnectionSettings);
+            var task = await MessagingContext.ConnectAsync(ConnectionSettings);
 
-            //task.AsTask().Wait(DefaultWaitTimeout);
+            task.AsTask().Wait(DefaultWaitTimeout);
 
-            //Assert.True(task.IsCompleted);
+            Assert.True(task.IsCompleted);
             Assert.NotNull(conAckResponse);
         }
 

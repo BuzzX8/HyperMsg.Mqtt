@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using HyperMsg.Mqtt.Extensions;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Integration.Tests

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Extensions
 {
     public static class MessagingContextExtensions
     {
@@ -14,7 +14,7 @@ namespace HyperMsg.Mqtt
         }
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
-        {            
+        {
             await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
             await messagingContext.Sender.SendAsync(ConnectionCommand.Close, cancellationToken);
         }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -28,16 +28,16 @@
 
   <ItemGroup>
     <Reference Include="HyperMsg">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.dll</HintPath>
+      <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.dll</HintPath>
+    </Reference>
+    <Reference Include="HyperMsg.Connection">
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Connection.dll</HintPath>
     </Reference>
     <Reference Include="HyperMsg.Core">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Core.dll</HintPath>
+      <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.Core.dll</HintPath>
     </Reference>
-    <Reference Include="HyperMsg.Transport">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Transport.dll</HintPath>
-    </Reference>
-    <Reference Include="HyperMsg.Transport.Sockets">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Transport.Sockets.dll</HintPath>
+    <Reference Include="HyperMsg.Sockets">
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Sockets.dll</HintPath>
     </Reference>
   </ItemGroup>
 

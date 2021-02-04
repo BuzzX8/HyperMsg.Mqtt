@@ -1,6 +1,6 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
+using HyperMsg.Connection;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Extensions
 {
     public class MessagingContextExtensionsTests
     {
@@ -20,9 +20,9 @@ namespace HyperMsg.Mqtt
         private readonly CancellationTokenSource tokenSource;
 
         public MessagingContextExtensionsTests()
-        {            
+        {
             connectionSettings = new MqttConnectionSettings("test-client");
-            
+
             host = ServiceHost.CreateDefault(services => services.AddMqttServices());
             host.StartAsync().Wait();
 
@@ -81,7 +81,7 @@ namespace HyperMsg.Mqtt
             var task = await messagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
             messagingContext.Sender.Receive(connAck);
-                        
+
             Assert.True(task.IsCompleted);
             Assert.Equal(SessionState.Clean, task.Result);
         }

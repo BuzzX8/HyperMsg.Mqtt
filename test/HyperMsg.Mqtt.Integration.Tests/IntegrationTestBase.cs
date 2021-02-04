@@ -1,4 +1,5 @@
-﻿using HyperMsg.Transport.Sockets;
+﻿using HyperMsg.Mqtt.Extensions;
+using HyperMsg.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
@@ -12,8 +13,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
         protected IntegrationTestBase()
         {
-            host = ServiceHost.CreateDefault(services => services.AddMqttServices())
-                    ;//.AddSocketTransport("localhost", 1883));
+            host = ServiceHost.CreateDefault(services => services.AddMqttServices().AddLocalSocketConnection(1883));
             host.StartAsync().Wait();
 
             ConnectionSettings = new MqttConnectionSettings("HyperMsg");

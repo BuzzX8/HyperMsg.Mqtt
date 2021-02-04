@@ -4,7 +4,7 @@ using static HyperMsg.Mqtt.Serialization.MqttSerializer;
 using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
 using HyperMsg.Mqtt.Packets;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Extensions
 {
     public static class ServiceCollectionExtensions
     {
@@ -31,7 +31,7 @@ namespace HyperMsg.Mqtt
         public static IServiceCollection AddMqttServices(this IServiceCollection services)
         {
             return services.AddMqttSerializers()
-                .AddMqttDeserializers();         
+                .AddMqttDeserializers();
         }
     }
 }
