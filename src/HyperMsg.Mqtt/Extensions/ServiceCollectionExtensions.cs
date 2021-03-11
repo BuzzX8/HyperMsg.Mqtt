@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using static HyperMsg.Mqtt.Serialization.MqttSerializer;
 using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
 using HyperMsg.Mqtt.Packets;
-using HyperMsg.Mqtt.Serialization;
 
 namespace HyperMsg.Mqtt.Extensions
 {
@@ -29,8 +28,7 @@ namespace HyperMsg.Mqtt.Extensions
 
         public static IServiceCollection AddMqttDeserializers(this IServiceCollection services)
         {
-            return services.AddSerializationService()
-                .AddConfigurator(provider =>
+            return services.AddConfigurator(provider =>
                 {
                     var service = provider.GetRequiredService<BufferTransferingService>();
                     var messageSender = provider.GetRequiredService<IMessageSender>();

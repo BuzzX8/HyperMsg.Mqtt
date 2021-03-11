@@ -1,4 +1,5 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,14 +14,14 @@ namespace HyperMsg.Mqtt
 
         internal SubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            RegisterReceiveHandler<SubAck>(Handle);
+            this.RegisterReceiveHandler<SubAck>(Handle);
         }
 
         internal async Task<MessagingTask<IEnumerable<SubscriptionResult>>> StartAsync(IEnumerable<SubscriptionRequest> requests)
         {
             var request = CreateSubscribeRequest(requests);
             packetId = request.Id;
-            await TransmitAsync(request, CancellationToken);            
+            await this.TransmitAsync(request, CancellationToken);            
             
             return this;
         }

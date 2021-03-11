@@ -1,6 +1,6 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Packets;
-using HyperMsg.Connection;
+using HyperMsg.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;

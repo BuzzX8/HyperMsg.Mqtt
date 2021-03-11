@@ -1,4 +1,4 @@
-﻿using HyperMsg.Connection;
+﻿using HyperMsg.Transport;
 using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;

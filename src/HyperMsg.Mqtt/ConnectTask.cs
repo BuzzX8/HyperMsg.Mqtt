@@ -1,8 +1,9 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Connection;
+using HyperMsg.Transport;
 using System.Threading;
 using System.Threading.Tasks;
 using HyperMsg.Mqtt.Extensions;
+using HyperMsg.Extensions;
 
 namespace HyperMsg.Mqtt
 {
@@ -13,7 +14,7 @@ namespace HyperMsg.Mqtt
         public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
-            RegisterReceiveHandler<ConnAck>(Handle);
+            this.RegisterReceiveHandler<ConnAck>(Handle);
         }
 
         internal async Task<MessagingTask<SessionState>> StartAsync()

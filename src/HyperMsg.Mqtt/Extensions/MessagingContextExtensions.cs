@@ -1,5 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Connection;
+using HyperMsg.Transport;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

@@ -31,13 +31,16 @@
       <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.dll</HintPath>
     </Reference>
     <Reference Include="HyperMsg.Connection">
-      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Connection.dll</HintPath>
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport\bin\Debug\netcoreapp2.0\HyperMsg.Transport.dll</HintPath>
     </Reference>
     <Reference Include="HyperMsg.Core">
       <HintPath>..\..\..\HyperMsg\src\HyperMsg.Core\bin\Debug\netstandard2.0\HyperMsg.Core.dll</HintPath>
     </Reference>
     <Reference Include="HyperMsg.Sockets">
       <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Sockets\bin\Debug\netcoreapp2.1\HyperMsg.Sockets.dll</HintPath>
+    </Reference>
+    <Reference Include="HyperMsg.Transport">
+      <HintPath>..\..\..\HyperMsg.Transport\src\HyperMsg.Transport\bin\Debug\netstandard2.0\HyperMsg.Transport.dll</HintPath>
     </Reference>
   </ItemGroup>
 
