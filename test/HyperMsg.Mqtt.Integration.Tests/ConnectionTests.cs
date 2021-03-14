@@ -2,8 +2,6 @@
 using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
-using MQTTnet;
-using MQTTnet.Client.Options;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -37,29 +35,6 @@ namespace HyperMsg.Mqtt.Integration.Tests
             Assert.NotNull(conAckResponse);
             Assert.Equal(responseResult, conAckResponse.ResultCode);
             Assert.Equal(isSessionPresent, conAckResponse.SessionPresent);
-        }
-
-        [Fact]
-        public async Task DisconnectAsync_Closes_Connection()
-        {
-            var factory = new MqttFactory();
-            var mqttClient = factory.CreateMqttClient();
-            var options = new MqttClientOptionsBuilder()
-                .WithClientId("HyperM-Client")
-                .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V311)
-                .WithTcpServer("localhost")
-                .WithCleanSession()
-                .Build();
-
-            //await mqttClient.ConnectAsync(options, default);
-            //await mqttClient.DisconnectAsync(new MQTTnet.Client.Disconnecting.MqttClientDisconnectOptions(), default);
-
-            //var port = GetRequiredService<IPort>();
-            //await await MessagingContext.ConnectAsync(ConnectionSettings);
-            //Assert.True(port.IsOpen);
-            //await MessagingContext.DisconnectAsync();
-
-            //Assert.False(port.IsOpen);
         }
     }
 }

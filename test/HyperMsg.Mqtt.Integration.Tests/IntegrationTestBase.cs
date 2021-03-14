@@ -1,33 +1,44 @@
 ﻿using HyperMsg.Mqtt.Extensions;
+using HyperMsg.Sockets.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using MQTTnet;
+using MQTTnet.Client.Options;
 using System;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Integration.Tests
 {
-    public abstract class IntegrationTestBase
+    public abstract class IntegrationTestBase : ServiceHostFixture
     {
         protected static readonly TimeSpan DefaultWaitTimeout = TimeSpan.FromSeconds(5);
-        private readonly ServiceHost host;
 
-        protected IntegrationTestBase()
+        const string hostName = "localhost";
+        const int port = 1883;
+
+        protected IntegrationTestBase() : base(services =>
         {
-            host = ServiceHost.CreateDefault(services => services.AddMqttServices());
-            host.StartAsync().Wait();
-
+            services.AddMqttServices()
+                .AddSocketConnection(hostName, port)
+                .AddSingleton(provider =>
+                {
+                    var factory = new MqttFactory();
+                    return factory.CreateMqttClient();
+                })
+                .AddSingleton(provider =>
+                {
+                    return new MqttClientOptionsBuilder()
+                        .WithClientId("HyperM-Client")
+                        .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V311)
+                        .WithTcpServer(hostName)
+                        .WithCleanSession()
+                        .Build();
+                });
+        })
+        {
             ConnectionSettings = new MqttConnectionSettings("HyperMsg");
-            MessagingContext = host.GetRequiredService<IMessagingContext>();
         }
 
         protected MqttConnectionSettings ConnectionSettings { get; }
-
-        protected IMessagingContext MessagingContext { get; }
-
-        protected IMessageSender MessageSender => MessagingContext.Sender;
-
-        protected IMessageHandlersRegistry HandlersRegistry => MessagingContext.HandlersRegistry;
-
-        protected T GetRequiredService<T>() => host.GetRequiredService<T>();
 
         protected async Task ConnectAsync() => await await MessagingContext.ConnectAsync(ConnectionSettings, default);
     }
