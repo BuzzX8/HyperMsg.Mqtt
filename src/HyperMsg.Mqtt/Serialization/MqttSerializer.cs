@@ -208,11 +208,11 @@ namespace HyperMsg.Mqtt.Serialization
 		    writer.Advance(4);
 	    }
 
-		public static void Serialize(IBufferWriter<byte> writer, PingReq pingReq) => writer.Write(PingReq);
+		public static void Serialize(IBufferWriter<byte> writer, PingReq _) => writer.Write(PingReq);
 
-	    public static void Serialize(IBufferWriter<byte> writer, PingResp pingResp) => writer.Write(PingResp);
+	    public static void Serialize(IBufferWriter<byte> writer, PingResp _) => writer.Write(PingResp);
 
-		public static void Serialize(IBufferWriter<byte> writer, Disconnect disconnect) => writer.Write(Disconnect);
+		public static void Serialize(IBufferWriter<byte> writer, Disconnect _) => writer.Write(Disconnect);
 
 	    public static int WriteRemainingLength(this Memory<byte> buffer, int length)
 	    {

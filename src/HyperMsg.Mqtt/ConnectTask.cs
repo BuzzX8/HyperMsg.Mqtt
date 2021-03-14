@@ -2,6 +2,8 @@
 using HyperMsg.Transport;
 using System.Threading;
 using System.Threading.Tasks;
+using HyperMsg.Mqtt.Extensions;
+using HyperMsg.Extensions;
 
 namespace HyperMsg.Mqtt
 {
@@ -12,48 +14,21 @@ namespace HyperMsg.Mqtt
         public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
-            AddReceiver<ConnAck>(Handle);
+            this.RegisterReceiveHandler<ConnAck>(Handle);
         }
 
         internal async Task<MessagingTask<SessionState>> StartAsync()
         {
-            await SendAsync(TransportCommand.Open, CancellationToken);
+            await SendAsync(ConnectionCommand.Open, CancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await SendAsync(TransportCommand.SetTransportLevelSecurity, CancellationToken);
+                await SendAsync(ConnectionCommand.SetTransportLevelSecurity, CancellationToken);
             }
 
-            var connectPacket = CreateConnectPacket(connectionSettings.CleanSession);
-            await TransmitAsync(connectPacket, CancellationToken);
+            await Sender.TransmitConnectionRequestAsync(connectionSettings, CancellationToken);
 
             return this;
-        }
-
-        private Connect CreateConnectPacket(bool cleanSession)
-        {
-            var flags = ConnectFlags.None;
-
-            if (cleanSession)
-            {
-                flags |= ConnectFlags.CleanSession;
-            }
-
-            var connect = new Connect
-            {
-                ClientId = connectionSettings.ClientId,
-                KeepAlive = connectionSettings.KeepAlive,
-                Flags = flags
-            };
-
-            if (connectionSettings.WillMessageSettings != null)
-            {
-                connect.Flags |= ConnectFlags.Will;
-                connect.WillTopic = connectionSettings.WillMessageSettings.Topic;
-                connect.WillMessage = connectionSettings.WillMessageSettings.Message;
-            }
-
-            return connect;
         }
 
         private void Handle(ConnAck connAck) => Complete(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);

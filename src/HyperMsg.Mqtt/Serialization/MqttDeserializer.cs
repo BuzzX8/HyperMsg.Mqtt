@@ -1,9 +1,12 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Packets;
 using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt.Serialization
 {
@@ -28,6 +31,25 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.Unsubscribe, ReadUnsubscribe},
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
+
+		internal static async Task<int> ReadBufferAsync(IMessageSender messageSender, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
+        {
+			var (BytesConsumed, Packet) = Deserialize(buffer);
+
+			if (BytesConsumed == 0)
+            {
+				return 0;
+            }
+
+			switch(Packet)
+            {
+				case ConnAck connAck:
+					await messageSender.ReceiveAsync(connAck, cancellationToken);
+					break;
+            }
+
+			return BytesConsumed;
+        }
 
 	    public static (int BytesConsumed, object Packet) Deserialize(ReadOnlySequence<byte> buffer)
 	    {
@@ -178,24 +200,24 @@ namespace HyperMsg.Mqtt.Serialization
 	    {
 		    var span = buffer.Span;
 		    int result = 0;
-		    int value = 0;
-		    int offset = 0;
-		    int i = 0;
+            int offset = 0;
+            int i = 0;
 
-		    do
-		    {
-			    value = span[i];
-			    result |= (value & 0x7f) << offset;
-			    offset += 7;
-			    i++;
+            int value;
+            do
+            {
+                value = span[i];
+                result |= (value & 0x7f) << offset;
+                offset += 7;
+                i++;
 
                 if (i == sizeof(int) && value >= 0x80)
                 {
                     throw new FormatException();
                 }
             }
-		    while ((value & 0x80) == 0x80);
-		    return (result, i);
+            while ((value & 0x80) == 0x80);
+            return (result, i);
 	    }
 
 	    public static string ReadString(this ReadOnlyMemory<byte> buffer)

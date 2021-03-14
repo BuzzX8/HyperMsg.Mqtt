@@ -1,4 +1,5 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Extensions;
+using HyperMsg.Mqtt.Packets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,16 +12,16 @@ namespace HyperMsg.Mqtt
 
         public PublishTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            AddReceiver<PubAck>(Handle);
-            AddReceiver<PubRec>(HandleAsync);
-            AddReceiver<PubComp>(Handle);
+            this.RegisterReceiveHandler<PubAck>(Handle);
+            this.RegisterReceiveHandler<PubRec>(HandleAsync);
+            this.RegisterReceiveHandler<PubComp>(Handle);
         }
 
         public async Task<MessagingTask<bool>> StartAsync(PublishRequest request)
         {
             var publishPacket = CreatePublishPacket(request);
             packetId = publishPacket.Id;
-            await TransmitAsync(publishPacket, CancellationToken);
+            await this.TransmitAsync(publishPacket, CancellationToken);
 
             if (request.Qos == QosLevel.Qos0)
             {
@@ -52,7 +53,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            await TransmitAsync(new PubRel(packetId), cancellationToken);
+            await this.TransmitAsync(new PubRel(packetId), cancellationToken);
         }
 
         private void Handle(PubComp pubComp)
