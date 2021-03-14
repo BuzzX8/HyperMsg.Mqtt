@@ -5,6 +5,9 @@ using HyperMsg.Mqtt.Packets;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using System.Diagnostics;
+using MQTTnet.Client;
+using MQTTnet.Client.Options;
 
 namespace HyperMsg.Mqtt.Integration.Tests
 {
@@ -12,7 +15,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
     {
         [Fact]
         public async Task ConnectAsync_Receives_ConAck_Response()
-        {            
+        {
             var conAckResponse = default(ConnAck);
             var responseResult = default(ConnectionResult?);
             var isSessionPresent = default(bool?);
@@ -26,6 +29,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
                 @event.Set();
             });
 
+            await StartConnectionListener();
             await MessageSender.SendAsync(ConnectionCommand.Open, default);
             await MessageSender.TransmitConnectionRequestAsync(ConnectionSettings);
 
@@ -35,6 +39,18 @@ namespace HyperMsg.Mqtt.Integration.Tests
             Assert.NotNull(conAckResponse);
             Assert.Equal(responseResult, conAckResponse.ResultCode);
             Assert.Equal(isSessionPresent, conAckResponse.SessionPresent);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_With_MqttClient()
+        {
+            await StartConnectionListener();
+            var client = GetService<IMqttClient>();
+            var options = GetService<IMqttClientOptions>();
+
+            var result = await client.ConnectAsync(options);
+
+            Assert.NotNull(result);
         }
     }
 }
