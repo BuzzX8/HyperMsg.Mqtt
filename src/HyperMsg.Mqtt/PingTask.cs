@@ -9,12 +9,12 @@ namespace HyperMsg.Mqtt
     {
         public PingTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            this.RegisterReceiveHandler<PingResp>(Handle);
+            this.RegisterMessageReceivedEventHandler<PingResp>(Handle);
         }
 
         internal async Task<MessagingTask<bool>> StartAsync()
         {
-            await this.TransmitAsync(PingReq.Instance, CancellationToken);
+            await this.SendTransmitMessageCommandAsync(PingReq.Instance, CancellationToken);
 
             return this;
         }

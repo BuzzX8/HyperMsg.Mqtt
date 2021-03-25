@@ -55,7 +55,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
         protected async Task StartConnectionListener()
         {
             var messageSender = ServerHost.GetService<IMessageSender>();
-            await messageSender.SendAsync(ConnectionListeneningCommand.StartListening, default);
+            //await messageSender.SendAsync(ConnectionListeneningCommand.StartListening, default);
         }
     }
 }

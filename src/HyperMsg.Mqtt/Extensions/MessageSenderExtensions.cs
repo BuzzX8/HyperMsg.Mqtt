@@ -10,7 +10,7 @@ namespace HyperMsg.Mqtt.Extensions
         public static Task TransmitConnectionRequestAsync(this IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
-            return messageSender.TransmitAsync(connectPacket, cancellationToken);
+            return messageSender.SendTransmitMessageCommandAsync(connectPacket, cancellationToken);
         }
 
         private static Connect CreateConnectPacket(MqttConnectionSettings connectionSettings)

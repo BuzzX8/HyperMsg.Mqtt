@@ -21,7 +21,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
             var isSessionPresent = default(bool?);
             var @event = new ManualResetEventSlim();
 
-            HandlersRegistry.RegisterReceiveHandler<ConnAck>(response => conAckResponse = response);
+            HandlersRegistry.RegisterMessageReceivedEventHandler<ConnAck>(response => conAckResponse = response);
             HandlersRegistry.RegisterConnectionResponseReceiveHandler((result, clean) =>
             {
                 responseResult = result;
@@ -30,7 +30,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
             });
 
             await StartConnectionListener();
-            await MessageSender.SendAsync(ConnectionCommand.Open, default);
+            //await MessageSender.SendAsync(ConnectionCommand.Open, default);
             await MessageSender.TransmitConnectionRequestAsync(ConnectionSettings);
 
             @event.Wait(DefaultWaitTimeout);
@@ -39,6 +39,8 @@ namespace HyperMsg.Mqtt.Integration.Tests
             Assert.NotNull(conAckResponse);
             Assert.Equal(responseResult, conAckResponse.ResultCode);
             Assert.Equal(isSessionPresent, conAckResponse.SessionPresent);
+
+            await MessageSender.SendTransmitMessageCommandAsync(Disconnect.Instance, default);
         }
 
         [Fact]
@@ -51,6 +53,8 @@ namespace HyperMsg.Mqtt.Integration.Tests
             var result = await client.ConnectAsync(options);
 
             Assert.NotNull(result);
+
+            await client.DisconnectAsync();
         }
     }
 }

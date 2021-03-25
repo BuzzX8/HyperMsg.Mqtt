@@ -45,11 +45,15 @@ namespace HyperMsg.Mqtt.Serialization
 			switch(Packet)
             {
 				case Connect connect:
-					await messageSender.ReceiveAsync(connect, cancellationToken);
+					await messageSender.SendMessageReceivedEventAsync(connect, cancellationToken);
 					break;
 
 				case ConnAck connAck:
-					await messageSender.ReceiveAsync(connAck, cancellationToken);
+					await messageSender.SendMessageReceivedEventAsync(connAck, cancellationToken);
+					break;
+
+				case Disconnect disconnect:
+					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
 					break;
             }
 

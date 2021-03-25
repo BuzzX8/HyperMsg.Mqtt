@@ -12,14 +12,14 @@ namespace HyperMsg.Mqtt
 
         internal UnsubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            this.RegisterReceiveHandler<UnsubAck>(Handle);
+            this.RegisterMessageReceivedEventHandler<UnsubAck>(Handle);
         }
 
         public async Task<MessagingTask<bool>> StartAsync(IEnumerable<string> topics)
         {
             var request = CreateUnsubscribeRequest(topics);
             packetId = request.Id;
-            await this.TransmitAsync(request, CancellationToken);
+            await this.SendTransmitMessageCommandAsync(request, CancellationToken);
             
             return this;
         }
