@@ -30,7 +30,7 @@ namespace HyperMsg.Mqtt
         {
             if (unsubAck.Id == packetId)
             {
-                Complete(true);
+                SetResult(true);
             }
         }
     }

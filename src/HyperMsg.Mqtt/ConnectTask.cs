@@ -3,6 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Extensions;
+using HyperMsg.Transport.Extensions;
+using System.Collections.Generic;
+using System;
 
 namespace HyperMsg.Mqtt
 {
@@ -13,23 +16,27 @@ namespace HyperMsg.Mqtt
         public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
-            this.RegisterMessageReceivedEventHandler<ConnAck>(Handle);
         }
 
-        internal async Task<MessagingTask<SessionState>> StartAsync()
+        //internal new ConnectTask Start() => base.Start();
+
+        protected override async Task BeginAsync()
         {
-            //await SendAsync(ConnectionCommand.Open, CancellationToken);
+            await this.SendOpenConnectionCommandAsync(CancellationToken);
 
-            //if (connectionSettings.UseTls)
-            //{
-            //    await SendAsync(ConnectionCommand.SetTransportLevelSecurity, CancellationToken);
-            //}
+            if (connectionSettings.UseTls)
+            {
+                await this.SendSetTlsCommandAsync(CancellationToken);
+            }
 
-            await Sender.TransmitConnectionRequestAsync(connectionSettings, CancellationToken);
-
-            return this;
+            await this.TransmitConnectionRequestAsync(connectionSettings, CancellationToken);
         }
 
-        private void Handle(ConnAck connAck) => Complete(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
+        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<ConnAck>(Handle);
+        }
+
+        private void Handle(ConnAck connAck) => SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
     }
 }

@@ -25,7 +25,7 @@ namespace HyperMsg.Mqtt
 
             if (request.Qos == QosLevel.Qos0)
             {
-                Complete(true);
+                SetResult(true);
                 return this;
             }
 
@@ -43,7 +43,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            Complete(true);
+            SetResult(true);
         }
 
         private async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
@@ -63,7 +63,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            Complete(true);
+            SetResult(true);
         }
     }
 }
