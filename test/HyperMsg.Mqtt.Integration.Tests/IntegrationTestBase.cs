@@ -1,7 +1,7 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Sockets.Extensions;
-using HyperMsg.Transport;
+using HyperMsg.Transport.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using MQTTnet;
 using MQTTnet.Client.Options;
@@ -50,12 +50,12 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
         protected ServiceHost ServerHost { get; }
 
-        protected async Task ConnectAsync() => await await MessagingContext.ConnectAsync(ConnectionSettings, default);
+        protected async Task ConnectAsync() => await MessagingContext.ConnectAsync(ConnectionSettings, default);
 
         protected async Task StartConnectionListener()
         {
-            var messageSender = ServerHost.GetService<IMessageSender>();
-            //await messageSender.SendAsync(ConnectionListeneningCommand.StartListening, default);
+            var messageSender = ServerHost.GetRequiredService<IMessageSender>();
+            await messageSender.SendStartConnectionListeningCommandAsync();
         }
     }
 }

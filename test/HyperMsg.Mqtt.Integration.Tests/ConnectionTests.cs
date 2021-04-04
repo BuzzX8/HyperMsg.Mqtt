@@ -1,13 +1,12 @@
-﻿using HyperMsg.Transport;
-using HyperMsg.Extensions;
+﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using System.Diagnostics;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
+using HyperMsg.Transport.Extensions;
 
 namespace HyperMsg.Mqtt.Integration.Tests
 {
@@ -30,7 +29,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
             });
 
             await StartConnectionListener();
-            //await MessageSender.SendAsync(ConnectionCommand.Open, default);
+            MessageSender.SendOpenConnectionCommandAsync().Wait(DefaultWaitTimeout);
             await MessageSender.TransmitConnectionRequestAsync(ConnectionSettings);
 
             @event.Wait(DefaultWaitTimeout);
