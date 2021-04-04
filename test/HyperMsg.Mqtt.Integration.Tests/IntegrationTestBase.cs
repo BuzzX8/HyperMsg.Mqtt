@@ -42,7 +42,20 @@ namespace HyperMsg.Mqtt.Integration.Tests
             ServerHost = ServiceHost.CreateDefault(services => services.AddSocketConnectionListener(new IPEndPoint(IPAddress.Any, port))
                 .AddBufferFactory()
                 .AddMqttServices()
-                .AddHostedService<MqttConnectionService>());
+                .AddConfigurator(provider =>
+                {
+                    var context = provider.GetRequiredService<IMessagingContext>();
+                    context.HandlersRegistry.RegisterAcceptedSocketHandler(socket =>
+                    {
+                        context.Sender.CreateSocketScope(socket, services =>
+                        {
+                            services.AddMqttServices()
+                                .AddHostedService<MqttConnectionService>();
+                        });                        
+
+                        return true;
+                    });
+                }));
             ServerHost.Start();
         }
 
