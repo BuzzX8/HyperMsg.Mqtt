@@ -1,36 +1,47 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
 using System.Threading;
 using System.Threading.Tasks;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Extensions;
+using HyperMsg.Transport.Extensions;
+using System.Collections.Generic;
+using System;
 
 namespace HyperMsg.Mqtt
 {
-    internal class ConnectTask : MessagingTask<SessionState>
+    public class ConnectTask : MessagingTask<SessionState>
     {
         private readonly MqttConnectionSettings connectionSettings;
 
-        public ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
+        private ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
             this.connectionSettings = connectionSettings;
-            this.RegisterReceiveHandler<ConnAck>(Handle);
         }
 
-        internal async Task<MessagingTask<SessionState>> StartAsync()
+        public static ConnectTask StartNew(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
         {
-            await SendAsync(ConnectionCommand.Open, CancellationToken);
+            var task = new ConnectTask(context, connectionSettings, cancellationToken);
+            task.Start();
+            return task;
+        }
+
+        protected override async Task BeginAsync()
+        {
+            await this.SendOpenConnectionCommandAsync(CancellationToken);
 
             if (connectionSettings.UseTls)
             {
-                await SendAsync(ConnectionCommand.SetTransportLevelSecurity, CancellationToken);
+                await this.SendSetTlsCommandAsync(CancellationToken);
             }
 
-            await Sender.TransmitConnectionRequestAsync(connectionSettings, CancellationToken);
-
-            return this;
+            await this.TransmitConnectionRequestAsync(connectionSettings, CancellationToken);
         }
 
-        private void Handle(ConnAck connAck) => Complete(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
+        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<ConnAck>(Handle);
+        }
+
+        private void Handle(ConnAck connAck) => SetResult(connAck.SessionPresent ? SessionState.Present : SessionState.Clean);
     }
 }

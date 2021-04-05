@@ -29,11 +29,11 @@ namespace HyperMsg.Mqtt.Extensions
         public static IServiceCollection AddMqttDeserializers(this IServiceCollection services)
         {
             return services.AddConfigurator(provider =>
-                {
-                    var service = provider.GetRequiredService<BufferTransferingService>();
-                    var messageSender = provider.GetRequiredService<IMessageSender>();
-                    service.AddReceivingBufferReader((buffer, token) => ReadBufferAsync(messageSender, buffer, token));
-                });
+            {
+                var service = provider.GetRequiredService<BufferTransferingService>();
+                var messageSender = provider.GetRequiredService<IMessageSender>();
+                service.AddReceivingBufferReader((buffer, token) => ReadBufferAsync(messageSender, buffer, token));
+            });
         }
 
         public static IServiceCollection AddMqttServices(this IServiceCollection services)

@@ -2,6 +2,7 @@
 {
     public static class PacketCodes
     {
+        public const byte Connect = 0b00010000;
         public const byte ConAck = 0b00100000;
         public const byte Unsubscribe = 0b10100010;
         public const byte SubAck = 0b10010000;

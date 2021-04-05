@@ -21,6 +21,7 @@ namespace HyperMsg.Mqtt.Serialization
 
 	    private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>> Readers = new Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>>
 	    {
+			{PacketCodes.Connect, ReadConnect },
 		    {PacketCodes.ConAck, ReadConAck },
 		    {PacketCodes.Subscribe, ReadSubscribe},
 		    {PacketCodes.Puback, ReadPuback},
@@ -43,8 +44,24 @@ namespace HyperMsg.Mqtt.Serialization
 
 			switch(Packet)
             {
+				case Connect connect:
+					await messageSender.SendMessageReceivedEventAsync(connect, cancellationToken);
+					break;
+
 				case ConnAck connAck:
-					await messageSender.ReceiveAsync(connAck, cancellationToken);
+					await messageSender.SendMessageReceivedEventAsync(connAck, cancellationToken);
+					break;
+
+				case Disconnect disconnect:
+					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
+					break;
+
+				case PingReq pingReq:
+					await messageSender.SendMessageReceivedEventAsync(pingReq, cancellationToken);
+					break;
+
+				case PingResp pingResp:
+					await messageSender.SendMessageReceivedEventAsync(pingResp, cancellationToken);
 					break;
             }
 
@@ -78,6 +95,24 @@ namespace HyperMsg.Mqtt.Serialization
             }
             
             return (0, null);
+        }
+
+		private static Connect ReadConnect(ReadOnlyMemory<byte> buffer, int length)
+        {
+			const int protocolNameLength = 6;
+
+			var protocolName = buffer.Slice(0, protocolNameLength).ReadString();
+			var protocolVersion = buffer.Span[protocolNameLength];
+			var connectFlags = (ConnectFlags)buffer.Span[protocolNameLength + 1];
+			var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span.Slice(protocolNameLength + 2));
+
+			var clientId = buffer.Slice(protocolNameLength + 4).ReadString();
+
+			return new Connect
+			{
+				ClientId = clientId,
+				KeepAlive = keepAlive
+			};
         }
 
 	    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)

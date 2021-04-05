@@ -12,20 +12,20 @@ namespace HyperMsg.Mqtt
 
         public PublishTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
         {
-            this.RegisterReceiveHandler<PubAck>(Handle);
-            this.RegisterReceiveHandler<PubRec>(HandleAsync);
-            this.RegisterReceiveHandler<PubComp>(Handle);
+            this.RegisterMessageReceivedEventHandler<PubAck>(Handle);
+            this.RegisterMessageReceivedEventHandler<PubRec>(HandleAsync);
+            this.RegisterMessageReceivedEventHandler<PubComp>(Handle);
         }
 
         public async Task<MessagingTask<bool>> StartAsync(PublishRequest request)
         {
             var publishPacket = CreatePublishPacket(request);
             packetId = publishPacket.Id;
-            await this.TransmitAsync(publishPacket, CancellationToken);
+            await this.SendTransmitMessageCommandAsync(publishPacket, CancellationToken);
 
             if (request.Qos == QosLevel.Qos0)
             {
-                Complete(true);
+                SetResult(true);
                 return this;
             }
 
@@ -43,7 +43,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            Complete(true);
+            SetResult(true);
         }
 
         private async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            await this.TransmitAsync(new PubRel(packetId), cancellationToken);
+            await this.SendTransmitMessageCommandAsync(new PubRel(packetId), cancellationToken);
         }
 
         private void Handle(PubComp pubComp)
@@ -63,7 +63,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            Complete(true);
+            SetResult(true);
         }
     }
 }

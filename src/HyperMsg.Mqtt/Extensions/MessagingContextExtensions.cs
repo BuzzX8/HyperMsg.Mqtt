@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,15 +7,12 @@ namespace HyperMsg.Mqtt.Extensions
 {
     public static class MessagingContextExtensions
     {
-        public static Task<MessagingTask<SessionState>> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
-        {
-            return new ConnectTask(messagingContext, connectionSettings, cancellationToken).StartAsync();
-        }
+        public static ConnectTask ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
+            ConnectTask.StartNew(messagingContext, connectionSettings, cancellationToken);
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
         {
             await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
-            await messagingContext.Sender.SendAsync(ConnectionCommand.Close, cancellationToken);
         }
 
         public static Task<MessagingTask<IEnumerable<SubscriptionResult>>> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
@@ -34,9 +30,6 @@ namespace HyperMsg.Mqtt.Extensions
             return new PublishTask(messagingContext, cancellationToken).StartAsync(request);
         }
 
-        public static Task<MessagingTask<bool>> PingAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
-        {
-            return new PingTask(messagingContext, cancellationToken).StartAsync();
-        }
+        public static PingTask PingAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default) => PingTask.StartNew(messagingContext, cancellationToken);
     }
 }
