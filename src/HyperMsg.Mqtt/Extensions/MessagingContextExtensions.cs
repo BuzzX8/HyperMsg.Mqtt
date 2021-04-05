@@ -15,10 +15,8 @@ namespace HyperMsg.Mqtt.Extensions
             await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
         }
 
-        public static Task<MessagingTask<IEnumerable<SubscriptionResult>>> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
-        {
-            return new SubscribeTask(messagingContext, cancellationToken).StartAsync(requests);
-        }
+        public static SubscribeTask SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default) => 
+            SubscribeTask.StartNew(requests, messagingContext, cancellationToken);
 
         public static Task<MessagingTask<bool>> UnsubscribeAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken token = default)
         {

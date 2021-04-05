@@ -51,7 +51,8 @@ namespace HyperMsg.Mqtt.Integration.Tests
                         {
                             services.AddMqttServices()
                                 .AddHostedService<MqttConnectionService>()
-                                .AddHostedService<PingService>();
+                                .AddHostedService<PingService>()
+                                .AddHostedService<SubscriptionService>();
                         });                        
 
                         return true;

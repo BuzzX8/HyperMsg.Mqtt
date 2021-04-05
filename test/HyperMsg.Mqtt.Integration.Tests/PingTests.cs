@@ -27,7 +27,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
         }
 
         [Fact]
-        public async Task ConnectAsync_With_MqttClient()
+        public async Task PingAsync_With_MqttClient()
         {
             await StartConnectionListener();
             var client = GetService<IMqttClient>();
