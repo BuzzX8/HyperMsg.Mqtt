@@ -1,6 +1,8 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Extensions;
 using HyperMsg.Mqtt.Packets;
+using MQTTnet.Client;
+using MQTTnet.Client.Options;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -12,15 +14,29 @@ namespace HyperMsg.Mqtt.Integration.Tests
         public async Task PingAsync_Receives_Ping_Response()
         {
             var pingResp = default(PingResp);
-            //MessageObservable.OnReceived<PingResp>(r => pingResp = r);
+            HandlersRegistry.RegisterMessageReceivedEventHandler<PingResp>(r => pingResp = r);
+            await StartConnectionListener();
             await ConnectAsync();
 
             var pingTask = MessagingContext.PingAsync();
 
-            pingTask.Wait(DefaultWaitTimeout);
+            await pingTask;//.Wait(DefaultWaitTimeout);
 
             Assert.True(pingTask.IsCompleted);
             Assert.NotNull(pingResp);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_With_MqttClient()
+        {
+            await StartConnectionListener();
+            var client = GetService<IMqttClient>();
+            var options = GetService<IMqttClientOptions>();
+
+            await client.ConnectAsync(options);
+            await client.PingAsync(default);            
+
+            await client.DisconnectAsync();
         }
     }
 }

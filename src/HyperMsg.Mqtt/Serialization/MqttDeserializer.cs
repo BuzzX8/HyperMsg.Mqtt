@@ -55,6 +55,14 @@ namespace HyperMsg.Mqtt.Serialization
 				case Disconnect disconnect:
 					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
 					break;
+
+				case PingReq pingReq:
+					await messageSender.SendMessageReceivedEventAsync(pingReq, cancellationToken);
+					break;
+
+				case PingResp pingResp:
+					await messageSender.SendMessageReceivedEventAsync(pingResp, cancellationToken);
+					break;
             }
 
 			return BytesConsumed;

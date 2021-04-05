@@ -50,7 +50,8 @@ namespace HyperMsg.Mqtt.Integration.Tests
                         context.Sender.CreateSocketScope(socket, services =>
                         {
                             services.AddMqttServices()
-                                .AddHostedService<MqttConnectionService>();
+                                .AddHostedService<MqttConnectionService>()
+                                .AddHostedService<PingService>();
                         });                        
 
                         return true;

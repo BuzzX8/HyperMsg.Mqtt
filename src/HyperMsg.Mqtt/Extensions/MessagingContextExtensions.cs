@@ -7,7 +7,7 @@ namespace HyperMsg.Mqtt.Extensions
 {
     public static class MessagingContextExtensions
     {
-        public static MessagingTask<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
+        public static ConnectTask ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
             ConnectTask.StartNew(messagingContext, connectionSettings, cancellationToken);
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
@@ -30,9 +30,6 @@ namespace HyperMsg.Mqtt.Extensions
             return new PublishTask(messagingContext, cancellationToken).StartAsync(request);
         }
 
-        public static Task<MessagingTask<bool>> PingAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
-        {
-            return new PingTask(messagingContext, cancellationToken).StartAsync();
-        }
+        public static PingTask PingAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default) => PingTask.StartNew(messagingContext, cancellationToken);
     }
 }

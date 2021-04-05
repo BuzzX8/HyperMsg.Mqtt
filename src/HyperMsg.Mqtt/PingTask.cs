@@ -1,24 +1,34 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Packets;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class PingTask : MessagingTask<bool>
+    public class PingTask : MessagingTask<bool>
     {
-        public PingTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
+        private PingTask(IMessagingContext context, CancellationToken cancellationToken) : base(context, cancellationToken)
+        { }
+
+        internal static PingTask StartNew(IMessagingContext context, CancellationToken cancellationToken)
         {
-            //this.RegisterMessageReceivedEventHandler<PingResp>(Handle);
+            var task = new PingTask(context, cancellationToken);
+            task.Start();
+            return task;
         }
 
-        internal async Task<MessagingTask<bool>> StartAsync()
+        protected override Task BeginAsync()
         {
-            await this.SendTransmitMessageCommandAsync(PingReq.Instance, CancellationToken);
-
-            return this;
+            return this.SendTransmitMessageCommandAsync(PingReq.Instance, CancellationToken);
         }
 
-        //private void Handle(PingResp _) => Complete(true);
+        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<PingResp>(Handle);
+        }
+
+        private void Handle(PingResp _) => SetResult(true);
     }
 }
