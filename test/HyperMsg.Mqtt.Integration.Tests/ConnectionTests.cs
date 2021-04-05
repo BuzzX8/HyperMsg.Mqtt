@@ -43,6 +43,18 @@ namespace HyperMsg.Mqtt.Integration.Tests
         }
 
         [Fact]
+        public async Task ConnectAsync_Returns_Running_Task()
+        {
+            await StartConnectionListener();
+            MessageSender.SendOpenConnectionCommandAsync().Wait(DefaultWaitTimeout);
+
+            var task = MessagingContext.ConnectAsync(ConnectionSettings);
+            await task;
+
+            Assert.True(task.IsCompleted);
+        }
+
+        [Fact]
         public async Task ConnectAsync_With_MqttClient()
         {
             await StartConnectionListener();
