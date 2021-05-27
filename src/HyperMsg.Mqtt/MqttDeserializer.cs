@@ -55,6 +55,22 @@ namespace HyperMsg.Mqtt
 					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
 					break;
 
+				case PubAck pubAck:
+					await messageSender.SendMessageReceivedEventAsync(pubAck, cancellationToken);
+					break;
+
+				case PubRel pubRel:
+					await messageSender.SendMessageReceivedEventAsync(pubRel, cancellationToken);
+					break;
+
+				case PubRec pubRec:
+					await messageSender.SendMessageReceivedEventAsync(pubRec, cancellationToken);
+					break;
+
+				case PubComp pubComp:
+					await messageSender.SendMessageReceivedEventAsync(pubComp, cancellationToken);
+					break;
+
 				case PingReq pingReq:
 					await messageSender.SendMessageReceivedEventAsync(pingReq, cancellationToken);
 					break;

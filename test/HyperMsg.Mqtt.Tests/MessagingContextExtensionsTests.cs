@@ -253,15 +253,20 @@ namespace HyperMsg.Mqtt
         {
             var request = CreatePublishRequest(QosLevel.Qos2);
             var publishPacket = default(Publish);
-            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
-            {
-                publishPacket = MqttDeserializer.Deserialize(data, out var bytesConsumed) as Publish;
-                return bytesConsumed;
-            });
             var pubRel = default(PubRel);
             HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
             {
-                pubRel = MqttDeserializer.Deserialize(data, out var bytesConsumed) as PubRel;
+                var packet = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+
+                if (packet is Publish publish)
+                {
+                    publishPacket = publish;
+                }
+                else
+                {
+                    pubRel = (PubRel)packet;
+                }
+
                 return bytesConsumed;
             });
 
@@ -280,7 +285,13 @@ namespace HyperMsg.Mqtt
             var publishPacket = default(Publish);
             HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
             {
-                publishPacket = MqttDeserializer.Deserialize(data, out var bytesConsumed) as Publish;
+                var packet = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+
+                if (packet is Publish publish)
+                {
+                    publishPacket = publish;
+                }
+
                 return bytesConsumed;
             });
             var task = MessagingContext.PublishAsync(request);
