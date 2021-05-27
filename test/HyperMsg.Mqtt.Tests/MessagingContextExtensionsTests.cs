@@ -97,36 +97,47 @@ namespace HyperMsg.Mqtt
 
         #region SubscribeAsync
 
-        //[Fact]
-        //public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
-        //{
-        //    var subscribePacket = default(Subscribe);
-        //    HandlersRegistry.RegisterTransmitHandler<Subscribe>(s => subscribePacket = s);
-        //    var request = Enumerable.Range(1, 5)
-        //        .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-        //        .ToArray();
-        //    await MessagingContext.SubscribeAsync(request, tokenSource.Token);
+        [Fact]
+        public void SubscribeAsync_Sends_Correct_Subscribe_Request()
+        {
+            var subscribePacket = default(Subscribe);
+            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            {
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+                subscribePacket = message as Subscribe;
+                return bytesConsumed;
+            });
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
 
-        //    Assert.NotNull(subscribePacket);
-        //}
+            _ = MessagingContext.SubscribeAsync(request, tokenSource.Token);
 
-        //[Fact]
-        //public async Task SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
-        //{
-        //    var subscribePacket = default(Subscribe);
-        //    HandlersRegistry.RegisterTransmitHandler<Subscribe>(s => subscribePacket = s);
-        //    var request = Enumerable.Range(1, 5)
-        //        .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-        //        .ToArray();
-        //    var task = await MessagingContext.SubscribeAsync(request, tokenSource.Token);
-        //    var packetId = subscribePacket.Id;
-        //    var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
+            Assert.NotNull(subscribePacket);
+        }
 
-        //    MessageSender.Receive(subAck);
+        [Fact]
+        public void SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
+        {
+            var subscribePacket = default(Subscribe);
+            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            {
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+                subscribePacket = message as Subscribe;
+                return bytesConsumed;
+            });
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
+            var task = MessagingContext.SubscribeAsync(request, tokenSource.Token);
+            var packetId = subscribePacket.Id;
+            var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
-        //    Assert.True(task.IsCompleted);
-        //    Assert.Equal(subAck.Results, task.Result);
-        //}
+            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, subAck);
+
+            Assert.True(task.Completion.IsCompleted);
+            Assert.Equal(subAck.Results, task.Completion.Result);
+        }
 
         #endregion
 
