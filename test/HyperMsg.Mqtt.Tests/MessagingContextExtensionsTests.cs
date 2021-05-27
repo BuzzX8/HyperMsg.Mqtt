@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using HyperMsg.Mqtt.Serialization;
 using HyperMsg.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -7,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Extensions
+namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests : ServiceHostFixture
     {        
@@ -20,74 +21,80 @@ namespace HyperMsg.Mqtt.Extensions
             tokenSource = new CancellationTokenSource();
         }
 
-        //#region ConnectAsync
+        #region ConnectAsync
 
-        //[Fact]
-        //public async Task ConnectAsync_Sends_Open_TransportCommand()
-        //{
-        //    var command = default(ConnectionCommand);
-        //    HandlersRegistry.RegisterHandler<ConnectionCommand>(c => command = c);
-        //    await MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+        [Fact]
+        public void ConnectAsync_Sends_Open_TransportCommand()
+        {
+            var wasInvoked = false;
 
-        //    Assert.Equal(ConnectionCommand.Open, command);
-        //}
+            HandlersRegistry.RegisterOpenConnectionCommandHandler(() => wasInvoked = true);
+            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-        //[Fact]
-        //public async Task ConnectAsync_Sends_SetTransportLevelSecurity_TransportCommand_If_UseTls_Is_True()
-        //{
-        //    connectionSettings.UseTls = true;
-        //    var command = default(ConnectionCommand);
-        //    HandlersRegistry.RegisterHandler<ConnectionCommand>(c => command = c);
-        //    await MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            Assert.True(wasInvoked);
+        }
 
-        //    Assert.Equal(ConnectionCommand.SetTransportLevelSecurity, command);
-        //}
+        [Fact]
+        public void ConnectAsync_Sends_SetTransportLevelSecurity_TransportCommand_If_UseTls_Is_True()
+        {
+            connectionSettings.UseTls = true;
+            var wasInvoked = false;
+            HandlersRegistry.RegisterSetTlsCommandHandler(() => wasInvoked = true);
+            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-        //[Fact]
-        //public async Task ConnectAsync_Sends_Correct_Packet()
-        //{
-        //    var expectedPacket = new Connect
-        //    {
-        //        ClientId = connectionSettings.ClientId
-        //    };
+            Assert.True(wasInvoked);
+        }
 
-        //    await VerifyTransmittedConnectPacket(expectedPacket);
-        //}
+        [Fact]
+        public void ConnectAsync_Sends_Correct_Packet()
+        {
+            var expectedPacket = new Connect
+            {
+                ClientId = connectionSettings.ClientId
+            };
 
-        //private async Task VerifyTransmittedConnectPacket(Connect expectedPacket)
-        //{
-        //    var actualPacket = default(Connect);
-        //    HandlersRegistry.RegisterTransmitHandler<Connect>(c => actualPacket = c);
-        //    await MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            VerifyTransmittedConnectPacket(expectedPacket);
+        }
 
-        //    Assert.Equal(expectedPacket, actualPacket);
-        //}
+        private void VerifyTransmittedConnectPacket(Connect expectedPacket)
+        {
+            var actualPacket = default(Connect);
+            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            {
+                (var bytesConsumed, var message) = MqttDeserializer.Deserialize(data);
+                actualPacket = message as Connect;
+                return bytesConsumed;
+            });
+            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-        //[Fact]
-        //public async Task Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
-        //{
-        //    var connAck = new ConnAck(ConnectionResult.Accepted);
-        //    var task = await MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            Assert.Equal(expectedPacket, actualPacket);
+        }
 
-        //    MessageSender.Receive(connAck);
+        [Fact]
+        public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
+        {
+            var connAck = new ConnAck(ConnectionResult.Accepted);
+            var task = MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-        //    Assert.True(task.IsCompleted);
-        //    Assert.Equal(SessionState.Clean, task.Result);
-        //}
+            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, connAck);
 
-        //[Fact]
-        //public async Task Received_ConAck_Completes_Connect_Task_And_Returns_Correct_Result_For_Present_Session()
-        //{
-        //    var connAck = new ConnAck(ConnectionResult.Accepted, true);
-        //    var task = await MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            Assert.True(task.Completion.IsCompleted);
+            Assert.Equal(SessionState.Clean, task.Completion.Result);
+        }
 
-        //    MessageSender.Receive(connAck);
+        [Fact]
+        public void Received_ConAck_Completes_Connect_Task_And_Returns_Correct_Result_For_Present_Session()
+        {
+            var connAck = new ConnAck(ConnectionResult.Accepted, true);
+            var task = MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
 
-        //    Assert.True(task.IsCompleted);
-        //    Assert.Equal(SessionState.Present, task.Result);
-        //}
+            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, connAck);
 
-        //#endregion
+            Assert.True(task.Completion.IsCompleted);
+            Assert.Equal(SessionState.Present, task.Completion.Result);
+        }
+
+        #endregion
 
         //#region SubscribeAsync
 

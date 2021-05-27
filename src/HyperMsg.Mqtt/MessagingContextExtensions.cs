@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HyperMsg.Mqtt.Extensions
+namespace HyperMsg.Mqtt
 {
     public static class MessagingContextExtensions
     {
-        public static ConnectTask ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
+        public static IMessagingTask<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
             ConnectTask.StartNew(messagingContext, connectionSettings, cancellationToken);
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default)
