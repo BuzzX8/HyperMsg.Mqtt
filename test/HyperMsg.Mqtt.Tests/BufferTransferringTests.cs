@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Mqtt.Serialization;
 using System;
 using Xunit;
 

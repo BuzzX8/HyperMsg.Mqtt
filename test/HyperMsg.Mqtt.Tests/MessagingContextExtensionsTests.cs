@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Mqtt.Serialization;
 using HyperMsg.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -96,7 +95,7 @@ namespace HyperMsg.Mqtt
 
         #endregion
 
-        //#region SubscribeAsync
+        #region SubscribeAsync
 
         //[Fact]
         //public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
@@ -129,7 +128,7 @@ namespace HyperMsg.Mqtt
         //    Assert.Equal(subAck.Results, task.Result);
         //}
 
-        //#endregion
+        #endregion
 
         //#region UnsubscribeAsync
 

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Serialization
+namespace HyperMsg.Mqtt
 {
     public class MqttDeserializerTests
     {

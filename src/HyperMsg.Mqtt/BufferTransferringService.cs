@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using static HyperMsg.Mqtt.Serialization.MqttSerializer;
-using static HyperMsg.Mqtt.Serialization.MqttDeserializer;
+using static HyperMsg.Mqtt.MqttSerializer;
+using static HyperMsg.Mqtt.MqttDeserializer;
 using HyperMsg.Mqtt.Packets;
 using System.Threading.Tasks;
 using System.Buffers;

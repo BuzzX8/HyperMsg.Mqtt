@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace HyperMsg.Mqtt.Serialization
+namespace HyperMsg.Mqtt
 {
     public static class MqttSerializer
     {
