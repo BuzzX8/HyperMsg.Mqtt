@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 
 namespace HyperMsg.Mqtt.Extensions

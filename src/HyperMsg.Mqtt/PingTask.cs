@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,7 +8,7 @@ namespace HyperMsg.Mqtt
 {
     public class PingTask : MessagingTask<bool>
     {
-        private PingTask(IMessagingContext context, CancellationToken cancellationToken) : base(context, cancellationToken)
+        private PingTask(IMessagingContext context, CancellationToken cancellationToken) : base(context)
         { }
 
         internal static PingTask StartNew(IMessagingContext context, CancellationToken cancellationToken)
@@ -21,10 +20,10 @@ namespace HyperMsg.Mqtt
 
         protected override Task BeginAsync()
         {
-            return this.SendTransmitMessageCommandAsync(PingReq.Instance, CancellationToken);
+            return this.SendTransmitMessageCommandAsync(PingReq.Instance);
         }
 
-        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        protected override IEnumerable<IDisposable> GetAutoDisposables()
         {
             yield return this.RegisterMessageReceivedEventHandler<PingResp>(Handle);
         }

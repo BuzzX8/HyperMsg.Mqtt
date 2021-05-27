@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace HyperMsg.Mqtt
     {
         private ushort packetId;
 
-        internal UnsubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
+        internal UnsubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context)
         {
             this.RegisterMessageReceivedEventHandler<UnsubAck>(Handle);
         }
@@ -19,7 +18,7 @@ namespace HyperMsg.Mqtt
         {
             var request = CreateUnsubscribeRequest(topics);
             packetId = request.Id;
-            await this.SendTransmitMessageCommandAsync(request, CancellationToken);
+            await this.SendTransmitMessageCommandAsync(request);
             
             return this;
         }

@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +12,7 @@ namespace HyperMsg.Mqtt
         private readonly IEnumerable<SubscriptionRequest> requests;
         private ushort packetId;
 
-        private SubscribeTask(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken) : base(context, cancellationToken)
+        private SubscribeTask(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken) : base(context)
         {
             this.requests = requests;
         }
@@ -25,7 +24,7 @@ namespace HyperMsg.Mqtt
             return task;
         }
 
-        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        protected override IEnumerable<IDisposable> GetAutoDisposables()
         {
             yield return this.RegisterMessageReceivedEventHandler<SubAck>(Handle);
         }
@@ -35,7 +34,7 @@ namespace HyperMsg.Mqtt
             var request = CreateSubscribeRequest(requests);
             packetId = request.Id;
             
-            return this.SendTransmitMessageCommandAsync(request, CancellationToken);
+            return this.SendTransmitMessageCommandAsync(request);
         }
 
         private Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
