@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
@@ -11,14 +10,14 @@ namespace HyperMsg.Mqtt
     {
         private readonly MqttConnectionSettings connectionSettings;
 
-        private ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken) : base(context)
+        private ConnectTask(IMessagingContext context, MqttConnectionSettings connectionSettings) : base(context)
         {
             this.connectionSettings = connectionSettings;
         }
 
-        public static ConnectTask StartNew(IMessagingContext context, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
+        public static ConnectTask StartNew(IMessagingContext context, MqttConnectionSettings connectionSettings)
         {
-            var task = new ConnectTask(context, connectionSettings, cancellationToken);
+            var task = new ConnectTask(context, connectionSettings);
             task.Start();
             return task;
         }

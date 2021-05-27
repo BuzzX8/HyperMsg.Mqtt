@@ -2,24 +2,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    public class SubscribeTask : MessagingTask<IEnumerable<SubscriptionResult>>
+    internal class SubscribeTask : MessagingTask<IEnumerable<SubscriptionResult>>
     {
         private readonly IEnumerable<SubscriptionRequest> requests;
         private ushort packetId;
 
-        private SubscribeTask(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken) : base(context)
-        {
-            this.requests = requests;
-        }
+        private SubscribeTask(IEnumerable<SubscriptionRequest> requests, IMessagingContext context) : base(context) => this.requests = requests;
 
-        public static SubscribeTask StartNew(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken = default)
+        public static SubscribeTask StartNew(IEnumerable<SubscriptionRequest> requests, IMessagingContext context)
         {
-            var task = new SubscribeTask(requests, context, cancellationToken);
+            var task = new SubscribeTask(requests, context);
             task.Start();
             return task;
         }

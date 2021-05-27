@@ -12,12 +12,10 @@ namespace HyperMsg.Mqtt
     public class MessagingContextExtensionsTests : ServiceHostFixture
     {        
         private readonly MqttConnectionSettings connectionSettings;
-        private readonly CancellationTokenSource tokenSource;
 
         public MessagingContextExtensionsTests() : base(services => services.AddMqttServices())
         {
             connectionSettings = new MqttConnectionSettings("test-client");
-            tokenSource = new CancellationTokenSource();
         }
 
         #region ConnectAsync
@@ -28,7 +26,7 @@ namespace HyperMsg.Mqtt
             var wasInvoked = false;
 
             HandlersRegistry.RegisterOpenConnectionCommandHandler(() => wasInvoked = true);
-            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            MessagingContext.ConnectAsync(connectionSettings);
 
             Assert.True(wasInvoked);
         }
@@ -39,7 +37,7 @@ namespace HyperMsg.Mqtt
             connectionSettings.UseTls = true;
             var wasInvoked = false;
             HandlersRegistry.RegisterSetTlsCommandHandler(() => wasInvoked = true);
-            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            MessagingContext.ConnectAsync(connectionSettings);
 
             Assert.True(wasInvoked);
         }
@@ -64,7 +62,7 @@ namespace HyperMsg.Mqtt
                 actualPacket = message as Connect;
                 return bytesConsumed;
             });
-            MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            MessagingContext.ConnectAsync(connectionSettings);
 
             Assert.Equal(expectedPacket, actualPacket);
         }
@@ -73,7 +71,7 @@ namespace HyperMsg.Mqtt
         public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
         {
             var connAck = new ConnAck(ConnectionResult.Accepted);
-            var task = MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            var task = MessagingContext.ConnectAsync(connectionSettings);
 
             MessageSender.SendWriteToBufferCommand(BufferType.Receiving, connAck);
 
@@ -85,7 +83,7 @@ namespace HyperMsg.Mqtt
         public void Received_ConAck_Completes_Connect_Task_And_Returns_Correct_Result_For_Present_Session()
         {
             var connAck = new ConnAck(ConnectionResult.Accepted, true);
-            var task = MessagingContext.ConnectAsync(connectionSettings, tokenSource.Token);
+            var task = MessagingContext.ConnectAsync(connectionSettings);
 
             MessageSender.SendWriteToBufferCommand(BufferType.Receiving, connAck);
 
@@ -111,7 +109,7 @@ namespace HyperMsg.Mqtt
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
 
-            _ = MessagingContext.SubscribeAsync(request, tokenSource.Token);
+            _ = MessagingContext.SubscribeAsync(request);
 
             Assert.NotNull(subscribePacket);
         }
@@ -129,7 +127,7 @@ namespace HyperMsg.Mqtt
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
-            var task = MessagingContext.SubscribeAsync(request, tokenSource.Token);
+            var task = MessagingContext.SubscribeAsync(request);
             var packetId = subscribePacket.Id;
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
 
@@ -141,35 +139,45 @@ namespace HyperMsg.Mqtt
 
         #endregion
 
-        //#region UnsubscribeAsync
+        #region UnsubscribeAsync
 
-        //[Fact]
-        //public async Task UnsubscribeAsync_Sends_Unsubscription_Request()
-        //{
-        //    var unsubscribe = default(Unsubscribe);
-        //    HandlersRegistry.RegisterTransmitHandler<Unsubscribe>(s => unsubscribe = s);
-        //    var topics = new[] { "topic-1", "topic-2" };
+        [Fact]
+        public void UnsubscribeAsync_Sends_Unsubscription_Request()
+        {
+            var unsubscribe = default(Unsubscribe);
+            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            {
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+                unsubscribe = message as Unsubscribe;
+                return bytesConsumed;
+            });
+            var topics = new[] { "topic-1", "topic-2" };
 
-        //    await MessagingContext.UnsubscribeAsync(topics, tokenSource.Token);
+            _ = MessagingContext.UnsubscribeAsync(topics);
 
-        //    Assert.NotNull(unsubscribe);
-        //    Assert.Equal(topics, unsubscribe.Topics);
-        //}
+            Assert.NotNull(unsubscribe);
+            Assert.Equal(topics, unsubscribe.Topics);
+        }
 
-        //[Fact]
-        //public async Task UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
-        //{
-        //    var unsubscribe = default(Unsubscribe);
-        //    HandlersRegistry.RegisterTransmitHandler<Unsubscribe>(s => unsubscribe = s);
-        //    var topics = new[] { "topic-1", "topic-2" };
-        //    var task = await MessagingContext.UnsubscribeAsync(topics, tokenSource.Token);
+        [Fact]
+        public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
+        {
+            var unsubscribe = default(Unsubscribe);
+            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            {
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
+                unsubscribe = message as Unsubscribe;
+                return bytesConsumed;
+            });
+            var topics = new[] { "topic-1", "topic-2" };
+            var task = MessagingContext.UnsubscribeAsync(topics);
 
-        //    MessageSender.Receive(new UnsubAck(unsubscribe.Id));
+            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, new UnsubAck(unsubscribe.Id));
 
-        //    Assert.True(task.IsCompleted);
-        //}
+            Assert.True(task.Completion.IsCompleted);
+        }
 
-        //#endregion
+        #endregion
 
         //#region PublishAsync
 

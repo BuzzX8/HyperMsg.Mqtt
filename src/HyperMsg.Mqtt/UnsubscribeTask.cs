@@ -1,35 +1,43 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class UnsubscribeTask : MessagingTask<bool>
+    internal class UnsubscribeTask : MessagingTask
     {
+        private readonly IEnumerable<string> topics;
         private ushort packetId;
 
-        internal UnsubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context)
+        internal UnsubscribeTask(IEnumerable<string> topics, IMessagingContext context) : base(context) => this.topics = topics;
+
+        public static UnsubscribeTask StartNew(IEnumerable<string> topics, IMessagingContext messagingContext)
         {
-            this.RegisterMessageReceivedEventHandler<UnsubAck>(Handle);
+            var task = new UnsubscribeTask(topics, messagingContext);
+            task.Start();
+            return task;
         }
 
-        public async Task<MessagingTask<bool>> StartAsync(IEnumerable<string> topics)
+        protected override Task BeginAsync()
         {
             var request = CreateUnsubscribeRequest(topics);
             packetId = request.Id;
-            await this.SendTransmitMessageCommandAsync(request);
-            
-            return this;
+            return this.SendTransmitMessageCommandAsync(request);
         }
 
         private Unsubscribe CreateUnsubscribeRequest(IEnumerable<string> topics) => new Unsubscribe(PacketId.New(), topics);
+
+        protected override IEnumerable<IDisposable> GetAutoDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<UnsubAck>(Handle);
+        }
 
         private void Handle(UnsubAck unsubAck)
         {
             if (unsubAck.Id == packetId)
             {
-                SetResult(true);
+                SetCompleted();
             }
         }
     }

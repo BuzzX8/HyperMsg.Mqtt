@@ -7,19 +7,17 @@ namespace HyperMsg.Mqtt
 {
     public static class MessagingContextExtensions
     {
-        public static IMessagingTask<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default) => 
-            ConnectTask.StartNew(messagingContext, connectionSettings, cancellationToken);
+        public static IMessagingTask<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings) => 
+            ConnectTask.StartNew(messagingContext, connectionSettings);
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default) => 
             await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
 
-        public static SubscribeTask SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default) => 
-            SubscribeTask.StartNew(requests, messagingContext, cancellationToken);
+        public static IMessagingTask<IEnumerable<SubscriptionResult>> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests) => 
+            SubscribeTask.StartNew(requests, messagingContext);
 
-        public static Task<MessagingTask<bool>> UnsubscribeAsync(this IMessagingContext messagingContext, IEnumerable<string> topics, CancellationToken token = default)
-        {
-            return new UnsubscribeTask(messagingContext, token).StartAsync(topics);
-        }
+        public static IMessagingTask UnsubscribeAsync(this IMessagingContext messagingContext, IEnumerable<string> topics) => 
+            UnsubscribeTask.StartNew(topics, messagingContext);
 
         public static Task<MessagingTask<bool>> PublishAsync(this IMessagingContext messagingContext, PublishRequest request, CancellationToken cancellationToken = default)
         {
