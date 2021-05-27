@@ -20,7 +20,7 @@ namespace HyperMsg.Mqtt
 
             HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
             {
-                (var bytesConsumed, var message) = MqttDeserializer.Deserialize(data);
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
                 actualMessage = message;
                 return bytesConsumed;
             });

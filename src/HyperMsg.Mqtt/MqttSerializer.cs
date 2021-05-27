@@ -41,13 +41,13 @@ namespace HyperMsg.Mqtt
             var span = buffer.Span;
 
             span[0] = ConnectCode;
-            int written = buffer.Slice(1).WriteRemainingLength(contentLength);
+            int written = buffer[1..].WriteRemainingLength(contentLength);
             writer.Advance(written + 1);
 
             writer.Write(ProtocolName);
             span = writer.GetSpan(3);
             span[0] = (byte)connect.Flags;
-            BinaryPrimitives.WriteUInt16BigEndian(span.Slice(1), connect.KeepAlive);
+            BinaryPrimitives.WriteUInt16BigEndian(span[1..], connect.KeepAlive);
             writer.Advance(3);
 
             written = writer.WriteString(connect.ClientId);
@@ -59,7 +59,7 @@ namespace HyperMsg.Mqtt
                 writer.Advance(written);
                 span = writer.GetSpan(connect.WillMessage.Length + sizeof(ushort));
                 BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.WillMessage.Length);
-                connect.WillMessage.Span.CopyTo(span.Slice(2));
+                connect.WillMessage.Span.CopyTo(span[2..]);
                 writer.Advance(connect.WillMessage.Length + 2);
             }
 
@@ -73,7 +73,7 @@ namespace HyperMsg.Mqtt
             {
                 span = writer.GetSpan(connect.Password.Length + 2);
                 BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.Password.Length);
-                connect.Password.CopyTo(span.Slice(2));
+                connect.Password.CopyTo(span[2..]);
                 writer.Advance(connect.Password.Length + 2);
             }
         }
@@ -111,7 +111,7 @@ namespace HyperMsg.Mqtt
 		    var span = buffer.Span;
 
 		    span[0] = header;
-		    var written = buffer.Slice(1).WriteRemainingLength(contentLength);
+		    var written = buffer[1..].WriteRemainingLength(contentLength);
 		    writer.Advance(written + 1);
 
 		    written = writer.WriteString(publish.Topic);
@@ -120,7 +120,7 @@ namespace HyperMsg.Mqtt
 		    buffer = writer.GetMemory(publish.Message.Length + sizeof(ushort));
 		    span = buffer.Span;
 		    BinaryPrimitives.WriteUInt16BigEndian(span, publish.Id);
-			publish.Message.CopyTo(buffer.Slice(sizeof(ushort)));
+			publish.Message.CopyTo(buffer[sizeof(ushort)..]);
 			writer.Advance(publish.Message.Length + sizeof(ushort));
 	    }
 
@@ -183,7 +183,7 @@ namespace HyperMsg.Mqtt
 		    var span = buffer.Span;
 
 		    span[0] = code;
-		    var written = buffer.Slice(1).WriteRemainingLength(contentLength);
+		    var written = buffer[1..].WriteRemainingLength(contentLength);
 		    writer.Advance(written + 1);
 
 		    span = writer.GetSpan(sizeof(ushort));
@@ -204,7 +204,7 @@ namespace HyperMsg.Mqtt
 
 		    span[0] = code;
 		    span[1] = 2; //Remaining length always 2
-		    BinaryPrimitives.WriteUInt16BigEndian(span.Slice(2), packetId);
+		    BinaryPrimitives.WriteUInt16BigEndian(span[2..], packetId);
 		    writer.Advance(4);
 	    }
 
@@ -251,7 +251,7 @@ namespace HyperMsg.Mqtt
 		    var span = writer.GetSpan(Encoding.UTF8.GetByteCount(value) + sizeof(ushort));
 		    var bytes = Encoding.UTF8.GetBytes(value);
 			BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)bytes.Length);
-		    bytes.CopyTo(span.Slice(sizeof(ushort)));
+		    bytes.CopyTo(span[sizeof(ushort)..]);
 		    return bytes.Length + sizeof(ushort);
 	    }
 	}

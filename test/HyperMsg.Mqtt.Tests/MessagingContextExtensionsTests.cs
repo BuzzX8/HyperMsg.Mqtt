@@ -60,7 +60,7 @@ namespace HyperMsg.Mqtt
             var actualPacket = default(Connect);
             HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
             {
-                (var bytesConsumed, var message) = MqttDeserializer.Deserialize(data);
+                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
                 actualPacket = message as Connect;
                 return bytesConsumed;
             });
