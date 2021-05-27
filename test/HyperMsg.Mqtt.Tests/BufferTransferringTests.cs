@@ -31,5 +31,21 @@ namespace HyperMsg.Mqtt
             Assert.NotNull(actualMessage);
             Assert.Equal(expectedMessage, actualMessage);
         }
+
+        [Fact]
+        public void Sends_Event_For_Received_Mqtt_Message()
+        {
+            var expectedMessage = new Connect
+            {
+                ClientId = Guid.NewGuid().ToString()
+            };
+            var actualMessage = default(object);
+            HandlersRegistry.RegisterMessageReceivedEventHandler<Connect>(c => actualMessage = c);
+
+            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, expectedMessage);
+
+            Assert.NotNull(actualMessage);
+            Assert.Equal(expectedMessage, actualMessage);
+        }
     }
 }
