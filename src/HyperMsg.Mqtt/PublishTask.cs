@@ -1,22 +1,27 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class PublishTask : MessagingTask<bool>
+    internal class PublishTask : MessagingTask
     {
+        private readonly PublishRequest request;
         private QosLevel qos;
         private ushort packetId;
 
-        public PublishTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context)
+        public PublishTask(IMessagingContext context, PublishRequest request) : base(context) => this.request = request;
+
+        public static PublishTask StartNew(IMessagingContext context, PublishRequest request)
         {
-            this.RegisterMessageReceivedEventHandler<PubAck>(Handle);
-            this.RegisterMessageReceivedEventHandler<PubRec>(HandleAsync);
-            this.RegisterMessageReceivedEventHandler<PubComp>(Handle);
+            var task = new PublishTask(context, request);
+            task.Start();
+            return task;
         }
 
-        public async Task<MessagingTask<bool>> StartAsync(PublishRequest request)
+        protected override async Task BeginAsync()
         {
             var publishPacket = CreatePublishPacket(request);
             packetId = publishPacket.Id;
@@ -24,13 +29,20 @@ namespace HyperMsg.Mqtt
 
             if (request.Qos == QosLevel.Qos0)
             {
-                SetResult(true);
-                return this;
+                SetCompleted();
+                return;
             }
 
             qos = request.Qos;
 
-            return this;
+            return;
+        }
+
+        protected override IEnumerable<IDisposable> GetAutoDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<PubAck>(Handle);
+            yield return this.RegisterMessageReceivedEventHandler<PubRec>(HandleAsync);
+            yield return this.RegisterMessageReceivedEventHandler<PubComp>(Handle);
         }
 
         private Publish CreatePublishPacket(PublishRequest request) => new Publish(PacketId.New(), request.TopicName, request.Message, request.Qos);
@@ -42,7 +54,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            SetResult(true);
+            SetCompleted();
         }
 
         private async Task HandleAsync(PubRec pubRec, CancellationToken cancellationToken)
@@ -62,7 +74,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            SetResult(true);
+            SetCompleted();
         }
     }
 }

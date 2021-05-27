@@ -1,19 +1,18 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    public class PingTask : MessagingTask<bool>
+    public class PingTask : MessagingTask
     {
-        private PingTask(IMessagingContext context, CancellationToken cancellationToken) : base(context)
+        private PingTask(IMessagingContext context) : base(context)
         { }
 
-        internal static PingTask StartNew(IMessagingContext context, CancellationToken cancellationToken)
+        internal static PingTask StartNew(IMessagingContext context)
         {
-            var task = new PingTask(context, cancellationToken);
+            var task = new PingTask(context);
             task.Start();
             return task;
         }
@@ -28,6 +27,6 @@ namespace HyperMsg.Mqtt
             yield return this.RegisterMessageReceivedEventHandler<PingResp>(Handle);
         }
 
-        private void Handle(PingResp _) => SetResult(true);
+        private void Handle(PingResp _) => SetCompleted();
     }
 }
