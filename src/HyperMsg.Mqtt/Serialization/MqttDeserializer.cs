@@ -63,7 +63,23 @@ namespace HyperMsg.Mqtt.Serialization
 				case PingResp pingResp:
 					await messageSender.SendMessageReceivedEventAsync(pingResp, cancellationToken);
 					break;
-            }
+
+				case Subscribe subscribe:
+					await messageSender.SendMessageReceivedEventAsync(subscribe, cancellationToken);
+					break;
+
+				case SubAck subAck:
+					await messageSender.SendMessageReceivedEventAsync(subAck, cancellationToken);
+					break;
+
+				case Unsubscribe unsubscribe:
+					await messageSender.SendMessageReceivedEventAsync(unsubscribe, cancellationToken);
+					break;
+
+				case UnsubAck unsubAck:
+					await messageSender.SendMessageReceivedEventAsync(unsubAck, cancellationToken);
+					break;
+			}
 
 			return BytesConsumed;
         }

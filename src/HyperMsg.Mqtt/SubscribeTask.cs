@@ -1,5 +1,6 @@
 ﻿using HyperMsg.Extensions;
 using HyperMsg.Mqtt.Packets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,22 +8,34 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class SubscribeTask : MessagingTask<IEnumerable<SubscriptionResult>>
+    public class SubscribeTask : MessagingTask<IEnumerable<SubscriptionResult>>
     {
+        private readonly IEnumerable<SubscriptionRequest> requests;
         private ushort packetId;
 
-        internal SubscribeTask(IMessagingContext context, CancellationToken cancellationToken = default) : base(context, cancellationToken)
+        private SubscribeTask(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken) : base(context, cancellationToken)
         {
-            this.RegisterMessageReceivedEventHandler<SubAck>(Handle);
+            this.requests = requests;
         }
 
-        internal async Task<MessagingTask<IEnumerable<SubscriptionResult>>> StartAsync(IEnumerable<SubscriptionRequest> requests)
+        public static SubscribeTask StartNew(IEnumerable<SubscriptionRequest> requests, IMessagingContext context, CancellationToken cancellationToken = default)
+        {
+            var task = new SubscribeTask(requests, context, cancellationToken);
+            task.Start();
+            return task;
+        }
+
+        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        {
+            yield return this.RegisterMessageReceivedEventHandler<SubAck>(Handle);
+        }
+
+        protected override Task BeginAsync()
         {
             var request = CreateSubscribeRequest(requests);
             packetId = request.Id;
-            await this.SendTransmitMessageCommandAsync(request, CancellationToken);            
             
-            return this;
+            return this.SendTransmitMessageCommandAsync(request, CancellationToken);
         }
 
         private Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
