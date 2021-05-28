@@ -1,5 +1,4 @@
-﻿using HyperMsg;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
