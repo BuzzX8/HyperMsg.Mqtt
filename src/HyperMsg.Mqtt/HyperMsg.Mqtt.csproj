@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="HyperMsg.Core" Version="1.0.2105251-beta" />
-    <PackageReference Include="HyperMsg.Transport" Version="1.0.2105211-beta" />
+    <PackageReference Include="HyperMsg.Transport" Version="1.0.2105281-beta" />
   </ItemGroup>
 
 </Project>

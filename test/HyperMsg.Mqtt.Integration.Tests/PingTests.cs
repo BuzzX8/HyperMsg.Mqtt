@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Extensions;
+﻿using HyperMsg.Mqtt;
 using HyperMsg.Mqtt.Packets;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
@@ -20,9 +19,9 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
             var pingTask = MessagingContext.PingAsync();
 
-            await pingTask;//.Wait(DefaultWaitTimeout);
+            await pingTask.Completion;//.Wait(DefaultWaitTimeout);
 
-            Assert.True(pingTask.IsCompleted);
+            Assert.True(pingTask.Completion.IsCompleted);
             Assert.NotNull(pingResp);
         }
 

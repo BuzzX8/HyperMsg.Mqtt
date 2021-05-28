@@ -1,7 +1,5 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Extensions;
-using HyperMsg.Sockets.Extensions;
-using HyperMsg.Transport.Extensions;
+﻿using HyperMsg.Sockets;
+using HyperMsg.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using MQTTnet;
 using MQTTnet.Client.Options;
@@ -47,7 +45,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
                     var context = provider.GetRequiredService<IMessagingContext>();
                     context.HandlersRegistry.RegisterAcceptedSocketHandler(socket =>
                     {
-                        context.Sender.CreateSocketScope(socket, services =>
+                        context.Sender.SendCreateSocketScopeRequest(socket, services =>
                         {
                             services.AddMqttServices()
                                 .AddHostedService<MqttConnectionService>()
@@ -65,7 +63,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
 
         protected ServiceHost ServerHost { get; }
 
-        protected async Task ConnectAsync() => await MessagingContext.ConnectAsync(ConnectionSettings, default);
+        protected Task ConnectAsync() => MessagingContext.ConnectAsync(ConnectionSettings).Completion;
 
         protected async Task StartConnectionListener()
         {

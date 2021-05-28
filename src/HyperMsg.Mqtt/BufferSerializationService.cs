@@ -9,9 +9,9 @@ using System.Threading;
 
 namespace HyperMsg.Mqtt
 {
-    internal class BufferTransferringService : MessagingService
+    internal class BufferSerializationService : MessagingService
     {
-        public BufferTransferringService(IMessagingContext messagingContext) : base(messagingContext)
+        public BufferSerializationService(IMessagingContext messagingContext) : base(messagingContext)
         {
         }
 

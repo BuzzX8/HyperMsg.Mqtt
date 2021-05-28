@@ -4,9 +4,9 @@ using Xunit;
 
 namespace HyperMsg.Mqtt
 {
-    public class BufferTransferringTests : ServiceHostFixture
+    public class BufferSerializationTests : ServiceHostFixture
     {
-        public BufferTransferringTests() : base(services => services.AddMqttServices())
+        public BufferSerializationTests() : base(services => services.AddMqttServices())
         { }
 
         [Fact]
