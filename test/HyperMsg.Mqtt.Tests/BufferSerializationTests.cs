@@ -18,14 +18,15 @@ namespace HyperMsg.Mqtt
             };
             var actualMessage = default(object);
 
-            HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
+            HandlersRegistry.RegisterTransmitPipeHandler<IBufferReader>(reader =>
             {
+                var data = reader.Read();
                 var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
                 actualMessage = message;
-                return bytesConsumed;
+                reader.Advance(bytesConsumed);
             });
 
-            MessageSender.SendTransmitMessageCommand(expectedMessage);
+            MessageSender.SendToTransmitPipe(expectedMessage);
 
             Assert.NotNull(actualMessage);
             Assert.Equal(expectedMessage, actualMessage);
@@ -39,9 +40,9 @@ namespace HyperMsg.Mqtt
                 ClientId = Guid.NewGuid().ToString()
             };
             var actualMessage = default(object);
-            HandlersRegistry.RegisterMessageReceivedEventHandler<Connect>(c => actualMessage = c);
+            HandlersRegistry.RegisterReceivePipeHandler<Connect>(c => actualMessage = c);
 
-            MessageSender.SendWriteToBufferCommand(BufferType.Receiving, expectedMessage);
+            MessageSender.SendToReceiveBuffer(expectedMessage);
 
             Assert.NotNull(actualMessage);
             Assert.Equal(expectedMessage, actualMessage);

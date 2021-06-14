@@ -19,7 +19,7 @@ namespace HyperMsg.Mqtt
             }
 
             var connectPacket = CreateConnectPacket(connectionSettings);
-            await messageSender.SendToTransmitPipeAsync(connectPacket, cancellationToken);
+            await messageSender.SendToTransmitBufferAsync(connectPacket, cancellationToken);
         }
 
         private static Connect CreateConnectPacket(MqttConnectionSettings connectionSettings)
