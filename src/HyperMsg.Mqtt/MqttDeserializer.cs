@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Buffers;
 using System.Buffers.Binary;
@@ -8,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HyperMsg.Mqtt.Serialization
+namespace HyperMsg.Mqtt
 {
     public static class MqttDeserializer
     {
@@ -33,58 +32,75 @@ namespace HyperMsg.Mqtt.Serialization
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static async Task<int> ReadBufferAsync(IMessageSender messageSender, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
+		internal static async Task ReadBufferAsync(IMessageSender messageSender, IBufferReader bufferReader, CancellationToken cancellationToken)
         {
-			var (BytesConsumed, Packet) = Deserialize(buffer);
+			var buffer = bufferReader.Read();
+			var packet = Deserialize(buffer, out var bytesConsumed);
 
-			if (BytesConsumed == 0)
+			if (bytesConsumed == 0)
             {
-				return 0;
+				return;
             }
 
-			switch(Packet)
+			switch(packet)
             {
 				case Connect connect:
-					await messageSender.SendMessageReceivedEventAsync(connect, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(connect, cancellationToken);
 					break;
 
 				case ConnAck connAck:
-					await messageSender.SendMessageReceivedEventAsync(connAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(connAck, cancellationToken);
 					break;
 
 				case Disconnect disconnect:
-					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(disconnect, cancellationToken);
+					break;
+
+				case PubAck pubAck:
+					await messageSender.SendToReceivePipeAsync(pubAck, cancellationToken);
+					break;
+
+				case PubRel pubRel:
+					await messageSender.SendToReceivePipeAsync(pubRel, cancellationToken);
+					break;
+
+				case PubRec pubRec:
+					await messageSender.SendToReceivePipeAsync(pubRec, cancellationToken);
+					break;
+
+				case PubComp pubComp:
+					await messageSender.SendToReceivePipeAsync(pubComp, cancellationToken);
 					break;
 
 				case PingReq pingReq:
-					await messageSender.SendMessageReceivedEventAsync(pingReq, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pingReq, cancellationToken);
 					break;
 
 				case PingResp pingResp:
-					await messageSender.SendMessageReceivedEventAsync(pingResp, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pingResp, cancellationToken);
 					break;
 
 				case Subscribe subscribe:
-					await messageSender.SendMessageReceivedEventAsync(subscribe, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(subscribe, cancellationToken);
 					break;
 
 				case SubAck subAck:
-					await messageSender.SendMessageReceivedEventAsync(subAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(subAck, cancellationToken);
 					break;
 
 				case Unsubscribe unsubscribe:
-					await messageSender.SendMessageReceivedEventAsync(unsubscribe, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(unsubscribe, cancellationToken);
 					break;
 
 				case UnsubAck unsubAck:
-					await messageSender.SendMessageReceivedEventAsync(unsubAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(unsubAck, cancellationToken);
 					break;
 			}
 
-			return BytesConsumed;
+			bufferReader.Advance(bytesConsumed);
         }
 
-	    public static (int BytesConsumed, object Packet) Deserialize(ReadOnlySequence<byte> buffer)
+	    public static object Deserialize(ReadOnlySequence<byte> buffer, out int bytesConsumed)
 	    {
             var span = buffer.First.Span;
             var code = span[0];
@@ -94,23 +110,27 @@ namespace HyperMsg.Mqtt.Serialization
 
             if ((code & 0xf0) == 0x30)
             {
-                var publish = ReadPublish(buffer.First.Slice(count), code, length);
-                return (consumed, publish);
+                var publish = ReadPublish(buffer.First[count..], code, length);
+				bytesConsumed = consumed;
+                return publish;
             }
 
             if (TwoBytePackets.ContainsKey(code))
             {
                 var packet = GetTwoBytePacket(code, length);
-                return (consumed, packet);
+				bytesConsumed = consumed;
+				return packet;
             }
 
             if (Readers.ContainsKey(code))
             {
-                var packet = Readers[code](buffer.First.Slice(count), length);
-                return (consumed, packet);
+                var packet = Readers[code](buffer.First[count..], length);
+				bytesConsumed = consumed;
+				return packet;
             }
-            
-            return (0, null);
+
+			bytesConsumed = 0;
+			return null;
         }
 
 		private static Connect ReadConnect(ReadOnlyMemory<byte> buffer, int length)
@@ -120,9 +140,9 @@ namespace HyperMsg.Mqtt.Serialization
 			var protocolName = buffer.Slice(0, protocolNameLength).ReadString();
 			var protocolVersion = buffer.Span[protocolNameLength];
 			var connectFlags = (ConnectFlags)buffer.Span[protocolNameLength + 1];
-			var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span.Slice(protocolNameLength + 2));
+			var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span[(protocolNameLength + 2)..]);
 
-			var clientId = buffer.Slice(protocolNameLength + 4).ReadString();
+			var clientId = buffer[(protocolNameLength + 4)..].ReadString();
 
 			return new Connect
 			{
@@ -145,10 +165,10 @@ namespace HyperMsg.Mqtt.Serialization
 		    QosLevel qos = (QosLevel)((code & 0x06) >> 1);
 		    bool retain = (code & 0x01) == 1;
 		    string topic = buffer.ReadString();
-            buffer = buffer.Slice(Encoding.UTF8.GetByteCount(topic) + 2);
+            buffer = buffer[(Encoding.UTF8.GetByteCount(topic) + 2)..];
             var span = buffer.Span;
             ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
-            buffer = buffer.Slice(2);
+            buffer = buffer[2..];
             span = buffer.Span;
 		    int payloadLength = length - Encoding.UTF8.GetByteCount(topic) - 4;
             byte[] payload = span.Slice(0, payloadLength).ToArray();
@@ -179,7 +199,7 @@ namespace HyperMsg.Mqtt.Serialization
 	    {
 		    var topic = buffer.ReadString();
             var byteCount = Encoding.UTF8.GetByteCount(topic) + 2;
-            buffer = buffer.Slice(byteCount);
+            buffer = buffer[byteCount..];
             var span = buffer.Span;		    
 		    callback((topic, (QosLevel)span[0]));
 		    return Encoding.UTF8.GetByteCount(topic) + 3;
@@ -214,13 +234,13 @@ namespace HyperMsg.Mqtt.Serialization
             ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
 		    int totalRead = 2;
 		    var items = new List<T>();
-            buffer = buffer.Slice(totalRead);
+            buffer = buffer[totalRead..];
 
 		    while (totalRead < length)
 		    {
 			    int currentRead = readItem(buffer, items.Add);
                 totalRead += currentRead;
-                buffer = buffer.Slice(currentRead);
+                buffer = buffer[currentRead..];
 		    }
 
 		    return createResult(id, items.ToArray());

@@ -1,12 +1,9 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
-using HyperMsg.Transport.Extensions;
 
 namespace HyperMsg.Mqtt.Integration.Tests
 {
@@ -18,40 +15,18 @@ namespace HyperMsg.Mqtt.Integration.Tests
             var conAckResponse = default(ConnAck);
             var responseResult = default(ConnectionResult?);
             var isSessionPresent = default(bool?);
-            var @event = new ManualResetEventSlim();
-
-            HandlersRegistry.RegisterMessageReceivedEventHandler<ConnAck>(response => conAckResponse = response);
-            HandlersRegistry.RegisterConnectionResponseReceiveHandler((result, clean) =>
-            {
-                responseResult = result;
-                isSessionPresent = clean;
-                @event.Set();
-            });
-
+            HandlersRegistry.RegisterMessageReceivedEventHandler<ConnAck>(conAck => conAckResponse = conAck);
+            
             await StartConnectionListener();
-            MessageSender.SendOpenConnectionCommandAsync().Wait(DefaultWaitTimeout);
-            await MessageSender.TransmitConnectionRequestAsync(ConnectionSettings);
+            var task = MessagingContext.ConnectAsync(ConnectionSettings);
+            
+            task.Completion.Wait(DefaultWaitTimeout);
 
-            @event.Wait(DefaultWaitTimeout);
-
-            Assert.True(@event.IsSet);
             Assert.NotNull(conAckResponse);
             Assert.Equal(responseResult, conAckResponse.ResultCode);
             Assert.Equal(isSessionPresent, conAckResponse.SessionPresent);
 
             await MessageSender.SendTransmitMessageCommandAsync(Disconnect.Instance, default);
-        }
-
-        [Fact]
-        public async Task ConnectAsync_Returns_Running_Task()
-        {
-            await StartConnectionListener();
-            MessageSender.SendOpenConnectionCommandAsync().Wait(DefaultWaitTimeout);
-
-            var task = MessagingContext.ConnectAsync(ConnectionSettings);
-            await task;
-
-            Assert.True(task.IsCompleted);
         }
 
         [Fact]

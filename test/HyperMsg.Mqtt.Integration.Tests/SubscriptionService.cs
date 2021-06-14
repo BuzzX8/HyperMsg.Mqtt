@@ -1,5 +1,4 @@
-﻿using HyperMsg.Extensions;
-using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +13,7 @@ namespace HyperMsg.Mqtt.Integration.Tests
         {
         }
 
-        protected override IEnumerable<IDisposable> GetDefaultDisposables()
+        protected override IEnumerable<IDisposable> GetAutoDisposables()
         {
             yield return this.RegisterMessageReceivedEventHandler<Subscribe>(HandleSubscribeRequest);
             yield return this.RegisterMessageReceivedEventHandler<Unsubscribe>(HandleUnsubscribeRequest);

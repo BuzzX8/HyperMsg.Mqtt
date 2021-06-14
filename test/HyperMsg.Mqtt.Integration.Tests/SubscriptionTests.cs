@@ -1,4 +1,4 @@
-﻿using HyperMsg.Mqtt.Extensions;
+﻿using HyperMsg.Mqtt;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
@@ -24,10 +24,10 @@ namespace HyperMsg.Mqtt.Integration.Tests
             var subscription = new SubscriptionRequest("test-topic", qosLevel);
             var subscribeTask = MessagingContext.SubscribeAsync(new[] { subscription });
 
-            await subscribeTask;//.AsTask().Wait(DefaultWaitTimeout);
-            Assert.True(subscribeTask.IsCompleted);
+            await subscribeTask.Completion;//.AsTask().Wait(DefaultWaitTimeout);
+            Assert.True(subscribeTask.Completion.IsCompleted);
 
-            Assert.Single(subscribeTask.Result);
+            Assert.Single(subscribeTask.Completion.Result);
         }
 
         [Fact]

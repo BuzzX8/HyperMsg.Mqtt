@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Serialization
+namespace HyperMsg.Mqtt
 {
     public class MqttDeserializerTests
     {
@@ -62,9 +62,9 @@ namespace HyperMsg.Mqtt.Serialization
 	    [MemberData(nameof(DeserializeTestCases))]
 		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int BytesConsumed, object Packet) expected)
 	    {
-			var actual = MqttDeserializer.Deserialize(new ReadOnlySequence<byte>(serialized));
+			var packet = MqttDeserializer.Deserialize(new ReadOnlySequence<byte>(serialized), out var bytesConsumed);
 
-			Assert.Equal(expected, actual);
+			Assert.Equal(expected, (bytesConsumed, packet));
 	    }
 
 	    public static IEnumerable<object[]> GetTestCasesForReadRemainingLength()
