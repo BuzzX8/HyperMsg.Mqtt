@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using static HyperMsg.Mqtt.MqttSerializer;
 using static HyperMsg.Mqtt.MqttDeserializer;
 using HyperMsg.Mqtt.Packets;
-using System.Threading.Tasks;
-using System.Buffers;
-using System.Threading;
 
 namespace HyperMsg.Mqtt
 {
@@ -32,9 +29,7 @@ namespace HyperMsg.Mqtt
             yield return this.RegisterSerializationHandler<PingResp>(Serialize);
             yield return this.RegisterSerializationHandler<Disconnect>(Serialize);
 
-            yield return this.RegisterBufferFlushReader(BufferType.Receiving, ReadReceivingBufferAsync);
+            yield return this.RegisterReceivePipeHandler<IBufferReader>((reader, token) => ReadBufferAsync(this, reader, token));
         }
-
-        private Task<int> ReadReceivingBufferAsync(ReadOnlySequence<byte> data, CancellationToken cancellationToken) => ReadBufferAsync(this, data, cancellationToken);
     }
 }

@@ -32,71 +32,72 @@ namespace HyperMsg.Mqtt
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static async Task<int> ReadBufferAsync(IMessageSender messageSender, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
+		internal static async Task ReadBufferAsync(IMessageSender messageSender, IBufferReader bufferReader, CancellationToken cancellationToken)
         {
+			var buffer = bufferReader.Read();
 			var packet = Deserialize(buffer, out var bytesConsumed);
 
 			if (bytesConsumed == 0)
             {
-				return 0;
+				return;
             }
 
 			switch(packet)
             {
 				case Connect connect:
-					await messageSender.SendMessageReceivedEventAsync(connect, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(connect, cancellationToken);
 					break;
 
 				case ConnAck connAck:
-					await messageSender.SendMessageReceivedEventAsync(connAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(connAck, cancellationToken);
 					break;
 
 				case Disconnect disconnect:
-					await messageSender.SendMessageReceivedEventAsync(disconnect, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(disconnect, cancellationToken);
 					break;
 
 				case PubAck pubAck:
-					await messageSender.SendMessageReceivedEventAsync(pubAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pubAck, cancellationToken);
 					break;
 
 				case PubRel pubRel:
-					await messageSender.SendMessageReceivedEventAsync(pubRel, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pubRel, cancellationToken);
 					break;
 
 				case PubRec pubRec:
-					await messageSender.SendMessageReceivedEventAsync(pubRec, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pubRec, cancellationToken);
 					break;
 
 				case PubComp pubComp:
-					await messageSender.SendMessageReceivedEventAsync(pubComp, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pubComp, cancellationToken);
 					break;
 
 				case PingReq pingReq:
-					await messageSender.SendMessageReceivedEventAsync(pingReq, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pingReq, cancellationToken);
 					break;
 
 				case PingResp pingResp:
-					await messageSender.SendMessageReceivedEventAsync(pingResp, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(pingResp, cancellationToken);
 					break;
 
 				case Subscribe subscribe:
-					await messageSender.SendMessageReceivedEventAsync(subscribe, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(subscribe, cancellationToken);
 					break;
 
 				case SubAck subAck:
-					await messageSender.SendMessageReceivedEventAsync(subAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(subAck, cancellationToken);
 					break;
 
 				case Unsubscribe unsubscribe:
-					await messageSender.SendMessageReceivedEventAsync(unsubscribe, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(unsubscribe, cancellationToken);
 					break;
 
 				case UnsubAck unsubAck:
-					await messageSender.SendMessageReceivedEventAsync(unsubAck, cancellationToken);
+					await messageSender.SendToReceivePipeAsync(unsubAck, cancellationToken);
 					break;
 			}
 
-			return bytesConsumed;
+			bufferReader.Advance(bytesConsumed);
         }
 
 	    public static object Deserialize(ReadOnlySequence<byte> buffer, out int bytesConsumed)

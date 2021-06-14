@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,21 +8,21 @@ namespace HyperMsg.Mqtt
 {
     public static class MessagingContextExtensions
     {
-        public static IMessagingTask<SessionState> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings) => 
-            ConnectTask.StartNew(messagingContext, connectionSettings);
+        public static Task<IDisposable> ConnectAsync(this IMessagingContext messagingContext, MqttConnectionSettings connectionSettings, Action responseCallback) => 
+            throw new NotImplementedException();
 
         public static async Task DisconnectAsync(this IMessagingContext messagingContext, CancellationToken cancellationToken = default) => 
             await messagingContext.Sender.SendAsync(Disconnect.Instance, cancellationToken);
 
-        public static IMessagingTask<IEnumerable<SubscriptionResult>> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests) => 
-            SubscribeTask.StartNew(requests, messagingContext);
+        public static Task<IDisposable> SubscribeAsync(this IMessagingContext messagingContext, IEnumerable<SubscriptionRequest> requests) =>
+            throw new NotImplementedException();
 
-        public static IMessagingTask UnsubscribeAsync(this IMessagingContext messagingContext, IEnumerable<string> topics) => 
-            UnsubscribeTask.StartNew(topics, messagingContext);
+        public static Task<IDisposable> UnsubscribeAsync(this IMessagingContext messagingContext, IEnumerable<string> topics) =>
+            throw new NotImplementedException();
 
-        public static IMessagingTask PublishAsync(this IMessagingContext messagingContext, PublishRequest request) => 
-            PublishTask.StartNew(messagingContext, request);
+        public static Task<IDisposable> PublishAsync(this IMessagingContext messagingContext, PublishRequest request) =>
+            throw new NotImplementedException();
 
-        public static IMessagingTask PingAsync(this IMessagingContext messagingContext) => PingTask.StartNew(messagingContext);
+        public static Task<IDisposable> PingAsync(this IMessagingContext messagingContext) => throw new NotImplementedException();
     }
 }
