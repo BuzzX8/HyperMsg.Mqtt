@@ -13,24 +13,6 @@ namespace HyperMsg.Mqtt
         //#region UnsubscribeAsync
 
         //[Fact]
-        //public void UnsubscribeAsync_Sends_Unsubscription_Request()
-        //{
-        //    var unsubscribe = default(Unsubscribe);
-        //    HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
-        //    {
-        //        var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
-        //        unsubscribe = message as Unsubscribe;
-        //        return bytesConsumed;
-        //    });
-        //    var topics = new[] { "topic-1", "topic-2" };
-
-        //    _ = MessagingContext.UnsubscribeAsync(topics);
-
-        //    Assert.NotNull(unsubscribe);
-        //    Assert.Equal(topics, unsubscribe.Topics);
-        //}
-
-        //[Fact]
         //public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
         //{
         //    var unsubscribe = default(Unsubscribe);

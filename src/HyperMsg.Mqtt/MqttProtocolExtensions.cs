@@ -76,7 +76,18 @@ namespace HyperMsg.Mqtt
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
 
         public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<IReadOnlyList<(string topic, SubscriptionResult result)>> handler) =>
-            handlersRegistry.RegisterReceivePipeHandler(handler);
+            handlersRegistry.RegisterReceivePipeHandler(typeof(SubAck), handler);
+
+        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<IReadOnlyList<(string topic, SubscriptionResult result)>> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(typeof(SubAck), handler);
+
+        public static ushort SendUnsubscribeRequest(this IMessageSender messageSender, IEnumerable<string> topics)
+        {
+            var packet = new Unsubscribe(PacketId.New(), topics);
+
+            messageSender.SendToTransmitPipe(packet);
+            return packet.Id;
+        }
 
         public static async Task<ushort> SendUnsubscribeRequestAsync(this IMessageSender messageSender, IEnumerable<string> topics, CancellationToken cancellationToken = default)
         {
@@ -85,5 +96,8 @@ namespace HyperMsg.Mqtt
             await messageSender.SendToTransmitPipeAsync(packet, cancellationToken);
             return packet.Id;
         }
+
+        public static IDisposable RegisterUnsubscribeResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<IReadOnlyList<string>> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(typeof(UnsubAck), handler);
     }
 }

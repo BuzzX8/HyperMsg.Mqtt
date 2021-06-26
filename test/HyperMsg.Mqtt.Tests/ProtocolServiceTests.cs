@@ -126,5 +126,19 @@ namespace HyperMsg.Mqtt
             Assert.Equal(topics, unsubscribe.Topics);
             Assert.True(dataRepository.Contains<Unsubscribe>(unsubscribe.Id));
         }
+
+        [Fact]
+        public void UnsubAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
+        {
+            var actualTopics = default(IReadOnlyList<string>);
+            var topics = new[] { "topic-1", "topic-2" };
+
+            HandlersRegistry.RegisterUnsubscribeResponseHandler(response => actualTopics = response);
+            var packetId = MessageSender.SendUnsubscribeRequest(topics);
+            MessageSender.SendToReceivePipe(new UnsubAck(packetId));
+
+            Assert.NotNull(actualTopics);
+            Assert.False(dataRepository.Contains<Unsubscribe>(packetId));
+        }
     }
 }
