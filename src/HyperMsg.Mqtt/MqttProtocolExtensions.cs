@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    public static class MessageSenderExtensions
+    public static class MqttProtocolExtensions
     {
         public static async Task SendConnectionRequestAsync(this IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
         {
@@ -40,12 +40,12 @@ namespace HyperMsg.Mqtt
             return connect;
         }
 
-        public static Task SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
+        public static async Task<ushort> SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
         {
             var request = CreateSubscribeRequest(requests);
-            //packetId = request.Id;
 
-            return messageSender.SendToTransmitPipeAsync(request, cancellationToken);
+            await messageSender.SendToTransmitPipeAsync(request, cancellationToken);
+            return request.Id;
         }
 
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));

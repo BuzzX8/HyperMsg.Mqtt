@@ -19,54 +19,6 @@ namespace HyperMsg.Mqtt
 
         #region ConnectAsync
 
-        //[Fact]
-        //public async Task ConnectAsync_Sends_Open_TransportCommand()
-        //{
-        //    var wasInvoked = false;
-
-        //    HandlersRegistry.RegisterConnectCommandHandler(() => wasInvoked = true);
-        //    using var _ = await MessagingContext.ConnectAsync(connectionSettings, A.Fake<Action<ConnAck>>());
-
-        //    Assert.True(wasInvoked);
-        //}
-
-        //[Fact]
-        //public async Task ConnectAsync_Sends_SetTransportLevelSecurity_TransportCommand_If_UseTls_Is_True()
-        //{
-        //    connectionSettings.UseTls = true;
-        //    var wasInvoked = false;
-        //    HandlersRegistry.RegisterSetTlsCommandHandler(() => wasInvoked = true);
-        //    using var _ = await MessagingContext.ConnectAsync(connectionSettings, A.Fake<Action<ConnAck>>());
-
-        //    Assert.True(wasInvoked);
-        //}
-
-        [Fact]
-        public async Task ConnectAsync_Sends_Correct_Packet()
-        {
-            var expectedPacket = new Connect
-            {
-                ClientId = connectionSettings.ClientId
-            };
-
-            await VerifyTransmittedConnectPacket(expectedPacket);
-        }
-
-        private async Task VerifyTransmittedConnectPacket(Connect expectedPacket)
-        {
-            var actualPacket = default(Connect);
-            HandlersRegistry.RegisterTransmitPipeHandler<IBufferReader>(reader =>
-            {
-                var data = reader.Read();
-                var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
-                actualPacket = message as Connect;
-                reader.Advance(bytesConsumed);
-            });
-            using var _ = await MessagingContext.ConnectAsync(connectionSettings, A.Fake<Action<ConnAck>>());
-
-            Assert.Equal(expectedPacket, actualPacket);
-        }
-
         [Fact]
         public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
         {
@@ -83,24 +35,7 @@ namespace HyperMsg.Mqtt
 
         //#region SubscribeAsync
 
-        //[Fact]
-        //public void SubscribeAsync_Sends_Correct_Subscribe_Request()
-        //{
-        //    var subscribePacket = default(Subscribe);
-        //    HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
-        //    {
-        //        var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
-        //        subscribePacket = message as Subscribe;
-        //        return bytesConsumed;
-        //    });
-        //    var request = Enumerable.Range(1, 5)
-        //        .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-        //        .ToArray();
-
-        //    _ = MessagingContext.SubscribeAsync(request);
-
-        //    Assert.NotNull(subscribePacket);
-        //}
+        
 
         //[Fact]
         //public void SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()

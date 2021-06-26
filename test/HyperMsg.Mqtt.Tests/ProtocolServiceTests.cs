@@ -1,5 +1,7 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using HyperMsg.Transport;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace HyperMsg.Mqtt
@@ -39,6 +41,21 @@ namespace HyperMsg.Mqtt
             MessageSender.SendTransportMessage(TransportMessage.Opened);
 
             Assert.True(isMessageSend);
+        }
+
+        [Fact]
+        public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
+        {
+            var subscribePacket = default(Subscribe);
+            HandlersRegistry.RegisterTransmitPipeHandler<Subscribe>(subscribe => subscribePacket = subscribe);
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
+
+            var packetId = await MessageSender.SendSubscriptionRequestAsync(request, default);
+
+            Assert.NotNull(subscribePacket);
+            Assert.True(dataRepository.Contains<Subscribe>(packetId));
         }
     }
 }
