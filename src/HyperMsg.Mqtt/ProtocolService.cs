@@ -19,6 +19,7 @@ namespace HyperMsg.Mqtt
             yield return this.RegisterTransportMessageHandler(TransportMessage.Opened, HandleOpeningTransportMessageAsync);
 
             yield return this.RegisterTransmitPipeHandler<Subscribe>(HandleSubscribeRequest);
+            yield return this.RegisterTransmitPipeHandler<Unsubscribe>(HandleUnsubscribeRequest);
 
             yield return this.RegisterReceivePipeHandler<ConnAck>(HandleConAckResponse);
         }
@@ -44,5 +45,7 @@ namespace HyperMsg.Mqtt
         }
 
         private void HandleSubscribeRequest(Subscribe subscribe) => dataRepository.AddOrReplace(subscribe.Id, subscribe);
+
+        private void HandleUnsubscribeRequest(Unsubscribe unsubscribe) => dataRepository.AddOrReplace(unsubscribe.Id, unsubscribe);
     }
 }

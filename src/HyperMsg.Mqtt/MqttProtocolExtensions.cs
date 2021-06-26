@@ -8,7 +8,7 @@ namespace HyperMsg.Mqtt
 {
     public static class MqttProtocolExtensions
     {
-        public static async Task SendConnectionRequestAsync(this IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken)
+        public static async Task SendConnectionRequestAsync(this IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
             await messageSender.SendToTransmitPipeAsync(connectPacket, cancellationToken);
@@ -40,7 +40,7 @@ namespace HyperMsg.Mqtt
             return connect;
         }
 
-        public static async Task<ushort> SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken)
+        public static async Task<ushort> SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {
             var request = CreateSubscribeRequest(requests);
 
@@ -49,5 +49,13 @@ namespace HyperMsg.Mqtt
         }
 
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
+
+        public static async Task<ushort> SendUnsubscribeRequestAsync(this IMessageSender messageSender, IEnumerable<string> topics, CancellationToken cancellationToken = default)
+        {
+            var packet = new Unsubscribe(PacketId.New(), topics);
+
+            await messageSender.SendToTransmitPipeAsync(packet, cancellationToken);
+            return packet.Id;
+        }
     }
 }

@@ -52,10 +52,26 @@ namespace HyperMsg.Mqtt
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
 
-            var packetId = await MessageSender.SendSubscriptionRequestAsync(request, default);
+            var packetId = await MessageSender.SendSubscriptionRequestAsync(request);
 
             Assert.NotNull(subscribePacket);
+            Assert.Equal(packetId, subscribePacket.Id);
             Assert.True(dataRepository.Contains<Subscribe>(packetId));
+        }
+
+        [Fact]
+        public async Task UnsubscribeAsync_Sends_Unsubscription_Request()
+        {
+            var unsubscribe = default(Unsubscribe);
+            HandlersRegistry.RegisterTransmitPipeHandler<Unsubscribe>(packet => unsubscribe = packet);
+            var topics = new[] { "topic-1", "topic-2" };
+
+            var packetId = await MessageSender.SendUnsubscribeRequestAsync(topics);
+
+            Assert.NotNull(unsubscribe);
+            Assert.Equal(packetId, unsubscribe.Id);
+            Assert.Equal(topics, unsubscribe.Topics);
+            Assert.True(dataRepository.Contains<Unsubscribe>(unsubscribe.Id));
         }
     }
 }

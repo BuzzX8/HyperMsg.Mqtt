@@ -19,17 +19,17 @@ namespace HyperMsg.Mqtt
 
         #region ConnectAsync
 
-        [Fact]
-        public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
-        {
-            var connAck = new ConnAck(ConnectionResult.Accepted);
-            var actualResponse = default(ConnAck);
-            using var _ = MessagingContext.ConnectAsync(connectionSettings, response => actualResponse = response);
+        //[Fact]
+        //public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
+        //{
+        //    var connAck = new ConnAck(ConnectionResult.Accepted);
+        //    var actualResponse = default(ConnAck);
+        //    using var _ = MessagingContext.ConnectAsync(connectionSettings, response => actualResponse = response);
 
-            MessageSender.SendToReceivePipe(connAck);
+        //    MessageSender.SendToReceivePipe(connAck);
                         
-            Assert.Equal(connAck, actualResponse);
-        }
+        //    Assert.Equal(connAck, actualResponse);
+        //}
 
         #endregion
 
