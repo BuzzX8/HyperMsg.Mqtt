@@ -10,35 +10,6 @@ namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests : ServiceHostFixture
     {
-        //#region SubscribeAsync
-
-        
-
-        //[Fact]
-        //public void SubscribeAsync_Returns_SubscriptionResult_When_SubAck_Received()
-        //{
-        //    var subscribePacket = default(Subscribe);
-        //    HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
-        //    {
-        //        var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
-        //        subscribePacket = message as Subscribe;
-        //        return bytesConsumed;
-        //    });
-        //    var request = Enumerable.Range(1, 5)
-        //        .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
-        //        .ToArray();
-        //    var task = MessagingContext.SubscribeAsync(request);
-        //    var packetId = subscribePacket.Id;
-        //    var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
-
-        //    MessageSender.SendWriteToBufferCommand(BufferType.Receiving, subAck);
-
-        //    Assert.True(task.Completion.IsCompleted);
-        //    Assert.Equal(subAck.Results, task.Completion.Result);
-        //}
-
-        //#endregion
-
         //#region UnsubscribeAsync
 
         //[Fact]

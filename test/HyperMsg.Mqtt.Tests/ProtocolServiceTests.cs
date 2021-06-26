@@ -1,5 +1,6 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using HyperMsg.Transport;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -12,6 +13,8 @@ namespace HyperMsg.Mqtt
 
         public ProtocolServiceTests() : base(services => services.AddMqttServices()) =>
             dataRepository = GetRequiredService<IDataRepository>();
+
+        #region Connection
 
         [Fact]
         public void Sends_Connect_Packet_When_Receives_Opening_Transport_Message()
@@ -73,6 +76,8 @@ namespace HyperMsg.Mqtt
             Assert.Equal(connAck, actualConAck);
         }
 
+        #endregion
+
         [Fact]
         public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
         {
@@ -87,6 +92,24 @@ namespace HyperMsg.Mqtt
             Assert.NotNull(subscribePacket);
             Assert.Equal(packetId, subscribePacket.Id);
             Assert.True(dataRepository.Contains<Subscribe>(packetId));
+        }
+
+        [Fact]
+        public void ConnAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
+        {
+            var actualResult = default(IReadOnlyList<(string topic, SubscriptionResult result)>);
+            
+            var request = Enumerable.Range(1, 5)
+                .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
+                .ToArray();
+
+            HandlersRegistry.RegisterSubscriptionResponseHandler(response => actualResult = response);
+            var packetId = MessageSender.SendSubscriptionRequest(request);
+            var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
+            MessageSender.SendToReceivePipe(subAck);
+
+            Assert.NotNull(actualResult);
+            Assert.False(dataRepository.Contains<Subscribe>(packetId));
         }
 
         [Fact]

@@ -2,6 +2,7 @@
 using HyperMsg.Transport;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +21,8 @@ namespace HyperMsg.Mqtt
 
             yield return this.RegisterTransmitPipeHandler<Subscribe>(HandleSubscribeRequest);
             yield return this.RegisterTransmitPipeHandler<Unsubscribe>(HandleUnsubscribeRequest);
+
+            yield return this.RegisterReceivePipeHandler<SubAck>(HandleSubAckResponse);
         }
 
         private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
@@ -39,6 +42,27 @@ namespace HyperMsg.Mqtt
 
         private void HandleSubscribeRequest(Subscribe subscribe) => dataRepository.AddOrReplace(subscribe.Id, subscribe);
 
-        private void HandleUnsubscribeRequest(Unsubscribe unsubscribe) => dataRepository.AddOrReplace(unsubscribe.Id, unsubscribe);
+        private async Task HandleSubAckResponse(SubAck subAck, CancellationToken cancellationToken)
+        {
+            if (!dataRepository.TryGet<Subscribe>(subAck.Id, out var request))
+            {
+                return;
+            }
+
+            var topics = request.Subscriptions.Select(s => s.Item1).ToArray();
+            var topicResponses = subAck.Results.ToArray();
+            var result = new (string, SubscriptionResult)[topicResponses.Length];
+
+            for(int i = 0; i < topicResponses.Length; i++)
+            {
+                result[i] = (topics[i], topicResponses[i]);
+            }
+
+            await this.SendToReceivePipeAsync<IReadOnlyList<(string, SubscriptionResult)>>(result);
+
+            dataRepository.Remove<Subscribe>(subAck.Id);
+        }
+
+        private void HandleUnsubscribeRequest(Unsubscribe unsubscribe) => dataRepository.AddOrReplace(unsubscribe.Id, unsubscribe);        
     }
 }

@@ -9,6 +9,8 @@ namespace HyperMsg.Mqtt
 {
     public static class MqttProtocolExtensions
     {
+        #region Connection
+
         public static void SendConnectionRequest(this IMessageSender messageSender, MqttConnectionSettings connectionSettings)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
@@ -53,6 +55,16 @@ namespace HyperMsg.Mqtt
         public static IDisposable RegisterConnectionResultHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<ConnAck> handler) =>
             handlersRegistry.RegisterReceivePipeHandler(handler);
 
+        #endregion
+
+        public static ushort SendSubscriptionRequest(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests)
+        {
+            var request = CreateSubscribeRequest(requests);
+
+            messageSender.SendToTransmitPipe(request);
+            return request.Id;
+        }
+
         public static async Task<ushort> SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {
             var request = CreateSubscribeRequest(requests);
@@ -62,6 +74,9 @@ namespace HyperMsg.Mqtt
         }
 
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
+
+        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<IReadOnlyList<(string topic, SubscriptionResult result)>> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
 
         public static async Task<ushort> SendUnsubscribeRequestAsync(this IMessageSender messageSender, IEnumerable<string> topics, CancellationToken cancellationToken = default)
         {
