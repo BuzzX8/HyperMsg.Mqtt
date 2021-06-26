@@ -15,7 +15,7 @@ namespace HyperMsg.Mqtt
 
         protected override IEnumerable<IDisposable> GetAutoDisposables()
         {
-            yield return this.RegisterTransportMessageHandler(TransportMessage.Opening, HandleOpeningTransportMessageAsync);
+            yield return this.RegisterTransportMessageHandler(TransportMessage.Opened, HandleOpeningTransportMessageAsync);
         }
 
         private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
@@ -23,6 +23,11 @@ namespace HyperMsg.Mqtt
             if (!dataRepository.TryGet<MqttConnectionSettings>(out var settings))
             {
                 return;
+            }
+
+            if (settings.UseTls)
+            {
+                await this.SendTransportMessageAsync(TransportMessage.SetTls, cancellationToken);
             }
 
             await this.SendConnectionRequestAsync(settings, cancellationToken);
