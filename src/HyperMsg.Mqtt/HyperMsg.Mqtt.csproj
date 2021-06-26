@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg.Core" Version="1.0.2106136-beta" />
-    <PackageReference Include="HyperMsg.Transport" Version="1.0.2106131-beta" />
+    <PackageReference Include="HyperMsg.Core" Version="1.0.2106231-beta" />
+    <PackageReference Include="HyperMsg.Transport" Version="1.0.2106231-beta" />
   </ItemGroup>
 
 </Project>
