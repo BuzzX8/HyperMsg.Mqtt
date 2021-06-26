@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,6 +9,12 @@ namespace HyperMsg.Mqtt
 {
     public static class MqttProtocolExtensions
     {
+        public static void SendConnectionRequest(this IMessageSender messageSender, MqttConnectionSettings connectionSettings)
+        {
+            var connectPacket = CreateConnectPacket(connectionSettings);
+            messageSender.SendToTransmitPipe(connectPacket);
+        }
+
         public static async Task SendConnectionRequestAsync(this IMessageSender messageSender, MqttConnectionSettings connectionSettings, CancellationToken cancellationToken = default)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
@@ -39,6 +46,12 @@ namespace HyperMsg.Mqtt
 
             return connect;
         }
+
+        public static IDisposable RegisterConnectionResultHandler(this IMessageHandlersRegistry handlersRegistry, Action<ConnAck> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
+
+        public static IDisposable RegisterConnectionResultHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<ConnAck> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
 
         public static async Task<ushort> SendSubscriptionRequestAsync(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
         {

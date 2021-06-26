@@ -9,30 +9,7 @@ using Xunit;
 namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests : ServiceHostFixture
-    {        
-        private readonly MqttConnectionSettings connectionSettings;
-
-        public MessagingContextExtensionsTests() : base(services => services.AddMqttServices())
-        {
-            connectionSettings = new MqttConnectionSettings("test-client");
-        }
-
-        #region ConnectAsync
-
-        //[Fact]
-        //public void Received_Connack_Completes_Connect_Task_With_Correct_Result_For_SessionState()
-        //{
-        //    var connAck = new ConnAck(ConnectionResult.Accepted);
-        //    var actualResponse = default(ConnAck);
-        //    using var _ = MessagingContext.ConnectAsync(connectionSettings, response => actualResponse = response);
-
-        //    MessageSender.SendToReceivePipe(connAck);
-                        
-        //    Assert.Equal(connAck, actualResponse);
-        //}
-
-        #endregion
-
+    {
         //#region SubscribeAsync
 
         

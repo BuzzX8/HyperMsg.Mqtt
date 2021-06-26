@@ -44,6 +44,36 @@ namespace HyperMsg.Mqtt
         }
 
         [Fact]
+        public void RegisterConnectionResultHandler_Invokes_Handler_For_ConnAck_Response()
+        {
+            var actualConAck = default(ConnAck);
+            var connAck = new ConnAck(ConnectionResult.Accepted, true);
+
+            HandlersRegistry.RegisterConnectionResultHandler(args => actualConAck = args);
+            MessageSender.SendToReceivePipe(connAck);
+
+            Assert.NotNull(actualConAck);
+            Assert.Equal(connAck, actualConAck);
+        }
+
+        [Fact]
+        public void RegisterConnectionResultHandler_Invokes_Async_Handler_For_ConnAck_Response()
+        {
+            var actualConAck = default(ConnAck);
+            var connAck = new ConnAck(ConnectionResult.Accepted, true);
+
+            HandlersRegistry.RegisterConnectionResultHandler((args, _) =>
+            {
+                actualConAck = args;
+                return Task.CompletedTask;
+            });
+            MessageSender.SendToReceivePipe(connAck);
+
+            Assert.NotNull(actualConAck);
+            Assert.Equal(connAck, actualConAck);
+        }
+
+        [Fact]
         public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
         {
             var subscribePacket = default(Subscribe);
