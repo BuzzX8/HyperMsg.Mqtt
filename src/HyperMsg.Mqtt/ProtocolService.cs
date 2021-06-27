@@ -25,6 +25,7 @@ namespace HyperMsg.Mqtt
 
             yield return this.RegisterReceivePipeHandler<SubAck>(HandleSubAckResponse);
             yield return this.RegisterReceivePipeHandler<UnsubAck>(HandleUnsubAckResponse);
+            yield return this.RegisterReceivePipeHandler<PubAck>(HandlePubAckAsync);
         }
 
         private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
@@ -86,6 +87,16 @@ namespace HyperMsg.Mqtt
             }
 
             dataRepository.AddOrReplace(publish.Id, publish);
+        }
+
+        private async Task HandlePubAckAsync(PubAck pubAck, CancellationToken cancellationToken)
+        {
+            if (!dataRepository.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos == QosLevel.Qos1)
+            {
+                return;
+            }
+
+            await this.SendToReceivePipeAsync(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos), cancellationToken);
         }
     }
 }

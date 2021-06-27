@@ -79,6 +79,8 @@ namespace HyperMsg.Mqtt
 
         #endregion
 
+        #region Subscription
+
         [Fact]
         public async Task SubscribeAsync_Sends_Correct_Subscribe_Request()
         {
@@ -142,6 +144,8 @@ namespace HyperMsg.Mqtt
             Assert.False(dataRepository.Contains<Unsubscribe>(packetId));
         }
 
+        #endregion
+
         [Fact]
         public void SendPublishRequest_Sends_Correct_Packet()
         {
@@ -179,7 +183,7 @@ namespace HyperMsg.Mqtt
         }
 
         [Fact]
-        public void SendPublishRequest_Does_Not_Stores_Publish_Packet_For_Qos1()
+        public void SendPublishRequest_Does_Not_Stores_Publish_Packet_For_Qos0()
         {
             var packetId = MessageSender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
@@ -187,7 +191,7 @@ namespace HyperMsg.Mqtt
         }
 
         [Fact]
-        public async Task SendPublishRequestAsync_Does_Not_Stores_Publish_Packet_For_Qos1()
+        public async Task SendPublishRequestAsync_Does_Not_Stores_Publish_Packet_For_Qos0()
         {
             var packetId = await MessageSender.SendPublishRequestAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
@@ -208,6 +212,22 @@ namespace HyperMsg.Mqtt
             var packetId = await MessageSender.SendPublishRequestAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
 
             Assert.True(dataRepository.Contains<Publish>(packetId));
+        }
+
+        [Fact]
+        public void Received_PubAck_Invokes_Handler_For_Qos1()
+        {
+            var actualArgs = default(PublishCompletedHandlerArgs);
+            var topic = Guid.NewGuid().ToString();
+
+            HandlersRegistry.RegisterPublishCompletedHandler(args => actualArgs = args);
+            var packetId = MessageSender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            MessageSender.SendToReceivePipe(new PubAck(packetId));
+
+            Assert.NotNull(actualArgs);
+            Assert.Equal(packetId, actualArgs.Id);
+            Assert.Equal(topic, actualArgs.Topic);
+            Assert.Equal(QosLevel.Qos1, actualArgs.Qos);
         }
     }
 }

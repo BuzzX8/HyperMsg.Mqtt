@@ -120,6 +120,24 @@ namespace HyperMsg.Mqtt
             return publish.Id;
         }
 
+        public static IDisposable RegisterPublishCompletedHandler(this IMessageHandlersRegistry handlersRegistry, Action<PublishCompletedHandlerArgs> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
+
+        public static IDisposable RegisterPublishCompletedHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<PublishCompletedHandlerArgs> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
+
         #endregion
+    }
+
+    public class PublishCompletedHandlerArgs
+    {
+        internal PublishCompletedHandlerArgs(ushort id, string topic, QosLevel qos) =>
+            (Id, Topic, Qos) = (id, topic, qos);
+
+        public ushort Id { get; }
+
+        public string Topic { get; }
+
+        public QosLevel Qos { get; }
     }
 }
