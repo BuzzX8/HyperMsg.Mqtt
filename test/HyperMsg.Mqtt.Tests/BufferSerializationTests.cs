@@ -42,7 +42,7 @@ namespace HyperMsg.Mqtt
             var actualMessage = default(object);
             HandlersRegistry.RegisterReceivePipeHandler<Connect>(c => actualMessage = c);
 
-            MessageSender.SendToReceiveBuffer(expectedMessage);
+            MessageSender.SendToReceivePipe(expectedMessage);
 
             Assert.NotNull(actualMessage);
             Assert.Equal(expectedMessage, actualMessage);

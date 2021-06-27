@@ -29,7 +29,7 @@ namespace HyperMsg.Mqtt
             yield return this.RegisterSerializationHandler<PingResp>(Serialize);
             yield return this.RegisterSerializationHandler<Disconnect>(Serialize);
 
-            yield return this.RegisterReceivePipeHandler<IBufferReader>((reader, token) => ReadBufferAsync(this, reader, token));
+            yield return this.RegisterReceiveBufferReaderHandler((reader, token) => ReadBufferAsync(this, reader, token));
         }
     }
 }
