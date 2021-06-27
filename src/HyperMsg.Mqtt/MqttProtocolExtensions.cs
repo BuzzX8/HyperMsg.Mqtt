@@ -57,6 +57,8 @@ namespace HyperMsg.Mqtt
 
         #endregion
 
+        #region Subscription
+
         public static ushort SendSubscriptionRequest(this IMessageSender messageSender, IEnumerable<SubscriptionRequest> requests)
         {
             var request = CreateSubscribeRequest(requests);
@@ -99,5 +101,25 @@ namespace HyperMsg.Mqtt
 
         public static IDisposable RegisterUnsubscribeResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<IReadOnlyList<string>> handler) =>
             handlersRegistry.RegisterReceivePipeHandler(typeof(UnsubAck), handler);
+
+        #endregion
+
+        #region Publish
+
+        public static ushort SendPublishRequest(this IMessageSender messageSender, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
+        {
+            var publish = new Publish(PacketId.New(), topic, message, qos);
+            messageSender.SendToTransmitPipe(publish);
+            return publish.Id;
+        }
+
+        public static async Task<ushort> SendPublishRequestAsync(this IMessageSender messageSender, string topic, ReadOnlyMemory<byte> message, QosLevel qos, CancellationToken cancellationToken = default)
+        {
+            var publish = new Publish(PacketId.New(), topic, message, qos);
+            await messageSender.SendToTransmitPipeAsync(publish);
+            return publish.Id;
+        }
+
+        #endregion
     }
 }

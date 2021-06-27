@@ -10,27 +10,6 @@ namespace HyperMsg.Mqtt
 {
     public class MessagingContextExtensionsTests : ServiceHostFixture
     {
-        //#region UnsubscribeAsync
-
-        //[Fact]
-        //public void UnsubscribeAsync_Completes_Task_When_UnsubAck_Received()
-        //{
-        //    var unsubscribe = default(Unsubscribe);
-        //    HandlersRegistry.RegisterBufferFlushReader(BufferType.Transmitting, data =>
-        //    {
-        //        var message = MqttDeserializer.Deserialize(data, out var bytesConsumed);
-        //        unsubscribe = message as Unsubscribe;
-        //        return bytesConsumed;
-        //    });
-        //    var topics = new[] { "topic-1", "topic-2" };
-        //    var task = MessagingContext.UnsubscribeAsync(topics);
-
-        //    MessageSender.SendWriteToBufferCommand(BufferType.Receiving, new UnsubAck(unsubscribe.Id));
-
-        //    Assert.True(task.Completion.IsCompleted);
-        //}
-
-        //#endregion
 
         //#region PublishAsync
 

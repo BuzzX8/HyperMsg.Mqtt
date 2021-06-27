@@ -1,5 +1,6 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using HyperMsg.Transport;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -95,7 +96,7 @@ namespace HyperMsg.Mqtt
         }
 
         [Fact]
-        public void ConnAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
+        public void SubAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
         {
             var actualResult = default(IReadOnlyList<(string topic, SubscriptionResult result)>);
             
@@ -139,6 +140,42 @@ namespace HyperMsg.Mqtt
 
             Assert.NotNull(actualTopics);
             Assert.False(dataRepository.Contains<Unsubscribe>(packetId));
+        }
+
+        [Fact]
+        public void SendPublishRequest_Sends_Correct_Packet()
+        {
+            var topic = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            var qos = QosLevel.Qos1;
+            var actualPacket = default(Publish);
+
+            HandlersRegistry.RegisterTransmitPipeHandler<Publish>(publish => actualPacket = publish);
+            var packetId = MessageSender.SendPublishRequest(topic, message, qos);
+
+            Assert.NotNull(actualPacket);
+            Assert.Equal(packetId, actualPacket.Id);
+            Assert.Equal(topic, actualPacket.Topic);
+            Assert.Equal(message, actualPacket.Message);
+            Assert.Equal(qos, actualPacket.Qos);
+        }
+
+        [Fact]
+        public async Task SendPublishRequestAsync_Sends_Correct_Packet()
+        {
+            var topic = Guid.NewGuid().ToString();
+            var message = Guid.NewGuid().ToByteArray();
+            var qos = QosLevel.Qos1;
+            var actualPacket = default(Publish);
+
+            HandlersRegistry.RegisterTransmitPipeHandler<Publish>(publish => actualPacket = publish);
+            var packetId = await MessageSender.SendPublishRequestAsync(topic, message, qos);
+
+            Assert.NotNull(actualPacket);
+            Assert.Equal(packetId, actualPacket.Id);
+            Assert.Equal(topic, actualPacket.Topic);
+            Assert.Equal(message, actualPacket.Message);
+            Assert.Equal(qos, actualPacket.Qos);
         }
     }
 }
