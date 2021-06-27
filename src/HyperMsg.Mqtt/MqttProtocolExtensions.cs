@@ -49,6 +49,11 @@ namespace HyperMsg.Mqtt
             return connect;
         }
 
+        public static void SendDisconnectRequest(this IMessageSender messageSender) => messageSender.SendToTransmitPipe(Disconnect.Instance);
+
+        public static Task SendDisconnectRequestAsync(this IMessageSender messageSender, CancellationToken cancellationToken = default) =>
+            messageSender.SendToTransmitPipeAsync(Disconnect.Instance, cancellationToken);
+
         public static IDisposable RegisterConnectionResultHandler(this IMessageHandlersRegistry handlersRegistry, Action<ConnAck> handler) =>
             handlersRegistry.RegisterReceivePipeHandler(handler);
 
@@ -127,6 +132,17 @@ namespace HyperMsg.Mqtt
             handlersRegistry.RegisterReceivePipeHandler(handler);
 
         #endregion
+
+        public static void SendPingRequest(this IMessageSender messageSender) => messageSender.SendToTransmitPipe(PingReq.Instance);
+
+        public static Task SendPingRequestAsync(this IMessageSender messageSender, CancellationToken cancellationToken = default) =>
+            messageSender.SendToTransmitPipeAsync(PingReq.Instance, cancellationToken);
+
+        public static IDisposable RegisterPingResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action handler) =>
+            handlersRegistry.RegisterReceivePipeHandler<PingResp>(_ => handler.Invoke());
+
+        public static IDisposable RegisterPingResponseHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction handler) =>
+            handlersRegistry.RegisterReceivePipeHandler<PingResp>((_, token) => handler.Invoke(token));
     }
 
     public class PublishCompletedHandlerArgs

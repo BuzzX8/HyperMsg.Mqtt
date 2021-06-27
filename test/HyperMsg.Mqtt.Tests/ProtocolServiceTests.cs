@@ -215,7 +215,7 @@ namespace HyperMsg.Mqtt
         }
 
         [Fact]
-        public void Received_PubAck_Invokes_Handler_For_Qos1()
+        public void Receiving_PubAck_Invokes_Handler_For_Qos1()
         {
             var actualArgs = default(PublishCompletedHandlerArgs);
             var topic = Guid.NewGuid().ToString();
@@ -262,6 +262,23 @@ namespace HyperMsg.Mqtt
 
             Assert.NotNull(pubRel);
             Assert.Equal(packetId, pubRel.Id);
+        }
+
+        [Fact]
+        public void Received_PubComp_Invokes_Handler_For_Qos2()
+        {
+            var actualArgs = default(PublishCompletedHandlerArgs);
+            var topic = Guid.NewGuid().ToString();
+
+            HandlersRegistry.RegisterPublishCompletedHandler(args => actualArgs = args);
+            var packetId = MessageSender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
+            MessageSender.SendToReceivePipe(new PubRec(packetId));
+            MessageSender.SendToReceivePipe(new PubComp(packetId));
+
+            Assert.NotNull(actualArgs);
+            Assert.Equal(packetId, actualArgs.Id);
+            Assert.Equal(topic, actualArgs.Topic);
+            Assert.Equal(QosLevel.Qos2, actualArgs.Qos);
         }
     }
 }

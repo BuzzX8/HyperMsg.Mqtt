@@ -26,7 +26,8 @@ namespace HyperMsg.Mqtt
             yield return this.RegisterReceivePipeHandler<SubAck>(HandleSubAckResponse);
             yield return this.RegisterReceivePipeHandler<UnsubAck>(HandleUnsubAckResponse);
             yield return this.RegisterReceivePipeHandler<PubAck>(HandlePubAckResponseAsync);
-            yield return this.RegisterReceivePipeHandler<PubRec>(HandlePubRecResponse);
+            yield return this.RegisterReceivePipeHandler<PubRec>(HandlePubRecResponseAsync);
+            yield return this.RegisterReceivePipeHandler<PubComp>(HandlePubCompResponseAsync);
         }
 
         private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
@@ -101,7 +102,7 @@ namespace HyperMsg.Mqtt
             dataRepository.Remove<Publish>(publish.Id);
         }
 
-        private async Task HandlePubRecResponse(PubRec pubRec, CancellationToken cancellationToken)
+        private async Task HandlePubRecResponseAsync(PubRec pubRec, CancellationToken cancellationToken)
         {
             if (!dataRepository.TryGet<Publish>(pubRec.Id, out var publish) && publish.Qos != QosLevel.Qos2)
             {
@@ -110,6 +111,25 @@ namespace HyperMsg.Mqtt
 
             await this.SendToTransmitPipeAsync(new PubRel(pubRec.Id), cancellationToken);
             dataRepository.AddOrReplace(pubRec.Id, pubRec);
+        }
+
+        private async Task HandlePubCompResponseAsync(PubComp pubComp, CancellationToken cancellationToken)
+        {            
+            if (!dataRepository.Contains<PubRec>(pubComp.Id) && !dataRepository.Contains<Publish>(pubComp.Id))
+            {
+                return;
+            }
+
+            var publish = dataRepository.Get<Publish>(pubComp.Id);
+
+            if (publish.Qos != QosLevel.Qos2)
+            {
+                return;
+            }
+
+            await this.SendToReceivePipeAsync(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos), cancellationToken);
+            dataRepository.Remove<Publish>(publish.Id);
+            dataRepository.Remove<PubRec>(publish.Id);
         }
     }
 }
