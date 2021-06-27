@@ -54,16 +54,8 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            var topics = request.Subscriptions.Select(s => s.Item1).ToArray();
-            var topicResponses = subAck.Results.ToArray();
-            var result = new (string, SubscriptionResult)[topicResponses.Length];
-
-            for(int i = 0; i < topicResponses.Length; i++)
-            {
-                result[i] = (topics[i], topicResponses[i]);
-            }
-
-            await this.SendToReceivePipeAsync<IReadOnlyList<(string, SubscriptionResult)>>(typeof(SubAck), result);
+            var requestedTopics = request.Subscriptions.Select(s => s.Item1).ToArray();
+            await this.SendToReceivePipeAsync(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
 
             dataRepository.Remove<Subscribe>(subAck.Id);
         }

@@ -100,7 +100,7 @@ namespace HyperMsg.Mqtt
         [Fact]
         public void SubAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
         {
-            var actualResult = default(IReadOnlyList<(string topic, SubscriptionResult result)>);
+            var actualResult = default(SubscriptionResponseHandlerArgs);
             
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
@@ -113,6 +113,7 @@ namespace HyperMsg.Mqtt
 
             Assert.NotNull(actualResult);
             Assert.False(dataRepository.Contains<Subscribe>(packetId));
+            Assert.Equal(subAck.Results, actualResult.SubscriptionResults);
         }
 
         [Fact]

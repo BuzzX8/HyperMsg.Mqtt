@@ -82,11 +82,11 @@ namespace HyperMsg.Mqtt
 
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
 
-        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<IReadOnlyList<(string topic, SubscriptionResult result)>> handler) =>
-            handlersRegistry.RegisterReceivePipeHandler(typeof(SubAck), handler);
+        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, Action<SubscriptionResponseHandlerArgs> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
 
-        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<IReadOnlyList<(string topic, SubscriptionResult result)>> handler) =>
-            handlersRegistry.RegisterReceivePipeHandler(typeof(SubAck), handler);
+        public static IDisposable RegisterSubscriptionResponseHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction<SubscriptionResponseHandlerArgs> handler) =>
+            handlersRegistry.RegisterReceivePipeHandler(handler);
 
         public static ushort SendUnsubscribeRequest(this IMessageSender messageSender, IEnumerable<string> topics)
         {
@@ -143,6 +143,16 @@ namespace HyperMsg.Mqtt
 
         public static IDisposable RegisterPingResponseHandler(this IMessageHandlersRegistry handlersRegistry, AsyncAction handler) =>
             handlersRegistry.RegisterReceivePipeHandler<PingResp>((_, token) => handler.Invoke(token));
+    }
+
+    public class SubscriptionResponseHandlerArgs
+    {
+        internal SubscriptionResponseHandlerArgs(IReadOnlyList<string> requestedTopics, IReadOnlyList<SubscriptionResult> subscriptionResults) =>
+            (RequestedTopics, SubscriptionResults) = (requestedTopics, subscriptionResults);
+
+        public IReadOnlyList<string> RequestedTopics { get; }
+
+        public IReadOnlyList<SubscriptionResult> SubscriptionResults { get; }
     }
 
     public class PublishCompletedHandlerArgs
