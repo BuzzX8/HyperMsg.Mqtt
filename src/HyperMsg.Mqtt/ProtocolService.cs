@@ -21,6 +21,7 @@ namespace HyperMsg.Mqtt
 
             yield return this.RegisterTransmitPipeHandler<Subscribe>(HandleSubscribeRequest);
             yield return this.RegisterTransmitPipeHandler<Unsubscribe>(HandleUnsubscribeRequest);
+            yield return this.RegisterTransmitPipeHandler<Publish>(HandlePublishRequest);
 
             yield return this.RegisterReceivePipeHandler<SubAck>(HandleSubAckResponse);
             yield return this.RegisterReceivePipeHandler<UnsubAck>(HandleUnsubAckResponse);
@@ -75,6 +76,16 @@ namespace HyperMsg.Mqtt
 
             await this.SendToReceivePipeAsync<IReadOnlyList<string>>(typeof(UnsubAck), request.Topics.ToArray(), cancellationToken);
             dataRepository.Remove<Unsubscribe>(unsubAck.Id);
+        }
+
+        private void HandlePublishRequest(Publish publish)
+        {
+            if (publish.Qos == QosLevel.Qos0)
+            {
+                return;
+            }
+
+            dataRepository.AddOrReplace(publish.Id, publish);
         }
     }
 }

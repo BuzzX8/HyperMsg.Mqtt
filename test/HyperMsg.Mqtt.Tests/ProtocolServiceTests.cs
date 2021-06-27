@@ -177,5 +177,37 @@ namespace HyperMsg.Mqtt
             Assert.Equal(message, actualPacket.Message);
             Assert.Equal(qos, actualPacket.Qos);
         }
+
+        [Fact]
+        public void SendPublishRequest_Does_Not_Stores_Publish_Packet_For_Qos1()
+        {
+            var packetId = MessageSender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+
+            Assert.False(dataRepository.Contains<Publish>(packetId));
+        }
+
+        [Fact]
+        public async Task SendPublishRequestAsync_Does_Not_Stores_Publish_Packet_For_Qos1()
+        {
+            var packetId = await MessageSender.SendPublishRequestAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+
+            Assert.False(dataRepository.Contains<Publish>(packetId));
+        }
+
+        [Fact]
+        public void SendPublishRequest_Stores_Publish_Packet_For_Qos1()
+        {
+            var packetId = MessageSender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+
+            Assert.True(dataRepository.Contains<Publish>(packetId));
+        }
+
+        [Fact]
+        public async Task SendPublishRequestAsync_Stores_Publish_Packet_For_Qos1()
+        {
+            var packetId = await MessageSender.SendPublishRequestAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+
+            Assert.True(dataRepository.Contains<Publish>(packetId));
+        }
     }
 }
