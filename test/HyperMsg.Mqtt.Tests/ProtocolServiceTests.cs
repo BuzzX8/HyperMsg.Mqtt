@@ -229,5 +229,39 @@ namespace HyperMsg.Mqtt
             Assert.Equal(topic, actualArgs.Topic);
             Assert.Equal(QosLevel.Qos1, actualArgs.Qos);
         }
+
+        [Fact]
+        public void Received_PubAck_Invokes_Async_Handler_For_Qos1()
+        {
+            var actualArgs = default(PublishCompletedHandlerArgs);
+            var topic = Guid.NewGuid().ToString();
+
+            HandlersRegistry.RegisterPublishCompletedHandler((args, _) =>
+            {
+                actualArgs = args;
+                return Task.CompletedTask;
+            });
+            var packetId = MessageSender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            MessageSender.SendToReceivePipe(new PubAck(packetId));
+
+            Assert.NotNull(actualArgs);
+            Assert.Equal(packetId, actualArgs.Id);
+            Assert.Equal(topic, actualArgs.Topic);
+            Assert.Equal(QosLevel.Qos1, actualArgs.Qos);
+        }
+
+        [Fact]
+        public void Receiving_PubRec_Transmits_PubRel()
+        {            
+            var pubRel = default(PubRel);
+            var topic = Guid.NewGuid().ToString();
+
+            HandlersRegistry.RegisterTransmitPipeHandler<PubRel>(packet => pubRel = packet);
+            var packetId = MessageSender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
+            MessageSender.SendToReceivePipe(new PubRec(packetId));
+
+            Assert.NotNull(pubRel);
+            Assert.Equal(packetId, pubRel.Id);
+        }
     }
 }
