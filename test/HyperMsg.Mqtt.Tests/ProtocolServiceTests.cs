@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +7,10 @@ using Xunit;
 
 namespace HyperMsg.Mqtt
 {
-    public class ProtocolServiceTests : ServiceHostFixture
+    public class ProtocolServiceTests : HostFixture
     {
-        private readonly IDataRepository dataRepository;
-
-        public ProtocolServiceTests() : base(services => services.AddMqttServices()) =>
-            dataRepository = GetRequiredService<IDataRepository>();
+        public ProtocolServiceTests() : base(services => services.AddMqttServices())
+        { }
 
         #region Connection
 
