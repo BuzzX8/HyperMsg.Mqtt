@@ -4,8 +4,7 @@ namespace HyperMsg.Mqtt
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMqttServices(this IServiceCollection services) => 
-            services.AddHostedService<BufferSerializationService>()
-                .AddHostedService<ProtocolService>();
+        public static IServiceCollection AddMqttSerialization(this IServiceCollection services) => 
+            services.AddHostedService<BufferSerializationService>();
     }
 }

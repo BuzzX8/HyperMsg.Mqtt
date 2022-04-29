@@ -4,8 +4,6 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
@@ -32,7 +30,7 @@ namespace HyperMsg.Mqtt
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static async Task ReadBufferAsync(IMessageSender messageSender, IBufferReader bufferReader, CancellationToken cancellationToken)
+		internal static void ReadBufferAsync(IForwarder forwarder, IBufferReader bufferReader)
         {
 			var buffer = bufferReader.Read();
 			var packet = Deserialize(buffer, out var bytesConsumed);
@@ -45,55 +43,55 @@ namespace HyperMsg.Mqtt
 			switch(packet)
             {
 				case Connect connect:
-					await messageSender.SendToReceivePipeAsync(connect, cancellationToken);
+					forwarder.Dispatch(connect);
 					break;
 
 				case ConnAck connAck:
-					await messageSender.SendToReceivePipeAsync(connAck, cancellationToken);
+					forwarder.Dispatch(connAck);
 					break;
 
 				case Disconnect disconnect:
-					await messageSender.SendToReceivePipeAsync(disconnect, cancellationToken);
+					forwarder.Dispatch(disconnect);
 					break;
 
 				case PubAck pubAck:
-					await messageSender.SendToReceivePipeAsync(pubAck, cancellationToken);
+					forwarder.Dispatch(pubAck);
 					break;
 
 				case PubRel pubRel:
-					await messageSender.SendToReceivePipeAsync(pubRel, cancellationToken);
+					forwarder.Dispatch(pubRel);
 					break;
 
 				case PubRec pubRec:
-					await messageSender.SendToReceivePipeAsync(pubRec, cancellationToken);
+					forwarder.Dispatch(pubRec);
 					break;
 
 				case PubComp pubComp:
-					await messageSender.SendToReceivePipeAsync(pubComp, cancellationToken);
+					forwarder.Dispatch(pubComp);
 					break;
 
 				case PingReq pingReq:
-					await messageSender.SendToReceivePipeAsync(pingReq, cancellationToken);
+					forwarder.Dispatch(pingReq);
 					break;
 
 				case PingResp pingResp:
-					await messageSender.SendToReceivePipeAsync(pingResp, cancellationToken);
+					forwarder.Dispatch(pingResp);
 					break;
 
 				case Subscribe subscribe:
-					await messageSender.SendToReceivePipeAsync(subscribe, cancellationToken);
+					forwarder.Dispatch(subscribe);
 					break;
 
 				case SubAck subAck:
-					await messageSender.SendToReceivePipeAsync(subAck, cancellationToken);
+					forwarder.Dispatch(subAck);
 					break;
 
 				case Unsubscribe unsubscribe:
-					await messageSender.SendToReceivePipeAsync(unsubscribe, cancellationToken);
+					forwarder.Dispatch(unsubscribe);
 					break;
 
 				case UnsubAck unsubAck:
-					await messageSender.SendToReceivePipeAsync(unsubAck, cancellationToken);
+					forwarder.Dispatch(unsubAck);
 					break;
 			}
 
