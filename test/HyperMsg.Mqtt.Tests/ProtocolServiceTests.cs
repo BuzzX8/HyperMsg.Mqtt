@@ -20,7 +20,7 @@ namespace HyperMsg.Mqtt
             var connectionSettings = new MqttConnectionSettings("test-client");            
             var sentPacket = default(Connect);
 
-            ReceiverRegistry.Register<Connect>(packet => sentPacket = packet);
+            SenderRegistry.Register<Connect>(packet => sentPacket = packet);
             Sender.SendConnectionRequest(connectionSettings);
 
             Assert.NotNull(sentPacket);
