@@ -15,7 +15,6 @@ namespace HyperMsg.Mqtt
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            //yield return this.RegisterTransportMessageHandler(TransportMessage.Opened, HandleOpeningTransportMessageAsync);
             RegisterSenderHandlers(context.Sender.Registry);
             RegisterReceiverHandlers(context.Receiver.Registry);
 
@@ -40,22 +39,26 @@ namespace HyperMsg.Mqtt
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            DeregisterSenderHandlers(context.Sender.Registry);
+            DeregisterReceiverHandlers(context.Receiver.Registry);
+
             return Task.CompletedTask;
         }
 
-        private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
+        private void DeregisterSenderHandlers(IRegistry registry)
         {
-            //if (!dataRepository.TryGet<MqttConnectionSettings>(out var settings))
-            //{
-            //    return;
-            //}
+            registry.Deregister<Subscribe>(HandleSubscribeRequest);
+            registry.Deregister<Unsubscribe>(HandleUnsubscribeRequest);
+            registry.Deregister<Publish>(HandlePublishRequest);
+        }
 
-            //if (settings.UseTls)
-            //{
-            //    await this.SendTransportMessageAsync(TransportMessage.SetTls, cancellationToken);
-            //}
-
-            //await this.SendConnectionRequestAsync(settings, cancellationToken);
+        private void DeregisterReceiverHandlers(IRegistry registry)
+        {
+            registry.Deregister<SubAck>(HandleSubAckResponse);
+            registry.Deregister<UnsubAck>(HandleUnsubAckResponse);
+            registry.Deregister<PubAck>(HandlePubAckResponseAsync);
+            registry.Deregister<PubRec>(HandlePubRecResponseAsync);
+            registry.Deregister<PubComp>(HandlePubCompResponseAsync);
         }
 
         private void HandleSubscribeRequest(Subscribe subscribe) => requestStorage.AddOrReplace(subscribe.Id, subscribe);
