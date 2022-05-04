@@ -1,76 +1,91 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Transport;
-using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Hosting;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class ProtocolService : MessagingService
+    internal class ProtocolService : IHostedService
     {
-        private readonly IDataRepository dataRepository;
+        private readonly IContext context;
+        private readonly RequestStorage requestStorage;
 
-        public ProtocolService(IMessagingContext messagingContext, IDataRepository dataRepository) : base(messagingContext) =>
-            this.dataRepository = dataRepository;
+        public ProtocolService(IContext context, RequestStorage requestStorage) => (this.context, this.requestStorage) = (context, requestStorage);
 
-        protected override IEnumerable<IDisposable> GetAutoDisposables()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            yield return this.RegisterTransportMessageHandler(TransportMessage.Opened, HandleOpeningTransportMessageAsync);
+            RegisterSenderHandlers(context.Sender.Registry);
+            RegisterReceiverHandlers(context.Receiver.Registry);
 
-            yield return this.RegisterTransmitPipeHandler<Subscribe>(HandleSubscribeRequest);
-            yield return this.RegisterTransmitPipeHandler<Unsubscribe>(HandleUnsubscribeRequest);
-            yield return this.RegisterTransmitPipeHandler<Publish>(HandlePublishRequest);
-
-            yield return this.RegisterReceivePipeHandler<SubAck>(HandleSubAckResponse);
-            yield return this.RegisterReceivePipeHandler<UnsubAck>(HandleUnsubAckResponse);
-            yield return this.RegisterReceivePipeHandler<PubAck>(HandlePubAckResponseAsync);
-            yield return this.RegisterReceivePipeHandler<PubRec>(HandlePubRecResponseAsync);
-            yield return this.RegisterReceivePipeHandler<PubComp>(HandlePubCompResponseAsync);
+            return Task.CompletedTask;
         }
 
-        private async Task HandleOpeningTransportMessageAsync(CancellationToken cancellationToken)
+        private void RegisterSenderHandlers(IRegistry registry)
         {
-            if (!dataRepository.TryGet<MqttConnectionSettings>(out var settings))
-            {
-                return;
-            }
-
-            if (settings.UseTls)
-            {
-                await this.SendTransportMessageAsync(TransportMessage.SetTls, cancellationToken);
-            }
-
-            await this.SendConnectionRequestAsync(settings, cancellationToken);
+            registry.Register<Subscribe>(HandleSubscribeRequest);
+            registry.Register<Unsubscribe>(HandleUnsubscribeRequest);
+            registry.Register<Publish>(HandlePublishRequest);
         }
 
-        private void HandleSubscribeRequest(Subscribe subscribe) => dataRepository.AddOrReplace(subscribe.Id, subscribe);
-
-        private async Task HandleSubAckResponse(SubAck subAck, CancellationToken cancellationToken)
+        private void RegisterReceiverHandlers(IRegistry registry)
         {
-            if (!dataRepository.TryGet<Subscribe>(subAck.Id, out var request))
+            registry.Register<SubAck>(HandleSubAckResponse);
+            registry.Register<UnsubAck>(HandleUnsubAckResponse);
+            registry.Register<PubAck>(HandlePubAckResponseAsync);
+            registry.Register<PubRec>(HandlePubRecResponseAsync);
+            registry.Register<PubComp>(HandlePubCompResponseAsync);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            DeregisterSenderHandlers(context.Sender.Registry);
+            DeregisterReceiverHandlers(context.Receiver.Registry);
+
+            return Task.CompletedTask;
+        }
+
+        private void DeregisterSenderHandlers(IRegistry registry)
+        {
+            registry.Deregister<Subscribe>(HandleSubscribeRequest);
+            registry.Deregister<Unsubscribe>(HandleUnsubscribeRequest);
+            registry.Deregister<Publish>(HandlePublishRequest);
+        }
+
+        private void DeregisterReceiverHandlers(IRegistry registry)
+        {
+            registry.Deregister<SubAck>(HandleSubAckResponse);
+            registry.Deregister<UnsubAck>(HandleUnsubAckResponse);
+            registry.Deregister<PubAck>(HandlePubAckResponseAsync);
+            registry.Deregister<PubRec>(HandlePubRecResponseAsync);
+            registry.Deregister<PubComp>(HandlePubCompResponseAsync);
+        }
+
+        private void HandleSubscribeRequest(Subscribe subscribe) => requestStorage.AddOrReplace(subscribe.Id, subscribe);
+
+        private void HandleSubAckResponse(SubAck subAck)
+        {
+            if (!requestStorage.TryGet<Subscribe>(subAck.Id, out var request))
             {
                 return;
             }
 
             var requestedTopics = request.Subscriptions.Select(s => s.Item1).ToArray();
-            await this.SendToReceivePipeAsync(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
+            context.Receiver.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
 
-            dataRepository.Remove<Subscribe>(subAck.Id);
+            requestStorage.Remove<Subscribe>(subAck.Id);
         }
 
-        private void HandleUnsubscribeRequest(Unsubscribe unsubscribe) => dataRepository.AddOrReplace(unsubscribe.Id, unsubscribe);
+        private void HandleUnsubscribeRequest(Unsubscribe unsubscribe) => requestStorage.AddOrReplace(unsubscribe.Id, unsubscribe);
 
-        private async Task HandleUnsubAckResponse(UnsubAck unsubAck, CancellationToken cancellationToken)
+        private void HandleUnsubAckResponse(UnsubAck unsubAck)
         {
-            if (!dataRepository.TryGet<Unsubscribe>(unsubAck.Id, out var request))
+            if (!requestStorage.TryGet<Unsubscribe>(unsubAck.Id, out var request))
             {
                 return;
             }
-
-            await this.SendToReceivePipeAsync<IReadOnlyList<string>>(typeof(UnsubAck), request.Topics.ToArray(), cancellationToken);
-            dataRepository.Remove<Unsubscribe>(unsubAck.Id);
+            
+            requestStorage.Remove<Unsubscribe>(unsubAck.Id);
         }
 
         private void HandlePublishRequest(Publish publish)
@@ -80,48 +95,46 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            dataRepository.AddOrReplace(publish.Id, publish);
+            requestStorage.AddOrReplace(publish.Id, publish);
         }
 
-        private async Task HandlePubAckResponseAsync(PubAck pubAck, CancellationToken cancellationToken)
+        private void HandlePubAckResponseAsync(PubAck pubAck)
         {
-            if (!dataRepository.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos != QosLevel.Qos1)
+            if (requestStorage.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos == QosLevel.Qos1)
             {
-                return;
+                context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
+                requestStorage.Remove<Publish>(publish.Id);
             }
-
-            await this.SendToReceivePipeAsync(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos), cancellationToken);
-            dataRepository.Remove<Publish>(publish.Id);
         }
 
-        private async Task HandlePubRecResponseAsync(PubRec pubRec, CancellationToken cancellationToken)
+        private void HandlePubRecResponseAsync(PubRec pubRec)
         {
-            if (!dataRepository.TryGet<Publish>(pubRec.Id, out var publish) && publish.Qos != QosLevel.Qos2)
+            if (!requestStorage.TryGet<Publish>(pubRec.Id, out var publish) && publish.Qos != QosLevel.Qos2)
             {
                 return;
             }
 
-            await this.SendToTransmitPipeAsync(new PubRel(pubRec.Id), cancellationToken);
-            dataRepository.AddOrReplace(pubRec.Id, pubRec);
+            context.Sender.Dispatch(new PubRel(pubRec.Id));
+            requestStorage.AddOrReplace(pubRec.Id, pubRec);
         }
 
-        private async Task HandlePubCompResponseAsync(PubComp pubComp, CancellationToken cancellationToken)
-        {            
-            if (!dataRepository.Contains<PubRec>(pubComp.Id) && !dataRepository.Contains<Publish>(pubComp.Id))
+        private void HandlePubCompResponseAsync(PubComp pubComp)
+        {
+            if (!requestStorage.Contains<PubRec>(pubComp.Id) && !requestStorage.Contains<Publish>(pubComp.Id))
             {
                 return;
             }
 
-            var publish = dataRepository.Get<Publish>(pubComp.Id);
+            var publish = requestStorage.Get<Publish>(pubComp.Id);
 
             if (publish.Qos != QosLevel.Qos2)
             {
                 return;
             }
 
-            await this.SendToReceivePipeAsync(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos), cancellationToken);
-            dataRepository.Remove<Publish>(publish.Id);
-            dataRepository.Remove<PubRec>(publish.Id);
+            context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
+            requestStorage.Remove<Publish>(publish.Id);
+            requestStorage.Remove<PubRec>(publish.Id);
         }
     }
 }
