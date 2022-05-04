@@ -11,7 +11,7 @@ namespace HyperMsg.Mqtt
         private readonly IContext context;
         private readonly RequestStorage requestStorage;
 
-        public ProtocolService(IContext context) => (this.context, requestStorage) = (context, new());
+        public ProtocolService(IContext context, RequestStorage requestStorage) => (this.context, this.requestStorage) = (context, requestStorage);
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
@@ -71,7 +71,7 @@ namespace HyperMsg.Mqtt
             }
 
             var requestedTopics = request.Subscriptions.Select(s => s.Item1).ToArray();
-            context.Sender.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
+            context.Receiver.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
 
             requestStorage.Remove<Subscribe>(subAck.Id);
         }
@@ -100,13 +100,11 @@ namespace HyperMsg.Mqtt
 
         private void HandlePubAckResponseAsync(PubAck pubAck)
         {
-            if (!requestStorage.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos != QosLevel.Qos1)
+            if (requestStorage.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos == QosLevel.Qos1)
             {
-                return;
+                context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
+                requestStorage.Remove<Publish>(publish.Id);
             }
-
-            context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
-            requestStorage.Remove<Publish>(publish.Id);
         }
 
         private void HandlePubRecResponseAsync(PubRec pubRec)

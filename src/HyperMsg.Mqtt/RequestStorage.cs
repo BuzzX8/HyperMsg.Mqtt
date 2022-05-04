@@ -1,34 +1,34 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class RequestStorage
+    public class RequestStorage
     {
-        private readonly ConcurrentDictionary<ushort, object> storage = new();
+        private readonly ConcurrentDictionary<(ushort, Type), object> storage = new();
 
         public void AddOrReplace<T>(ushort requestId, T request)
-        { }
-
-        public bool Contains<T>(ushort requestId)
-        {
-            throw new NotImplementedException();
+        { 
+            storage[(requestId, typeof(T))] = request;
         }
+
+        public bool Contains<T>(ushort requestId) => storage.ContainsKey((requestId, typeof(T)));
 
         public T Get<T>(ushort requestId)
         {
-            throw new NotImplementedException();
+            if (Contains<T>(requestId))
+            {
+                return (T)storage[(requestId, typeof(T))];
+            }
+
+            throw new InvalidOperationException();
         }
 
         public bool TryGet<T>(ushort requestId, out T request)
         {
-            if (storage.TryGetValue(requestId, out var value) && value is T val)
+            if (storage.TryGetValue((requestId, typeof(T)), out var value))
             {
-                request = val;
+                request = (T)value;
                 return true;
             }
 
@@ -37,6 +37,11 @@ namespace HyperMsg.Mqtt
         }
 
         public void Remove<T>(ushort requestId)
-        { }
+        {
+            if (!Contains<T>(requestId))
+                return;
+
+            storage.TryRemove((requestId, typeof(T)), out _);
+        }
     }
 }

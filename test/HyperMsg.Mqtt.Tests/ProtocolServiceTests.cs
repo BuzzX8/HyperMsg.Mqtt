@@ -1,6 +1,6 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -8,8 +8,10 @@ namespace HyperMsg.Mqtt
 {
     public class ProtocolServiceTests : HostFixture
     {
-        public ProtocolServiceTests() : base(services => services.AddMqttProtocolService())
-        { }
+        private readonly RequestStorage requestStorage;
+
+        public ProtocolServiceTests() : base(services => services.AddMqttProtocolService().AddSingleton<RequestStorage>()) => 
+            requestStorage = GetRequiredService<RequestStorage>();
 
         #region Connection
 
@@ -25,19 +27,6 @@ namespace HyperMsg.Mqtt
             Assert.NotNull(sentPacket);
             Assert.Equal(connectionSettings.ClientId, sentPacket.ClientId);
         }
-
-        //[Fact]
-        //public void RegisterConnectionResultHandler_Invokes_Handler_For_ConnAck_Response()
-        //{
-        //    var actualConAck = default(ConnAck);
-        //    var connAck = new ConnAck(ConnectionResult.Accepted, true);
-
-        //    HandlersRegistry.RegisterConnectionResultHandler(args => actualConAck = args);
-        //    MessageSender.SendToReceivePipe(connAck);
-
-        //    Assert.NotNull(actualConAck);
-        //    Assert.Equal(connAck, actualConAck);
-        //}
 
         #endregion
 
@@ -56,7 +45,7 @@ namespace HyperMsg.Mqtt
 
             Assert.NotNull(subscribePacket);
             Assert.Equal(packetId, subscribePacket.Id);
-            //Assert.True(dataRepository.Contains<Subscribe>(packetId));
+            Assert.True(requestStorage.Contains<Subscribe>(packetId));
         }
 
         [Fact]
@@ -74,7 +63,7 @@ namespace HyperMsg.Mqtt
             Receiver.Dispatch(subAck);
 
             Assert.NotNull(actualResult);
-            //Assert.False(dataRepository.Contains<Subscribe>(packetId));
+            Assert.False(requestStorage.Contains<Subscribe>(packetId));
             Assert.Equal(subAck.Results, actualResult.SubscriptionResults);
         }
 
@@ -90,21 +79,7 @@ namespace HyperMsg.Mqtt
             Assert.NotNull(unsubscribe);
             Assert.Equal(packetId, unsubscribe.Id);
             Assert.Equal(topics, unsubscribe.Topics);
-            //Assert.True(dataRepository.Contains<Unsubscribe>(unsubscribe.Id));
-        }
-
-        [Fact]
-        public void UnsubAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
-        {
-            var actualTopics = default(IReadOnlyList<string>);
-            var topics = new[] { "topic-1", "topic-2" };
-
-            //ReceiverRegistry.Register<Unsubscribe>(response => actualTopics = response);
-            var packetId = Sender.SendUnsubscribeRequest(topics);
-            Receiver.Dispatch(new UnsubAck(packetId));
-
-            Assert.NotNull(actualTopics);
-            //Assert.False(dataRepository.Contains<Unsubscribe>(packetId));
+            Assert.True(requestStorage.Contains<Unsubscribe>(unsubscribe.Id));
         }
 
         #endregion
@@ -150,7 +125,7 @@ namespace HyperMsg.Mqtt
         {
             var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
-            //Assert.False(dataRepository.Contains<Publish>(packetId));
+            Assert.False(requestStorage.Contains<Publish>(packetId));
         }
 
         [Fact]
@@ -158,7 +133,7 @@ namespace HyperMsg.Mqtt
         {
             var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
-            //Assert.False(dataRepository.Contains<Publish>(packetId));
+            Assert.False(requestStorage.Contains<Publish>(packetId));
         }
 
         [Fact]
@@ -166,7 +141,7 @@ namespace HyperMsg.Mqtt
         {
             var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
 
-            //Assert.True(dataRepository.Contains<Publish>(packetId));
+            Assert.True(requestStorage.Contains<Publish>(packetId));
         }
 
         [Fact]
@@ -174,7 +149,7 @@ namespace HyperMsg.Mqtt
         {
             var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
 
-            //Assert.True(dataRepository.Contains<Publish>(packetId));
+            Assert.True(requestStorage.Contains<Publish>(packetId));
         }
 
         [Fact]
