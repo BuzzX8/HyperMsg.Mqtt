@@ -8,24 +8,16 @@ namespace HyperMsg.Mqtt
 {
     internal class ProtocolService : IHostedService
     {
-        private readonly IContext context;
+        private readonly Pipeline pipeline;
         private readonly RequestStorage requestStorage;
 
-        public ProtocolService(IContext context, RequestStorage requestStorage) => (this.context, this.requestStorage) = (context, requestStorage);
+        public ProtocolService(Pipeline pipeline, RequestStorage requestStorage) => (this.pipeline, this.requestStorage) = (pipeline, requestStorage);
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            RegisterSenderHandlers(context.Sender.Registry);
-            RegisterReceiverHandlers(context.Receiver.Registry);
+            RegisterReceiverHandlers(pipeline);
 
             return Task.CompletedTask;
-        }
-
-        private void RegisterSenderHandlers(IRegistry registry)
-        {
-            registry.Register<Subscribe>(HandleSubscribeRequest);
-            registry.Register<Unsubscribe>(HandleUnsubscribeRequest);
-            registry.Register<Publish>(HandlePublishRequest);
         }
 
         private void RegisterReceiverHandlers(IRegistry registry)
@@ -39,17 +31,9 @@ namespace HyperMsg.Mqtt
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            DeregisterSenderHandlers(context.Sender.Registry);
-            DeregisterReceiverHandlers(context.Receiver.Registry);
+            DeregisterReceiverHandlers(pipeline);
 
             return Task.CompletedTask;
-        }
-
-        private void DeregisterSenderHandlers(IRegistry registry)
-        {
-            registry.Deregister<Subscribe>(HandleSubscribeRequest);
-            registry.Deregister<Unsubscribe>(HandleUnsubscribeRequest);
-            registry.Deregister<Publish>(HandlePublishRequest);
         }
 
         private void DeregisterReceiverHandlers(IRegistry registry)
@@ -71,7 +55,7 @@ namespace HyperMsg.Mqtt
             }
 
             var requestedTopics = request.Subscriptions.Select(s => s.Item1).ToArray();
-            context.Receiver.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
+            pipeline.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
 
             requestStorage.Remove<Subscribe>(subAck.Id);
         }
@@ -102,7 +86,7 @@ namespace HyperMsg.Mqtt
         {
             if (requestStorage.TryGet<Publish>(pubAck.Id, out var publish) && publish.Qos == QosLevel.Qos1)
             {
-                context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
+                pipeline.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
                 requestStorage.Remove<Publish>(publish.Id);
             }
         }
@@ -114,7 +98,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            context.Sender.Dispatch(new PubRel(pubRec.Id));
+            pipeline.Dispatch(new PubRel(pubRec.Id));
             requestStorage.AddOrReplace(pubRec.Id, pubRec);
         }
 
@@ -132,7 +116,7 @@ namespace HyperMsg.Mqtt
                 return;
             }
 
-            context.Receiver.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
+            pipeline.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
             requestStorage.Remove<Publish>(publish.Id);
             requestStorage.Remove<PubRec>(publish.Id);
         }

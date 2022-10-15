@@ -9,10 +9,10 @@ namespace HyperMsg.Mqtt
     {
         #region Connection
 
-        public static void SendConnectionRequest(this IForwarder forwarder, MqttConnectionSettings connectionSettings)
+        public static void SendConnectionRequest(this IDispatcher dispatcher, MqttConnectionSettings connectionSettings)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
-            forwarder.Dispatch(connectPacket);
+            dispatcher.Dispatch(connectPacket);
         }
 
         private static Connect CreateConnectPacket(MqttConnectionSettings connectionSettings)
@@ -41,27 +41,27 @@ namespace HyperMsg.Mqtt
             return connect;
         }
 
-        public static void SendDisconnectRequest(this IForwarder forwarder) => forwarder.Dispatch(Disconnect.Instance);
+        public static void SendDisconnectRequest(this IDispatcher dispatcher) => dispatcher.Dispatch(Disconnect.Instance);
 
         #endregion
 
         #region Subscription
 
-        public static ushort SendSubscriptionRequest(this IForwarder forwarder, IEnumerable<SubscriptionRequest> requests)
+        public static ushort SendSubscriptionRequest(this IDispatcher dispatcher, IEnumerable<SubscriptionRequest> requests)
         {
             var request = CreateSubscribeRequest(requests);
 
-            forwarder.Dispatch(request);
+            dispatcher.Dispatch(request);
             return request.Id;
         }        
 
         private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
 
-        public static ushort SendUnsubscribeRequest(this IForwarder forwarder, IEnumerable<string> topics)
+        public static ushort SendUnsubscribeRequest(this IDispatcher dispatcher, IEnumerable<string> topics)
         {
             var packet = new Unsubscribe(PacketId.New(), topics);
 
-            forwarder.Dispatch(packet);
+            dispatcher.Dispatch(packet);
             return packet.Id;
         }
 
@@ -69,16 +69,16 @@ namespace HyperMsg.Mqtt
 
         #region Publish
 
-        public static ushort SendPublishRequest(this IForwarder forwarder, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
+        public static ushort SendPublishRequest(this IDispatcher dispatcher, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
         {
             var publish = new Publish(PacketId.New(), topic, message, qos);
-            forwarder.Dispatch(publish);
+            dispatcher.Dispatch(publish);
             return publish.Id;
         }
 
         #endregion
 
-        public static void SendPingRequest(this IForwarder forwarder) => forwarder.Dispatch(PingReq.Instance);
+        public static void SendPingRequest(this IDispatcher dispatcher) => dispatcher.Dispatch(PingReq.Instance);
     }
 
     public class SubscriptionResponseHandlerArgs
