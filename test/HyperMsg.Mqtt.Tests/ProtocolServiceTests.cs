@@ -6,12 +6,18 @@ using Xunit;
 
 namespace HyperMsg.Mqtt
 {
-    public class ProtocolServiceTests : HostFixture
+    public class ProtocolServiceTests
     {
+        private readonly Pipeline pipeline;
         private readonly RequestStorage requestStorage;
+        private readonly ProtocolService service;
 
-        public ProtocolServiceTests() : base(services => services.AddMqttProtocolService().AddSingleton<RequestStorage>()) => 
-            requestStorage = GetRequiredService<RequestStorage>();
+        public ProtocolServiceTests()
+        {
+            //pipeline = new()
+            requestStorage = new();
+            service = new(pipeline, requestStorage);
+        }
 
         #region Connection
 
@@ -21,8 +27,8 @@ namespace HyperMsg.Mqtt
             var connectionSettings = new MqttConnectionSettings("test-client");            
             var sentPacket = default(Connect);
 
-            SenderRegistry.Register<Connect>(packet => sentPacket = packet);
-            Sender.SendConnectionRequest(connectionSettings);
+            pipeline.Register<Connect>(packet => sentPacket = packet);
+            pipeline.SendConnectionRequest(connectionSettings);
 
             Assert.NotNull(sentPacket);
             Assert.Equal(connectionSettings.ClientId, sentPacket.ClientId);
@@ -36,12 +42,12 @@ namespace HyperMsg.Mqtt
         public void SendSubscriptionRequest_Sends_Correct_Subscribe_Request()
         {
             var subscribePacket = default(Subscribe);
-            SenderRegistry.Register<Subscribe>(subscribe => subscribePacket = subscribe);
+            pipeline.Register<Subscribe>(subscribe => subscribePacket = subscribe);
             var request = Enumerable.Range(1, 5)
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
 
-            var packetId = Sender.SendSubscriptionRequest(request);
+            var packetId = pipeline.SendSubscriptionRequest(request);
 
             Assert.NotNull(subscribePacket);
             Assert.Equal(packetId, subscribePacket.Id);
@@ -57,10 +63,10 @@ namespace HyperMsg.Mqtt
                 .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
                 .ToArray();
 
-            ReceiverRegistry.Register<SubscriptionResponseHandlerArgs>(response => actualResult = response);
-            var packetId = Sender.SendSubscriptionRequest(request);
+            pipeline.Register<SubscriptionResponseHandlerArgs>(response => actualResult = response);
+            var packetId = pipeline.SendSubscriptionRequest(request);
             var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
-            Receiver.Dispatch(subAck);
+            pipeline.Dispatch(subAck);
 
             Assert.NotNull(actualResult);
             Assert.False(requestStorage.Contains<Subscribe>(packetId));
@@ -71,10 +77,10 @@ namespace HyperMsg.Mqtt
         public void UnsubscribeAsync_Sends_Unsubscription_Request()
         {
             var unsubscribe = default(Unsubscribe);
-            SenderRegistry.Register<Unsubscribe>(packet => unsubscribe = packet);
+            pipeline.Register<Unsubscribe>(packet => unsubscribe = packet);
             var topics = new[] { "topic-1", "topic-2" };
 
-            var packetId = Sender.SendUnsubscribeRequest(topics);
+            var packetId = pipeline.SendUnsubscribeRequest(topics);
 
             Assert.NotNull(unsubscribe);
             Assert.Equal(packetId, unsubscribe.Id);
@@ -92,8 +98,8 @@ namespace HyperMsg.Mqtt
             var qos = QosLevel.Qos1;
             var actualPacket = default(Publish);
 
-            SenderRegistry.Register<Publish>(publish => actualPacket = publish);
-            var packetId = Sender.SendPublishRequest(topic, message, qos);
+            pipeline.Register<Publish>(publish => actualPacket = publish);
+            var packetId = pipeline.SendPublishRequest(topic, message, qos);
 
             Assert.NotNull(actualPacket);
             Assert.Equal(packetId, actualPacket.Id);
@@ -110,8 +116,8 @@ namespace HyperMsg.Mqtt
             var qos = QosLevel.Qos1;
             var actualPacket = default(Publish);
 
-            SenderRegistry.Register<Publish>(publish => actualPacket = publish);
-            var packetId = Sender.SendPublishRequest(topic, message, qos);
+            pipeline.Register<Publish>(publish => actualPacket = publish);
+            var packetId = pipeline.SendPublishRequest(topic, message, qos);
 
             Assert.NotNull(actualPacket);
             Assert.Equal(packetId, actualPacket.Id);
@@ -123,7 +129,7 @@ namespace HyperMsg.Mqtt
         [Fact]
         public void SendPublishRequest_Does_Not_Stores_Publish_Packet_For_Qos0()
         {
-            var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+            var packetId = pipeline.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
             Assert.False(requestStorage.Contains<Publish>(packetId));
         }
@@ -131,7 +137,7 @@ namespace HyperMsg.Mqtt
         [Fact]
         public void SendPublishRequestAsync_Does_Not_Stores_Publish_Packet_For_Qos0()
         {
-            var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
+            var packetId = pipeline.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos0);
 
             Assert.False(requestStorage.Contains<Publish>(packetId));
         }
@@ -139,7 +145,7 @@ namespace HyperMsg.Mqtt
         [Fact]
         public void SendPublishRequest_Stores_Publish_Packet_For_Qos1()
         {
-            var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            var packetId = pipeline.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
 
             Assert.True(requestStorage.Contains<Publish>(packetId));
         }
@@ -147,7 +153,7 @@ namespace HyperMsg.Mqtt
         [Fact]
         public void SendPublishRequestAsync_Stores_Publish_Packet_For_Qos1()
         {
-            var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            var packetId = pipeline.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
 
             Assert.True(requestStorage.Contains<Publish>(packetId));
         }
@@ -158,9 +164,9 @@ namespace HyperMsg.Mqtt
             var actualArgs = default(PublishCompletedHandlerArgs);
             var topic = Guid.NewGuid().ToString();
 
-            ReceiverRegistry.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
-            var packetId = Sender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
-            Receiver.Dispatch(new PubAck(packetId));
+            pipeline.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
+            var packetId = pipeline.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            pipeline.Dispatch(new PubAck(packetId));
 
             Assert.NotNull(actualArgs);
             Assert.Equal(packetId, actualArgs.Id);
@@ -174,9 +180,9 @@ namespace HyperMsg.Mqtt
             var actualArgs = default(PublishCompletedHandlerArgs);
             var topic = Guid.NewGuid().ToString();
 
-            ReceiverRegistry.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
-            var packetId = Sender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
-            Receiver.Dispatch(new PubAck(packetId));
+            pipeline.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
+            var packetId = pipeline.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
+            pipeline.Dispatch(new PubAck(packetId));
 
             Assert.NotNull(actualArgs);
             Assert.Equal(packetId, actualArgs.Id);
@@ -190,9 +196,9 @@ namespace HyperMsg.Mqtt
             var pubRel = default(PubRel);
             var topic = Guid.NewGuid().ToString();
 
-            SenderRegistry.Register<PubRel>(packet => pubRel = packet);
-            var packetId = Sender.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
-            Receiver.Dispatch(new PubRec(packetId));
+            pipeline.Register<PubRel>(packet => pubRel = packet);
+            var packetId = pipeline.SendPublishRequest(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
+            pipeline.Dispatch(new PubRec(packetId));
 
             Assert.NotNull(pubRel);
             Assert.Equal(packetId, pubRel.Id);
@@ -204,10 +210,10 @@ namespace HyperMsg.Mqtt
             var actualArgs = default(PublishCompletedHandlerArgs);
             var topic = Guid.NewGuid().ToString();
 
-            ReceiverRegistry.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
-            var packetId = Sender.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
-            Receiver.Dispatch(new PubRec(packetId));
-            Receiver.Dispatch(new PubComp(packetId));
+            pipeline.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
+            var packetId = pipeline.SendPublishRequest(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
+            pipeline.Dispatch(new PubRec(packetId));
+            pipeline.Dispatch(new PubComp(packetId));
 
             Assert.NotNull(actualArgs);
             Assert.Equal(packetId, actualArgs.Id);

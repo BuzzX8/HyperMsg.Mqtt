@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HyperMsg.Mqtt
 {
-    internal class ProtocolService : IHostedService
+    public class ProtocolService : IHostedService
     {
         private readonly Pipeline pipeline;
         private readonly RequestStorage requestStorage;

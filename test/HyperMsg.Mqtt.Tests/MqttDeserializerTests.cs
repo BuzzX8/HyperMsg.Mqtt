@@ -62,7 +62,7 @@ namespace HyperMsg.Mqtt
 	    [MemberData(nameof(DeserializeTestCases))]
 		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int BytesConsumed, object Packet) expected)
 	    {
-			var packet = MqttDeserializer.Deserialize(new ReadOnlySequence<byte>(serialized), out var bytesConsumed);
+			var packet = MqttDeserializer.Deserialize(serialized, out var bytesConsumed);
 
 			Assert.Equal(expected, (bytesConsumed, packet));
 	    }

@@ -29,7 +29,7 @@ namespace HyperMsg.Mqtt
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static void ReadBufferAsync(IBufferReader bufferReader, IDispatcher dispatcher)
+		internal static void ReadBuffer(IBufferReader bufferReader, IDispatcher dispatcher)
         {
 			var buffer = bufferReader.GetMemory();
 			var packet = Deserialize(buffer, out var bytesConsumed);
