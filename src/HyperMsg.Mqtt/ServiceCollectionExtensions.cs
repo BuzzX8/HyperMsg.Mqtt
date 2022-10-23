@@ -8,14 +8,15 @@ namespace HyperMsg.Mqtt
     public static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddMqttProtocolService(this IServiceCollection services) =>
-            services.AddHostedService<ProtocolService>();
+            services.AddSingleton<ProtocolService>();
 
         public static IServiceCollection AddMqttSerialization(this IServiceCollection services)
         {            
             var compositeSerializer = new CompositeSerializer();
             RegisterSerializers(compositeSerializer);
 
-            return services.AddSerializer(compositeSerializer)
+            return services
+                .AddSerializer(compositeSerializer)
                 .AddDeserializer(ReadBuffer);
         }
 
