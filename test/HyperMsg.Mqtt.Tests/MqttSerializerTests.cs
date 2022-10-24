@@ -372,7 +372,7 @@ namespace HyperMsg.Mqtt
 
 		private void VerifySerialization(params byte[] expected)
 	    {
-			var actual = buffer.Reader.Read().ToArray();
+			var actual = buffer.Reader.GetMemory().ToArray();
             Assert.Equal(expected, actual);
 		}
 
@@ -403,7 +403,7 @@ namespace HyperMsg.Mqtt
             bufferWriter.Advance(bytesWritten);
 
             Assert.Equal(expected.Length, bytesWritten);
-            Assert.Equal(expected, buffer.Reader.Read().ToArray());
+            Assert.Equal(expected, buffer.Reader.GetMemory().ToArray());
         }
 
         [Fact(DisplayName = "WriteString correctly serializes string")]
@@ -415,7 +415,7 @@ namespace HyperMsg.Mqtt
             bufferWriter.WriteString(value);
 			bufferWriter.Advance(expected.Length);
             			
-			Assert.Equal(expected, buffer.Reader.Read().ToArray());
+			Assert.Equal(expected, buffer.Reader.GetMemory().ToArray());
 		}
 	}
 }

@@ -1,13 +1,12 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
 
 namespace HyperMsg.Mqtt
 {
-    public static class MqttDeserializer
+	public static class MqttDeserializer
     {
 	    private static readonly Dictionary<byte, object> TwoBytePackets = new Dictionary<byte, object>
 	    {
@@ -30,9 +29,9 @@ namespace HyperMsg.Mqtt
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static void ReadBufferAsync(IForwarder forwarder, IBufferReader bufferReader)
+		internal static void ReadBuffer(IBufferReader bufferReader, IDispatcher dispatcher)
         {
-			var buffer = bufferReader.Read();
+			var buffer = bufferReader.GetMemory();
 			var packet = Deserialize(buffer, out var bytesConsumed);
 
 			if (bytesConsumed == 0)
@@ -43,72 +42,72 @@ namespace HyperMsg.Mqtt
 			switch(packet)
             {
 				case Connect connect:
-					forwarder.Dispatch(connect);
+                    dispatcher.Dispatch(connect);
 					break;
 
 				case ConnAck connAck:
-					forwarder.Dispatch(connAck);
+                    dispatcher.Dispatch(connAck);
 					break;
 
 				case Disconnect disconnect:
-					forwarder.Dispatch(disconnect);
+                    dispatcher.Dispatch(disconnect);
 					break;
 
 				case PubAck pubAck:
-					forwarder.Dispatch(pubAck);
+                    dispatcher.Dispatch(pubAck);
 					break;
 
 				case PubRel pubRel:
-					forwarder.Dispatch(pubRel);
+                    dispatcher.Dispatch(pubRel);
 					break;
 
 				case PubRec pubRec:
-					forwarder.Dispatch(pubRec);
+                    dispatcher.Dispatch(pubRec);
 					break;
 
 				case PubComp pubComp:
-					forwarder.Dispatch(pubComp);
+                    dispatcher.Dispatch(pubComp);
 					break;
 
 				case PingReq pingReq:
-					forwarder.Dispatch(pingReq);
+                    dispatcher.Dispatch(pingReq);
 					break;
 
 				case PingResp pingResp:
-					forwarder.Dispatch(pingResp);
+                    dispatcher.Dispatch(pingResp);
 					break;
 
 				case Subscribe subscribe:
-					forwarder.Dispatch(subscribe);
+                    dispatcher.Dispatch(subscribe);
 					break;
 
 				case SubAck subAck:
-					forwarder.Dispatch(subAck);
+                    dispatcher.Dispatch(subAck);
 					break;
 
 				case Unsubscribe unsubscribe:
-					forwarder.Dispatch(unsubscribe);
+                    dispatcher.Dispatch(unsubscribe);
 					break;
 
 				case UnsubAck unsubAck:
-					forwarder.Dispatch(unsubAck);
+                    dispatcher.Dispatch(unsubAck);
 					break;
 			}
 
 			bufferReader.Advance(bytesConsumed);
         }
 
-	    public static object Deserialize(ReadOnlySequence<byte> buffer, out int bytesConsumed)
+	    public static object Deserialize(ReadOnlyMemory<byte> buffer, out int bytesConsumed)
 	    {
-            var span = buffer.First.Span;
+            var span = buffer.Span;
             var code = span[0];
             buffer = buffer.Slice(1);
-            (var length, var count) = buffer.First.ReadRemainingLength();
+            (var length, var count) = buffer.ReadRemainingLength();
             var consumed = length + count + 1;
 
             if ((code & 0xf0) == 0x30)
             {
-                var publish = ReadPublish(buffer.First[count..], code, length);
+                var publish = ReadPublish(buffer[count..], code, length);
 				bytesConsumed = consumed;
                 return publish;
             }
@@ -122,7 +121,7 @@ namespace HyperMsg.Mqtt
 
             if (Readers.ContainsKey(code))
             {
-                var packet = Readers[code](buffer.First[count..], length);
+                var packet = Readers[code](buffer[count..], length);
 				bytesConsumed = consumed;
 				return packet;
             }
