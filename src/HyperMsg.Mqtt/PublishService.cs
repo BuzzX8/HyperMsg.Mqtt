@@ -22,6 +22,8 @@ public class PublishService
         RegisterHandlers(this.registry);
     }
 
+    public IReadOnlyDictionary<ushort, Publish> PendingPublications => pendingPublications;
+
     private void RegisterHandlers(IRegistry registry)
     {
         registry.Register<PubAck>(HandlePubAckResponse);
@@ -43,7 +45,11 @@ public class PublishService
 
     private ushort DispatchPublish(Publish publish)
     {
-        pendingPublications.TryAdd(publish.Id, publish);
+        if (publish.Qos != QosLevel.Qos0)
+        {
+            pendingPublications.TryAdd(publish.Id, publish);
+        }
+
         dispatcher.Dispatch(publish);
         return publish.Id;
     }
