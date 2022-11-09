@@ -9,13 +9,13 @@ namespace HyperMsg.Mqtt
     {
         #region Connection
 
-        public static void SendConnectionRequest(this IDispatcher dispatcher, MqttConnectionSettings connectionSettings)
+        public static void SendConnectionRequest(this IDispatcher dispatcher, ConnectionSettings connectionSettings)
         {
             var connectPacket = CreateConnectPacket(connectionSettings);
             dispatcher.Dispatch(connectPacket);
         }
 
-        private static Connect CreateConnectPacket(MqttConnectionSettings connectionSettings)
+        private static Connect CreateConnectPacket(ConnectionSettings connectionSettings)
         {
             var flags = ConnectFlags.None;
 

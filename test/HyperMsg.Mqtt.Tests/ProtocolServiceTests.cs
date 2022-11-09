@@ -25,7 +25,7 @@ public class ProtocolServiceTests
     [Fact]
     public void Sends_Connect_Packet_When_Receives_Opening_Transport_Message()
     {
-        var connectionSettings = new MqttConnectionSettings("test-client");            
+        var connectionSettings = new ConnectionSettings("test-client");            
         var sentPacket = default(Connect);
 
         messageBroker.Register<Connect>(packet => sentPacket = packet);

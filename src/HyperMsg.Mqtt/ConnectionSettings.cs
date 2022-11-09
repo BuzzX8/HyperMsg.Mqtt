@@ -2,9 +2,9 @@
 
 namespace HyperMsg.Mqtt
 {
-    public class MqttConnectionSettings
+    public class ConnectionSettings
     {
-        public MqttConnectionSettings(string clientId)
+        public ConnectionSettings(string clientId)
         {
             ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
         }
