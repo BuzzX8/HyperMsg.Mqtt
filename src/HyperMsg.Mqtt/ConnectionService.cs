@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 
 namespace HyperMsg.Mqtt;
 

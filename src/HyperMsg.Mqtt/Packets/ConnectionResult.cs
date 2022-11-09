@@ -1,12 +1,11 @@
-﻿namespace HyperMsg.Mqtt.Packets
+﻿namespace HyperMsg.Mqtt.Packets;
+
+public enum ConnectionResult
 {
-    public enum ConnectionResult
-    {
-        Accepted,
-        UnacceptableVersion,
-        IdentifierRejected,
-        ServerUnavailable,
-        BadUsernameOrPassword,
-        NotAuthorized
-    }
+    Accepted,
+    UnacceptableVersion,
+    IdentifierRejected,
+    ServerUnavailable,
+    BadUsernameOrPassword,
+    NotAuthorized
 }

@@ -1,10 +1,9 @@
-﻿namespace HyperMsg.Mqtt.Packets
+﻿namespace HyperMsg.Mqtt.Packets;
+
+public enum SubscriptionResult : byte
 {
-    public enum SubscriptionResult : byte
-    {
-        SuccessQos0,
-        SuccessQos1,
-        SuccessQos2,
-        Failure = 0x80
-    }
+    SuccessQos0,
+    SuccessQos1,
+    SuccessQos2,
+    Failure = 0x80
 }

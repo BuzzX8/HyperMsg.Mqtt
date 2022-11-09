@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System.Linq;
 using Xunit;
 
 namespace HyperMsg.Mqtt;
