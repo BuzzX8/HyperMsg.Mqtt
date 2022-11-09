@@ -33,7 +33,7 @@ public class PublishService
 
     public ushort Publish(PublishRequest publishRequest)
     {
-        var publish = default(Publish);
+        var publish = new Publish(PacketId.New(), publishRequest.TopicName, publishRequest.Message, publishRequest.Qos);
         return DispatchPublish(publish);
     }
 
