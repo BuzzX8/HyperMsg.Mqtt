@@ -28,7 +28,7 @@ namespace HyperMsg.Mqtt
 				0, 10, //Packet Id
 				0, 2, 0x80 //Response codes
 			);
-			yield return TestCase(new Subscribe(4, new[] { ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2) }),
+			yield return TestCase(new Subscribe(4, new SubscriptionRequest[] { new ("a/b", QosLevel.Qos1), new ("c/d", QosLevel.Qos2) }),
 				0b10000010, //Packet code
 				14, //Length
 				0, 4, //Packet ID

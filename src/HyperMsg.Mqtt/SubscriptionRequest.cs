@@ -1,23 +1,10 @@
-﻿using System;
+﻿namespace HyperMsg.Mqtt;
 
-namespace HyperMsg.Mqtt
+public readonly record struct SubscriptionRequest(string TopicName, QosLevel Qos)
 {
-    public class SubscriptionRequest
+    public void Deconstruct(out string topic, out QosLevel qos) 
     {
-        public SubscriptionRequest(string topicName, QosLevel qos)
-        {
-            TopicName = topicName ?? throw new ArgumentNullException(nameof(topicName));
-            Qos = qos;
-        }
-
-        public string TopicName { get; }
-
-        public QosLevel Qos { get; }
-
-        public void Deconstruct(out string topic, out QosLevel qos) 
-        {
-            topic = TopicName;
-            qos = Qos;
-        }
+        topic = TopicName;
+        qos = Qos;
     }
 }

@@ -11,19 +11,23 @@ public class Session
     private readonly ConcurrentDictionary<ushort, Subscribe> requestedSubscriptions;
     private readonly RequestStorage requestStorage;
 
-    public Session()
+    public Session(IDispatcher dispatcher)
     {
+        this.dispatcher = dispatcher;
         requestedSubscriptions = new();
     }
 
-    public void RequestSubscription(IEnumerable<SubscriptionRequest> subscriptions)
+    public ushort RequestSubscription(params SubscriptionRequest[] subscriptions) => RequestSubscription((IEnumerable<SubscriptionRequest>)subscriptions);
+
+    public ushort RequestSubscription(IEnumerable<SubscriptionRequest> subscriptions)
     {
         var request = new Subscribe(PacketId.New(), subscriptions);
         requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
         dispatcher.Dispatch(request);
+        return request.Id;
     }
 
-    private void HandleSubscriptionResponse(ushort responseId)
+    public void HandleSubscriptionResponse(ushort responseId, IEnumerable<SubscriptionResult> results)
     {
         if (!requestedSubscriptions.TryGetValue(responseId, out var request))
         {
@@ -32,8 +36,7 @@ public class Session
 
         var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
         //dispatcher.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
-
-        //requestStorage.Remove<Subscribe>(subAck.Id);
+                
         requestedSubscriptions.Remove(responseId, out _);
     }
 
