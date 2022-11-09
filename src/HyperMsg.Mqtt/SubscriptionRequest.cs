@@ -13,5 +13,11 @@ namespace HyperMsg.Mqtt
         public string TopicName { get; }
 
         public QosLevel Qos { get; }
+
+        public void Deconstruct(out string topic, out QosLevel qos) 
+        {
+            topic = TopicName;
+            qos = Qos;
+        }
     }
 }

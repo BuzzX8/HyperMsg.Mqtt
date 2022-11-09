@@ -49,7 +49,7 @@ public class ProtocolService : IDisposable
             return;
         }
 
-        var requestedTopics = request.Subscriptions.Select(s => s.Item1).ToArray();
+        var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
         dispatcher.Dispatch(new SubscriptionResponseHandlerArgs(requestedTopics, subAck.Results.ToArray()));
 
         requestStorage.Remove<Subscribe>(subAck.Id);

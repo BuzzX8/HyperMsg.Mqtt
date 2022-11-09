@@ -147,7 +147,7 @@ namespace HyperMsg.Mqtt
 			}
 		}
 
-	    private static int GetSubscriptionsByteCount(IEnumerable<(string, QosLevel)> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.Item1) + 1);
+	    private static int GetSubscriptionsByteCount(IEnumerable<SubscriptionRequest> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.TopicName) + 1);
 
 		public static void Serialize(IBufferWriter writer, SubAck subAck)
 		{

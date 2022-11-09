@@ -189,16 +189,16 @@ namespace HyperMsg.Mqtt
 
 	    private static object ReadSubscribe(ReadOnlyMemory<byte> buffer, int length)
 	    {
-		    return ReadPacketWithItems<(string, QosLevel)>(buffer, length, ReadTopicFilter, (id, items) => new Subscribe(id, items));
+		    return ReadPacketWithItems<SubscriptionRequest>(buffer, length, ReadTopicFilter, (id, items) => new Subscribe(id, items));
 	    }
 
-	    private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<(string, QosLevel)> callback)
+	    private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<SubscriptionRequest> callback)
 	    {
 		    var topic = buffer.ReadString();
             var byteCount = Encoding.UTF8.GetByteCount(topic) + 2;
             buffer = buffer[byteCount..];
             var span = buffer.Span;		    
-		    callback((topic, (QosLevel)span[0]));
+		    callback(new (topic, (QosLevel)span[0]));
 		    return Encoding.UTF8.GetByteCount(topic) + 3;
 	    }
 

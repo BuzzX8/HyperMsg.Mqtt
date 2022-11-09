@@ -5,7 +5,7 @@ namespace HyperMsg.Mqtt.Packets
 {
     public class Subscribe : IEquatable<Subscribe>
     {
-        public Subscribe(ushort packetId, IEnumerable<(string, QosLevel)> subscriptions)
+        public Subscribe(ushort packetId, IEnumerable<SubscriptionRequest> subscriptions)
         {
             Id = packetId;
             Subscriptions = subscriptions ?? throw new ArgumentNullException(nameof(subscriptions));
@@ -13,7 +13,7 @@ namespace HyperMsg.Mqtt.Packets
 
         public ushort Id { get; }
 
-        public IEnumerable<(string, QosLevel)> Subscriptions { get; }
+        public IEnumerable<SubscriptionRequest> Subscriptions { get; }
 
         public override int GetHashCode() => Id;
 
