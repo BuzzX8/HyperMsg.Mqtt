@@ -1,32 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace HyperMsg.Mqtt.Packets;
 
-namespace HyperMsg.Mqtt.Packets
-{
-    public class SubAck : IEquatable<SubAck>
-    {
-        public SubAck(ushort id, IEnumerable<SubscriptionResult> results)
-        {
-            Id = id;
-            Results = results;
-        }
-
-        public ushort Id { get; }
-
-        public IEnumerable<SubscriptionResult> Results { get; }
-
-        public override int GetHashCode() => Id;
-
-        public override bool Equals(object obj) => Equals(obj as SubAck);
-
-        public bool Equals(SubAck packet)
-        {
-            if (packet == null)
-            {
-                return false;
-            }
-
-            return Id == packet.Id;
-        }
-    }
-}
+public record struct SubAck(ushort Id, IEnumerable<SubscriptionResult> Results);

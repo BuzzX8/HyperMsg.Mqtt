@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace HyperMsg.Mqtt.Packets;
 
-namespace HyperMsg.Mqtt.Packets
+internal static class PacketId
 {
-    internal static class PacketId
-    {
-        public static ushort New() => BitConverter.ToUInt16(Guid.NewGuid().ToByteArray(), 0);
-    }
+    public static ushort New() => BitConverter.ToUInt16(Guid.NewGuid().ToByteArray(), 0);
 }

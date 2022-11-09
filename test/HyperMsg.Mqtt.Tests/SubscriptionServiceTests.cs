@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System.Linq;
 using Xunit;
 
 namespace HyperMsg.Mqtt;
@@ -52,7 +51,7 @@ public class SubscriptionServiceTests
         messageBroker.Register<Unsubscribe>(packet => unsubscribe = packet);
         var topics = new[] { "topic-1", "topic-2" };
 
-        var packetId = messageBroker.SendUnsubscribeRequest(topics);
+        var packetId = service.RequestUnsubscription(topics);
 
         Assert.NotNull(unsubscribe);
         Assert.Equal(packetId, unsubscribe.Id);
