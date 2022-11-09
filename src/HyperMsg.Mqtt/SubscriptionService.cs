@@ -10,15 +10,23 @@ public class SubscriptionService : IDisposable
 {
     private readonly IDispatcher dispatcher;
     private readonly IRegistry registry;
+
     private readonly ConcurrentDictionary<ushort, Subscribe> requestedSubscriptions;
+    private readonly ConcurrentDictionary<ushort, Unsubscribe> requestedUnsubscriptions;
 
     public SubscriptionService(IDispatcher dispatcher, IRegistry registry)
     {
         this.dispatcher = dispatcher;
         this.registry = registry;
+
         requestedSubscriptions = new();
+        requestedUnsubscriptions = new();
         RegisterHandlers(this.registry);
     }
+
+    public IReadOnlyDictionary<ushort, Subscribe> PendingSubscriptionRequests => requestedSubscriptions;
+
+    public IReadOnlyDictionary<ushort, Unsubscribe> PendingUnsubscriptionRequests => requestedUnsubscriptions;
 
     private void RegisterHandlers(IRegistry registry)
     {
@@ -47,7 +55,7 @@ public class SubscriptionService : IDisposable
     public ushort RequestUnsubscription(IEnumerable<string> topicNames)
     {
         var request = new Unsubscribe(PacketId.New(), topicNames);
-
+        requestedUnsubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
         dispatcher.Dispatch(request);
         return request.Id;
     }
@@ -66,7 +74,12 @@ public class SubscriptionService : IDisposable
 
     private void HandleUnsubAckResponse(UnsubAck unsubAck)
     {
-        
+        if (!requestedUnsubscriptions.ContainsKey(unsubAck.Id))
+        {
+            return;
+        }
+
+        requestedUnsubscriptions.Remove(unsubAck.Id, out _);
     }
 
     public void Dispose() => DeregisterHandlers(registry);

@@ -7,12 +7,12 @@ namespace HyperMsg.Mqtt;
 public class SubscriptionServiceTests
 {
     private readonly MessageBroker messageBroker;
-    private readonly SubscriptionService session;
+    private readonly SubscriptionService service;
 
     public SubscriptionServiceTests()
     {
         messageBroker = new();
-        session= new(messageBroker, messageBroker);
+        service = new(messageBroker, messageBroker);
     }
 
     [Fact]
@@ -24,30 +24,25 @@ public class SubscriptionServiceTests
             .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
             .ToArray();
 
-        var packetId = session.RequestSubscription(request);
+        var packetId = service.RequestSubscription(request);
 
         Assert.NotNull(subscribePacket);
         Assert.Equal(packetId, subscribePacket.Id);
-        //Assert.True(requestStorage.Contains<Subscribe>(packetId));
+        Assert.True(service.PendingSubscriptionRequests.ContainsKey(packetId));
     }
 
     [Fact]
-    public void SubAck_Response_Invokes_Handler_Registered_With_RegisterSubscriptionResponseHandler()
+    public void SubAck_Response_Updates_PendingSubscriptionRequests()
     {
-        var actualResult = default(SubscriptionResponseHandlerArgs);
-
         var request = Enumerable.Range(1, 5)
             .Select(i => new SubscriptionRequest($"topic-{i}", (QosLevel)(i % 3)))
             .ToArray();
 
-        messageBroker.Register<SubscriptionResponseHandlerArgs>(response => actualResult = response);
-        var packetId = session.RequestSubscription(request);
+        var packetId = service.RequestSubscription(request);
         var subAck = new SubAck(packetId, new[] { SubscriptionResult.Failure, SubscriptionResult.SuccessQos1, SubscriptionResult.SuccessQos0 });
         messageBroker.Dispatch(subAck);
 
-        Assert.NotNull(actualResult);
-        //Assert.False(requestStorage.Contains<Subscribe>(packetId));
-        Assert.Equal(subAck.Results, actualResult.SubscriptionResults);
+        Assert.False(service.PendingSubscriptionRequests.ContainsKey(packetId));
     }
 
     [Fact]
@@ -62,6 +57,5 @@ public class SubscriptionServiceTests
         Assert.NotNull(unsubscribe);
         Assert.Equal(packetId, unsubscribe.Id);
         Assert.Equal(topics, unsubscribe.Topics);
-        //Assert.True(requestStorage.Contains<Unsubscribe>(unsubscribe.Id));
     }
 }
