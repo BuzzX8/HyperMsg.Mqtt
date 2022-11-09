@@ -55,7 +55,7 @@ namespace HyperMsg.Mqtt
             return request.Id;
         }        
 
-        private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new Subscribe(PacketId.New(), requests.Select(r => (r.TopicName, r.Qos)));
+        private static Subscribe CreateSubscribeRequest(IEnumerable<SubscriptionRequest> requests) => new (PacketId.New(), requests);
 
         public static ushort SendUnsubscribeRequest(this IDispatcher dispatcher, IEnumerable<string> topics)
         {

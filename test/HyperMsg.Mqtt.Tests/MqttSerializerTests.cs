@@ -283,7 +283,7 @@ namespace HyperMsg.Mqtt
 		public void Serializes_Subscribe_Packet()
 		{
 			ushort packetId = 0x8098;
-			var packet = new Subscribe(packetId, new [] { ("a/b", QosLevel.Qos1), ("c/d", QosLevel.Qos2) });
+			var packet = new Subscribe(packetId, new SubscriptionRequest[] { new("a/b", QosLevel.Qos1), new("c/d", QosLevel.Qos2) });
 			byte[] expected =
 			{
 				0b10000010, //Type code
