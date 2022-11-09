@@ -7,12 +7,6 @@ namespace HyperMsg.Mqtt;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddMqttProtocolService(this IServiceCollection services) =>
-        services.AddSingleton<ProtocolService>(provider => { 
-            var pipeline = provider.GetRequiredService<Pipeline>();
-            return new(pipeline, pipeline, new());
-        });
-
     public static IServiceCollection AddMqttSerialization(this IServiceCollection services)
     {            
         var compositeSerializer = new CompositeSerializer();
