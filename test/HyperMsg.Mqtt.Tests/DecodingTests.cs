@@ -7,9 +7,9 @@ using Xunit;
 
 namespace HyperMsg.Mqtt
 {
-    public class MqttDeserializerTests
+    public class DecodingTests
     {
-		public static IEnumerable<object[]> DeserializeTestCases()
+		public static IEnumerable<object[]> DecodingTestCases()
 		{
 			yield return TestCase(new Disconnect(), 0b11100000, 0);
 			yield return TestCase(new PingResp(), 0b11010000, 0);
@@ -58,11 +58,11 @@ namespace HyperMsg.Mqtt
 
         private static object[] TestCase(object expected, params byte[] serialized) => new object[] { serialized, (serialized.Length, expected) };
 
-        [Theory(DisplayName = "Deserialize return correct deserialization result")]
-	    [MemberData(nameof(DeserializeTestCases))]
-		public void Deserialize_Returns_Correct_DeserializationResult(byte[] serialized, (int BytesConsumed, object Packet) expected)
+        [Theory(DisplayName = "Decode return correct packet")]
+	    [MemberData(nameof(DecodingTestCases))]
+		public void Decode_Returns_Correct_Packet(byte[] serialized, (int BytesConsumed, object Packet) expected)
 	    {
-			var packet = MqttDeserializer.Deserialize(serialized, out var bytesConsumed);
+			var packet = Decoding.Decode(serialized, out var bytesConsumed);
 
 			Assert.Equal(expected, (bytesConsumed, packet));
 	    }
@@ -111,7 +111,7 @@ namespace HyperMsg.Mqtt
 	    {
 		    string expected = Guid.NewGuid().ToString();
 		    var bytes = new List<byte> { 0, (byte)expected.Length };
-		    bytes.AddRange(Encoding.UTF8.GetBytes(expected));
+		    bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(expected));
 		    var buffer = new ReadOnlyMemory<byte>(bytes.ToArray());
 
 		    string actual = buffer.ReadString();

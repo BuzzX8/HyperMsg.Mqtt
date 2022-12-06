@@ -1,28 +1,24 @@
 ﻿using FakeItEasy;
 using HyperMsg.Mqtt.Packets;
-using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Xunit;
 
 namespace HyperMsg.Mqtt
 {
-    public class MqttSerializerTests
+	public class EncodingTests
     {		
 		private readonly Buffer buffer;
 		private readonly IBufferWriter bufferWriter;
 
-		public MqttSerializerTests()
+		public EncodingTests()
         {
 			var memoryOwner = MemoryPool<byte>.Shared.Rent();
 			buffer = new Buffer(memoryOwner);
 			bufferWriter = buffer.Writer;
         }
 
-		[Fact(DisplayName = "Serializes Connect packet with Password flag")]
-		public void Serializes_Connect_With_Password_Flag()
+		[Fact(DisplayName = "Encodes Connect packet with Password flag")]
+		public void Encode_Connect_With_Password_Flag()
 		{
 			byte[] password = Guid.NewGuid().ToByteArray();
 			var packet = new Connect
@@ -35,13 +31,13 @@ namespace HyperMsg.Mqtt
 			AddBinary(expected, password);
 			SetRemainingLength(expected);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
 
-		[Fact(DisplayName = "Serializes Connect with Username flag")]
-		public void Serializes_Connect_With_Username_Flag()
+		[Fact(DisplayName = "Encode Connect with Username flag")]
+		public void Encode_Connect_With_Username_Flag()
 		{
 			string username = Guid.NewGuid().ToString();
 			var packet = new Connect
@@ -54,13 +50,13 @@ namespace HyperMsg.Mqtt
 			AddString(expected, username);
 			SetRemainingLength(expected);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
 
-		[Fact(DisplayName = "Serializes Connect with Will flag")]
-		public void Serializes_Connect_With_Will_Flag()
+		[Fact(DisplayName = "Encodes Connect with Will flag")]
+		public void Encode_Connect_With_Will_Flag()
 		{
 			string willTopic = Guid.NewGuid().ToString();
 			byte[] willMessage = Guid.NewGuid().ToByteArray();
@@ -76,7 +72,7 @@ namespace HyperMsg.Mqtt
 			AddBinary(expected, willMessage);
 			SetRemainingLength(expected);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -92,9 +88,9 @@ namespace HyperMsg.Mqtt
 			yield return new object[] { ConnectFlags.CleanSession | ConnectFlags.WillRetain };
 		}
 
-		[Theory(DisplayName = "Serializes Connect packet")]
+		[Theory(DisplayName = "Encodes Connect packet")]
 		[MemberData(nameof(GetTestCasesForSerializeConnect))]
-		public void Serializes_Connect(ConnectFlags flags)
+		public void Encode_Connect(ConnectFlags flags)
 		{
 			ushort keepAlive = BitConverter.ToUInt16(Guid.NewGuid().ToByteArray(), 0);
 			string clientId = Guid.NewGuid().ToString();
@@ -107,7 +103,7 @@ namespace HyperMsg.Mqtt
 			var expected = CreateConnectHeader(packet);
 			SetRemainingLength(expected);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
@@ -137,7 +133,7 @@ namespace HyperMsg.Mqtt
 		private static void AddString(List<byte> packet, string str)
 		{
 			packet.AddRange(new byte[] { 0, (byte)str.Length });
-			packet.AddRange(Encoding.UTF8.GetBytes(str));
+			packet.AddRange(System.Text.Encoding.UTF8.GetBytes(str));
 		}
 
 		private static void SetRemainingLength(List<byte> packet)
@@ -155,9 +151,9 @@ namespace HyperMsg.Mqtt
 			yield return new object[] { true, ConnectionResult.UnacceptableVersion };
 		}
 
-		[Theory(DisplayName = "Serializes ConnAck packet")]
+		[Theory(DisplayName = "Encodes ConnAck packet")]
 		[MemberData(nameof(GetTestCasesForSerializeConnAck))]
-		public void Serializes_ConnAck_Packet(bool sessionPresent, ConnectionResult result)
+		public void Encode_ConnAck_Packet(bool sessionPresent, ConnectionResult result)
 		{
 			var packet = new ConnAck(result, sessionPresent);
 			byte[] expected =
@@ -168,7 +164,7 @@ namespace HyperMsg.Mqtt
 				(byte)result
 			};
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
@@ -182,9 +178,9 @@ namespace HyperMsg.Mqtt
 			yield return new object[] { 0b00111011, true, QosLevel.Qos1, true };
 		}
 
-		[Theory(DisplayName = "Serializes Publish packet")]
+		[Theory(DisplayName = "Encodes Publish packet")]
 		[MemberData(nameof(GetTestCasesForSerializePublish))]
-		public void Serializes_Publish_Packet(byte expectedHeader, bool dup, QosLevel qos, bool retain)
+		public void Encodes_Publish_Packet(byte expectedHeader, bool dup, QosLevel qos, bool retain)
 		{
 			ushort packetId = 0x8667;
 			string topicName = Guid.NewGuid().ToString();
@@ -201,18 +197,18 @@ namespace HyperMsg.Mqtt
 				(byte)(topicName.Length + 2 /*topic length*/ + 2 /*packet ID*/ + payload.Length), //Length
 				0x00, (byte)topicName.Length
 			};
-			expected.AddRange(Encoding.UTF8.GetBytes(topicName));
+			expected.AddRange(System.Text.Encoding.UTF8.GetBytes(topicName));
 			expected.Add((byte)(packetId >> 8));
 			expected.Add((byte)packetId);
 			expected.AddRange(payload);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected.ToArray());
 		}
 
-		[Fact(DisplayName = "Serializes PubAck packet")]
-		public void Serializes_Puback_Packet()
+		[Fact(DisplayName = "Encodes PubAck packet")]
+		public void Encode_Puback_Packet()
 		{
 			ushort packetId = 0x8178;
 			var packet = new PubAck(packetId);
@@ -223,12 +219,12 @@ namespace HyperMsg.Mqtt
 			    0x81, 0x78 //Packet ID
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
 
-		[Fact(DisplayName = "Serializes PubRec packet")]
+		[Fact(DisplayName = "Encodes PubRec packet")]
 		public void Serializes_Pubrec_Packet()
 		{
 			ushort packetId = 0x8179;
@@ -240,13 +236,13 @@ namespace HyperMsg.Mqtt
 			    0x81, 0x79 //Packet ID
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
 
-		[Fact(DisplayName = "Serializes PubRel packet")]
-		public void Serializes_Pubrel_Packet()
+		[Fact(DisplayName = "Encodes PubRel packet")]
+		public void Encode_Pubrel_Packet()
 		{
 			ushort packetId = 0x8079;
 			var packet = new PubRel(packetId);
@@ -257,13 +253,13 @@ namespace HyperMsg.Mqtt
 			    0x80, 0x79 //Packet ID
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
 
-		[Fact(DisplayName = "Serialzies PubComp packet")]
-		public void Serializes_Pubcomp_Packet()
+		[Fact(DisplayName = "Encodes PubComp packet")]
+		public void Encode_Pubcomp_Packet()
 		{
 			ushort packetId = 0x8989;
 			var packet = new PubComp(packetId);
@@ -274,13 +270,13 @@ namespace HyperMsg.Mqtt
 			    0x89, 0x89 //Packet ID
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
 
-		[Fact(DisplayName = "Serializes Subscribe packet")]
-		public void Serializes_Subscribe_Packet()
+		[Fact(DisplayName = "Encodes Subscribe packet")]
+		public void Encode_Subscribe_Packet()
 		{
 			ushort packetId = 0x8098;
 			var packet = new Subscribe(packetId, new SubscriptionRequest[] { new("a/b", QosLevel.Qos1), new("c/d", QosLevel.Qos2) });
@@ -293,13 +289,13 @@ namespace HyperMsg.Mqtt
 			    0, 3, 0x63, 0x2f, 0x64, 2 //Filter "c/d" Qos2
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 		}
 
-		[Fact(DisplayName = "Serializes SubAck packet")]
-	    public void Serializes_SubAck_Packet()
+		[Fact(DisplayName = "Encodes SubAck packet")]
+	    public void Encodes_SubAck_Packet()
 	    {
 		    ushort packetId = 0x6790;
 		    var packet = new SubAck(packetId, new[] { SubscriptionResult.SuccessQos0, SubscriptionResult.SuccessQos2, SubscriptionResult.Failure });
@@ -311,13 +307,13 @@ namespace HyperMsg.Mqtt
 			    0, 0x02, 0x80 //Response codes
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 	    }
 
-		[Fact(DisplayName = "Serializes Unsubscribe packet")]
-	    public void Serializes_Unsubscribe_Packet()
+		[Fact(DisplayName = "Encodes Unsubscribe packet")]
+	    public void Encodes_Unsubscribe_Packet()
 	    {
 		    ushort packetId = 0x0c1d;
 		    var packet = new Unsubscribe(packetId, new[] { "a/b", "c/d" });
@@ -330,42 +326,42 @@ namespace HyperMsg.Mqtt
 			    0, 3, 0x63, 0x2f, 0x64	//Filter "c/d"
 		    };
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(expected);
 	    }
 
-		[Fact(DisplayName = "Serializes UnsubAck packet")]
-	    public void Serializes_UnsubAck_Packet()
+		[Fact(DisplayName = "Encodes UnsubAck packet")]
+	    public void Encodes_UnsubAck_Packet()
 	    {
 		    ushort packetId = 0x0990;
 			var packet = new UnsubAck(packetId);
 
-			MqttSerializer.Serialize(bufferWriter, packet);
+			Encoding.Encode(bufferWriter, packet);
 
 			VerifySerialization(0b10110000, 0b00000010, 0x09, 0x90);
 	    }
 
-		[Fact(DisplayName = "Serializes PingReq packet")]
-	    public void Serializes_PingReq_Packet()
+		[Fact(DisplayName = "Encodes PingReq packet")]
+	    public void Encodes_PingReq_Packet()
 	    {
-			MqttSerializer.Serialize(bufferWriter, new PingReq());
+			Encoding.Encode(bufferWriter, new PingReq());
 
 		    VerifySerialization(0b11000000, 0b00000000);
 	    }
 
-		[Fact(DisplayName = "Serialzies PingResp packet")]
-	    public void Serializes_PingResp_Packet()
+		[Fact(DisplayName = "Encodes PingResp packet")]
+	    public void Encodes_PingResp_Packet()
 	    {
-			MqttSerializer.Serialize(bufferWriter, new PingResp());
+			Encoding.Encode(bufferWriter, new PingResp());
 
 		    VerifySerialization(0b11010000, 0b00000000);
 	    }
 
-		[Fact(DisplayName = "Serialzies Disconnect packet")]
-	    public void Serializes_Disconnect_Packet()
+		[Fact(DisplayName = "Encodes Disconnect packet")]
+	    public void Encodes_Disconnect_Packet()
 	    {
-			MqttSerializer.Serialize(bufferWriter, new Disconnect());
+			Encoding.Encode(bufferWriter, new Disconnect());
 
 		    VerifySerialization(0b11100000, 0b00000000);
 	    }
@@ -410,7 +406,7 @@ namespace HyperMsg.Mqtt
 		public void WriteString_Correctly_Serializes_String()
 		{			
 			string value = Guid.NewGuid().ToString();
-			byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(Encoding.UTF8.GetBytes(value)).ToArray();
+			byte[] expected = new byte[] { 0, (byte)value.Length }.Concat(System.Text.Encoding.UTF8.GetBytes(value)).ToArray();
             
             bufferWriter.WriteString(value);
 			bufferWriter.Advance(expected.Length);
