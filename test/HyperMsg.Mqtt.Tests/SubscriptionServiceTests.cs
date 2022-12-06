@@ -11,7 +11,7 @@ public class SubscriptionServiceTests
     public SubscriptionServiceTests()
     {
         messageBroker = new();
-        service = new(messageBroker, messageBroker);
+        service = new(messageBroker);
     }
 
     [Fact]

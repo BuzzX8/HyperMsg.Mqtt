@@ -2,26 +2,19 @@
 
 namespace HyperMsg.Mqtt;
 
-public class ConnectionService : IDisposable
+public class ConnectionService : Service
 {
-    private readonly IDispatcher dispatcher;
-    private readonly IRegistry registry;
+    private readonly ConnectionSettings settings;
 
-    private readonly ConnectionSettings connectionSettings;
-
-    public ConnectionService(IDispatcher dispatcher, IRegistry registry, ConnectionSettings connectionSettings)
+    public ConnectionService(ITopic messageTopic, ConnectionSettings settings) : base(messageTopic)
     {
-        this.dispatcher = dispatcher;
-        this.registry = registry;
-        this.connectionSettings = connectionSettings;
-
-        registry.Register<ConnAck>(HandleConAck);
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
     public void RequestConnection()
     {
-        var connectPacket = CreateConnectPacket(connectionSettings);
-        dispatcher.Dispatch(connectPacket);
+        var connectPacket = CreateConnectPacket(settings);
+        Dispatch(connectPacket);
     }
 
     private static Connect CreateConnectPacket(ConnectionSettings connectionSettings)
@@ -55,5 +48,13 @@ public class ConnectionService : IDisposable
 
     }
 
-    public void Dispose() => registry.Deregister<ConnAck>(HandleConAck);
+    protected override void RegisterHandlers(IRegistry registry)
+    {
+        registry.Register<ConnAck>(HandleConAck);
+    }
+
+    protected override void UnregisterHandlers(IRegistry registry)
+    {
+        registry.Unregister<ConnAck>(HandleConAck);
+    }
 }
