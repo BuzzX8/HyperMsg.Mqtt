@@ -1,38 +1,38 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using Microsoft.Extensions.DependencyInjection;
-using static HyperMsg.Mqtt.MqttSerializer;
+using static HyperMsg.Mqtt.Encoding;
 using static HyperMsg.Mqtt.MqttDeserializer;
 
 namespace HyperMsg.Mqtt;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddMqttSerialization(this IServiceCollection services)
+    public static IServiceCollection AddMqttCoding(this IServiceCollection services)
     {            
-        var compositeSerializer = new CompositeSerializer();
-        RegisterSerializers(compositeSerializer);
+        var compositeEncoder = new CompositeEncoder();
+        AddEncoders(compositeEncoder);
 
-        return services
-            .AddSerializer(compositeSerializer)
-            .AddDeserializer(ReadBuffer);
+        return services;
+        //    .AddSerializer(compositeEncoder)
+        //    .AddDeserializer(ReadBuffer);
     }
 
-    private static void RegisterSerializers(CompositeSerializer compositeSerializer)
+    private static void AddEncoders(CompositeEncoder encoder)
     {
-        compositeSerializer.Register<Connect>(Serialize);
-        compositeSerializer.Register<ConnAck>(Serialize);
-        compositeSerializer.Register<Subscribe>(Serialize);
-        compositeSerializer.Register<SubAck>(Serialize);
-        compositeSerializer.Register<Unsubscribe>(Serialize);
-        compositeSerializer.Register<UnsubAck>(Serialize);
-        compositeSerializer.Register<Publish>(Serialize);
-        compositeSerializer.Register<PubAck>(Serialize);
-        compositeSerializer.Register<PubRec>(Serialize);
-        compositeSerializer.Register<PubRel>(Serialize);
-        compositeSerializer.Register<PubComp>(Serialize);
-        compositeSerializer.Register<PingReq>(Serialize);
-        compositeSerializer.Register<PingResp>(Serialize);
-        compositeSerializer.Register<Disconnect>(Serialize);
+        encoder.Add<Connect>(Encode);
+        encoder.Add<ConnAck>(Serialize);
+        encoder.Add<Subscribe>(Serialize);
+        encoder.Add<SubAck>(Serialize);
+        encoder.Add<Unsubscribe>(Serialize);
+        encoder.Add<UnsubAck>(Serialize);
+        encoder.Add<Publish>(Serialize);
+        encoder.Add<PubAck>(Serialize);
+        encoder.Add<PubRec>(Serialize);
+        encoder.Add<PubRel>(Serialize);
+        encoder.Add<PubComp>(Serialize);
+        encoder.Add<PingReq>(Serialize);
+        encoder.Add<PingResp>(Serialize);
+        encoder.Add<Disconnect>(Serialize);
     }
 
     //private static void DeregisterSerializers(CompositeSerializer compositeSerializer)

@@ -162,12 +162,12 @@ namespace HyperMsg.Mqtt
 		    QosLevel qos = (QosLevel)((code & 0x06) >> 1);
 		    bool retain = (code & 0x01) == 1;
 		    string topic = buffer.ReadString();
-            buffer = buffer[(Encoding.UTF8.GetByteCount(topic) + 2)..];
+            buffer = buffer[(System.Text.Encoding.UTF8.GetByteCount(topic) + 2)..];
             var span = buffer.Span;
             ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
             buffer = buffer[2..];
             span = buffer.Span;
-		    int payloadLength = length - Encoding.UTF8.GetByteCount(topic) - 4;
+		    int payloadLength = length - System.Text.Encoding.UTF8.GetByteCount(topic) - 4;
             byte[] payload = span.Slice(0, payloadLength).ToArray();
 
 		    return new Publish(packetId, topic, payload, qos)
@@ -195,11 +195,11 @@ namespace HyperMsg.Mqtt
 	    private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<SubscriptionRequest> callback)
 	    {
 		    var topic = buffer.ReadString();
-            var byteCount = Encoding.UTF8.GetByteCount(topic) + 2;
+            var byteCount = System.Text.Encoding.UTF8.GetByteCount(topic) + 2;
             buffer = buffer[byteCount..];
             var span = buffer.Span;		    
 		    callback(new (topic, (QosLevel)span[0]));
-		    return Encoding.UTF8.GetByteCount(topic) + 3;
+		    return System.Text.Encoding.UTF8.GetByteCount(topic) + 3;
 	    }
 
 	    private static object ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
@@ -222,7 +222,7 @@ namespace HyperMsg.Mqtt
 	    private static int ReadTopic(ReadOnlyMemory<byte> buffer, Action<string> callback)
 	    {
 		    string filter = buffer.ReadString();
-		    return Encoding.UTF8.GetByteCount(filter) + 2;
+		    return System.Text.Encoding.UTF8.GetByteCount(filter) + 2;
 	    }
 
 	    private static object ReadPacketWithItems<T>(ReadOnlyMemory<byte> buffer, int length, Func<ReadOnlyMemory<byte>, Action<T>, int> readItem, Func<ushort, T[], object> createResult)
@@ -292,7 +292,7 @@ namespace HyperMsg.Mqtt
 	    {
 		    ushort length = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span);
 		    var bytes = buffer.Slice(2, length).ToArray();
-		    return Encoding.UTF8.GetString(bytes);
+		    return System.Text.Encoding.UTF8.GetString(bytes);
 	    }
 	}
 }

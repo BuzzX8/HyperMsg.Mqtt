@@ -111,7 +111,7 @@ namespace HyperMsg.Mqtt
 	    {
 		    string expected = Guid.NewGuid().ToString();
 		    var bytes = new List<byte> { 0, (byte)expected.Length };
-		    bytes.AddRange(Encoding.UTF8.GetBytes(expected));
+		    bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(expected));
 		    var buffer = new ReadOnlyMemory<byte>(bytes.ToArray());
 
 		    string actual = buffer.ReadString();
