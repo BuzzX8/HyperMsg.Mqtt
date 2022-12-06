@@ -1,12 +1,9 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HyperMsg.Mqtt
 {
-	public static class MqttDeserializer
+	public static class Decoding
     {
 	    private static readonly Dictionary<byte, object> TwoBytePackets = new Dictionary<byte, object>
 	    {
@@ -29,10 +26,10 @@ namespace HyperMsg.Mqtt
 		    {PacketCodes.UnsubAck, ReadUnsubAck}
 	    };
 
-		internal static void ReadBuffer(IBufferReader bufferReader, IDispatcher dispatcher)
+		internal static void Decode(IBufferReader bufferReader, IDispatcher dispatcher)
         {
 			var buffer = bufferReader.GetMemory();
-			var packet = Deserialize(buffer, out var bytesConsumed);
+			var packet = Decode(buffer, out var bytesConsumed);
 
 			if (bytesConsumed == 0)
             {
@@ -97,7 +94,7 @@ namespace HyperMsg.Mqtt
 			bufferReader.Advance(bytesConsumed);
         }
 
-	    public static object Deserialize(ReadOnlyMemory<byte> buffer, out int bytesConsumed)
+	    public static object Decode(ReadOnlyMemory<byte> buffer, out int bytesConsumed)
 	    {
             var span = buffer.Span;
             var code = span[0];
