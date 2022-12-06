@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 using Xunit;
 
 namespace HyperMsg.Mqtt;
@@ -12,7 +11,8 @@ public class PublishServiceTests
     public PublishServiceTests()
     {
         messageBroker = new();
-        service = new(messageBroker, messageBroker);
+        service = new(messageBroker);
+        service.StartAsync(default);
     }
 
     [Fact]
@@ -53,29 +53,11 @@ public class PublishServiceTests
     public void Receiving_PubAck_Invokes_Handler_For_Qos1()
     {        
         var topic = Guid.NewGuid().ToString();
-
-        //messageBroker.Register<PublishCompletedHandlerArgs>(args => actualArgs = args);
+                
         var packetId = service.Publish(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
         messageBroker.Dispatch(new PubAck(packetId));
 
-        //Assert.NotNull(actualArgs);
-        //Assert.Equal(packetId, actualArgs.Id);
-        //Assert.Equal(topic, actualArgs.Topic);
-        //Assert.Equal(QosLevel.Qos1, actualArgs.Qos);
-    }
-
-    [Fact]
-    public void Received_PubAck_Invokes_Async_Handler_For_Qos1()
-    {
-        var topic = Guid.NewGuid().ToString();
-        
-        var packetId = service.Publish(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
-        messageBroker.Dispatch(new PubAck(packetId));
-
-        //Assert.NotNull(actualArgs);
-        //Assert.Equal(packetId, actualArgs.Id);
-        //Assert.Equal(topic, actualArgs.Topic);
-        //Assert.Equal(QosLevel.Qos1, actualArgs.Qos);
+        Assert.False(service.PendingPublications.ContainsKey(packetId));
     }
 
     [Fact]
@@ -87,8 +69,7 @@ public class PublishServiceTests
         messageBroker.Register<PubRel>(packet => pubRel = packet);
         var packetId = service.Publish(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
         messageBroker.Dispatch(new PubRec(packetId));
-
-        Assert.NotNull(pubRel);
+                
         Assert.Equal(packetId, pubRel.Id);
     }
 
@@ -101,9 +82,6 @@ public class PublishServiceTests
         messageBroker.Dispatch(new PubRec(packetId));
         messageBroker.Dispatch(new PubComp(packetId));
 
-        //Assert.NotNull(actualArgs);
-        //Assert.Equal(packetId, actualArgs.Id);
-        //Assert.Equal(topic, actualArgs.Topic);
-        //Assert.Equal(QosLevel.Qos2, actualArgs.Qos);
+        Assert.False(service.PendingPublications.ContainsKey(packetId));
     }
 }
