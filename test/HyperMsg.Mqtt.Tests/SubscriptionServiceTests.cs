@@ -12,6 +12,7 @@ public class SubscriptionServiceTests
     {
         messageBroker = new();
         service = new(messageBroker);
+        service.StartAsync(default);
     }
 
     [Fact]
@@ -24,8 +25,6 @@ public class SubscriptionServiceTests
             .ToArray();
 
         var packetId = service.RequestSubscription(request);
-
-        Assert.NotNull(subscribePacket);
         Assert.Equal(packetId, subscribePacket.Id);
         Assert.True(service.PendingSubscriptionRequests.ContainsKey(packetId));
     }
@@ -53,7 +52,6 @@ public class SubscriptionServiceTests
 
         var packetId = service.RequestUnsubscription(topics);
 
-        Assert.NotNull(unsubscribe);
         Assert.Equal(packetId, unsubscribe.Id);
         Assert.Equal(topics, unsubscribe.Topics);
     }

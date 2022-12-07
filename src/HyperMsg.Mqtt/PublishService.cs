@@ -1,35 +1,22 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 
 namespace HyperMsg.Mqtt;
 
-public class PublishService
+public class PublishService : Service
 {
-    private readonly IDispatcher dispatcher;
-    private readonly IRegistry registry;
-
     private readonly ConcurrentDictionary<ushort, Publish> pendingPublications;
+    private readonly ConcurrentBag<ushort> releasedPublications;
 
-    public PublishService(IDispatcher dispatcher, IRegistry registry)
+    public PublishService(ITopic messageTopic) : base(messageTopic)
     {
-        this.dispatcher = dispatcher;
-        this.registry = registry;
-
-        pendingPublications = new ConcurrentDictionary<ushort, Publish>();
-
-        RegisterHandlers(this.registry);
+        pendingPublications = new();
+        releasedPublications = new();
     }
 
     public IReadOnlyDictionary<ushort, Publish> PendingPublications => pendingPublications;
 
-    private void RegisterHandlers(IRegistry registry)
-    {
-        registry.Register<PubAck>(HandlePubAckResponse);
-        registry.Register<PubRec>(HandlePubRecResponse);
-        registry.Register<PubComp>(HandlePubCompResponse);
-    }
+    public IReadOnlyCollection<ushort> ReleasedPublications => releasedPublications;
 
     public ushort Publish(PublishRequest publishRequest)
     {
@@ -50,7 +37,7 @@ public class PublishService
             pendingPublications.TryAdd(publish.Id, publish);
         }
 
-        dispatcher.Dispatch(publish);
+        Dispatch(publish);
         return publish.Id;
     }
 
@@ -69,26 +56,32 @@ public class PublishService
             return;
         }
 
-            //dispatcher.Dispatch(new PubRel(pubRec.Id));
-            //requestStorage.AddOrReplace(pubRec.Id, pubRec);
+        Dispatch(new PubRel(pubRec.Id));
+        releasedPublications.Add(pubRec.Id);
     }
 
     private void HandlePubCompResponse(PubComp pubComp)
     {
-        //if (!requestStorage.Contains<PubRec>(pubComp.Id) && !requestStorage.Contains<Publish>(pubComp.Id))
-        //{
-        //    return;
-        //}
+        if (!releasedPublications.Contains(pubComp.Id) && !pendingPublications.TryGetValue(pubComp.Id, out var publish) && publish.Qos != QosLevel.Qos2)
+        {
+            return;
+        }
+                
+        pendingPublications.Remove(pubComp.Id, out var _);
+        releasedPublications.TryTake(out _);
+    }
 
-            //var publish = requestStorage.Get<Publish>(pubComp.Id);
+    protected override void RegisterHandlers(IRegistry registry)
+    {
+        registry.Register<PubAck>(HandlePubAckResponse);
+        registry.Register<PubRec>(HandlePubRecResponse);
+        registry.Register<PubComp>(HandlePubCompResponse);
+    }
 
-            //if (publish.Qos != QosLevel.Qos2)
-            //{
-            //    return;
-            //}
-
-            //dispatcher.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
-            //requestStorage.Remove<Publish>(publish.Id);
-            //requestStorage.Remove<PubRec>(publish.Id);
+    protected override void UnregisterHandlers(IRegistry registry)
+    {
+        registry.Unregister<PubAck>(HandlePubAckResponse);
+        registry.Unregister<PubRec>(HandlePubRecResponse);
+        registry.Unregister<PubComp>(HandlePubCompResponse);
     }
 }

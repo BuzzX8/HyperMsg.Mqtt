@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using HyperMsg.Socket;
 
 namespace HyperMsg.Mqtt;
 
@@ -12,6 +13,11 @@ public class ConnectionService : Service
     }
 
     public void RequestConnection()
+    {
+        Dispatch(new ConnectRequest(settings.EndPoint));
+    }
+
+    private void HandleConnectResult(ConnectResult result)
     {
         var connectPacket = CreateConnectPacket(settings);
         Dispatch(connectPacket);
@@ -43,18 +49,19 @@ public class ConnectionService : Service
         return connect;
     }
 
-    private void HandleConAck(ConnAck response)
-    {
-
-    }
+    private void HandleConAck(ConnAck response) => Dispatch(new ConnectionResponse(response.ResultCode, response.SessionPresent));
 
     protected override void RegisterHandlers(IRegistry registry)
     {
+        registry.Register<ConnectResult>(HandleConnectResult);
         registry.Register<ConnAck>(HandleConAck);
     }
 
     protected override void UnregisterHandlers(IRegistry registry)
     {
+        registry.Unregister<ConnectResult>(HandleConnectResult);
         registry.Unregister<ConnAck>(HandleConAck);
     }
 }
+
+public record ConnectionResponse(ConnectionResult ResultCode, bool SessionPresent);
