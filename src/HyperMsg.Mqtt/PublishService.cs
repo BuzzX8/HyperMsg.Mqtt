@@ -6,13 +6,17 @@ namespace HyperMsg.Mqtt;
 public class PublishService : Service
 {
     private readonly ConcurrentDictionary<ushort, Publish> pendingPublications;
+    private readonly ConcurrentBag<ushort> releasedPublications;
 
     public PublishService(ITopic messageTopic) : base(messageTopic)
     {
         pendingPublications = new();
+        releasedPublications = new();
     }
 
     public IReadOnlyDictionary<ushort, Publish> PendingPublications => pendingPublications;
+
+    public IReadOnlyCollection<ushort> ReleasedPublications => releasedPublications;
 
     public ushort Publish(PublishRequest publishRequest)
     {
@@ -53,27 +57,20 @@ public class PublishService : Service
         }
 
         Dispatch(new PubRel(pubRec.Id));
-        //requestStorage.AddOrReplace(pubRec.Id, pubRec);
+        releasedPublications.Add(pubRec.Id);
     }
 
     private void HandlePubCompResponse(PubComp pubComp)
     {
-        //if (!requestStorage.Contains<PubRec>(pubComp.Id) && !requestStorage.Contains<Publish>(pubComp.Id))
-        //{
-        //    return;
-        //}
-
-        //var publish = requestStorage.Get<Publish>(pubComp.Id);
-
-        //if (publish.Qos != QosLevel.Qos2)
-        //{
-        //    return;
-        //}
-
-        //dispatcher.Dispatch(new PublishCompletedHandlerArgs(publish.Id, publish.Topic, publish.Qos));
-        //requestStorage.Remove<Publish>(publish.Id);
-        //requestStorage.Remove<PubRec>(publish.Id);
+        if (!releasedPublications.Contains(pubComp.Id) && !pendingPublications.TryGetValue(pubComp.Id, out var publish) && publish.Qos != QosLevel.Qos2)
+        {
+            return;
+        }
+                
+        pendingPublications.Remove(pubComp.Id, out var _);
+        releasedPublications.TryTake(out _);
     }
+
     protected override void RegisterHandlers(IRegistry registry)
     {
         registry.Register<PubAck>(HandlePubAckResponse);

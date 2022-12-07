@@ -71,6 +71,7 @@ public class PublishServiceTests
         messageBroker.Dispatch(new PubRec(packetId));
                 
         Assert.Equal(packetId, pubRel.Id);
+        Assert.Contains(pubRel.Id, service.ReleasedPublications);
     }
 
     [Fact]
@@ -83,5 +84,6 @@ public class PublishServiceTests
         messageBroker.Dispatch(new PubComp(packetId));
 
         Assert.False(service.PendingPublications.ContainsKey(packetId));
+        Assert.DoesNotContain(packetId, service.ReleasedPublications);
     }
 }
