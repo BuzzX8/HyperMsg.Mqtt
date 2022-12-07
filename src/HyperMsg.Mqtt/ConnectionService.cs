@@ -49,10 +49,7 @@ public class ConnectionService : Service
         return connect;
     }
 
-    private void HandleConAck(ConnAck response)
-    {
-
-    }
+    private void HandleConAck(ConnAck response) => Dispatch(new ConnectionResponse(response.ResultCode, response.SessionPresent));
 
     protected override void RegisterHandlers(IRegistry registry)
     {
@@ -66,3 +63,5 @@ public class ConnectionService : Service
         registry.Unregister<ConnAck>(HandleConAck);
     }
 }
+
+public record ConnectionResponse(ConnectionResult ResultCode, bool SessionPresent);
