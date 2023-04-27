@@ -9,7 +9,7 @@ public class PublishRequest
         Qos = qos;
     }
 
-    public string TopicName { get; }        
+    public string TopicName { get; }
 
     public ReadOnlyMemory<byte> Message { get; }
 

@@ -1,3 +1,3 @@
-﻿namespace HyperMsg.Mqtt.Packets; 
+﻿namespace HyperMsg.Mqtt.Packets;
 
 public record struct PubRel(ushort Id);
