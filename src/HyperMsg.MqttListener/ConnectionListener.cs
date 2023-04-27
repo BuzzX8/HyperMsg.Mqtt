@@ -5,13 +5,13 @@ using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Sockets;
 
-public class ListenerWorker : BackgroundService
+public class ConnectionListener : BackgroundService
 {
-    private readonly ILogger<ListenerWorker> _logger;
+    private readonly ILogger<ConnectionListener> _logger;
     private readonly IOptions<ListeningOptions> _listeningOptions;
     private Socket listeningSocket;
 
-    public ListenerWorker(ILogger<ListenerWorker> logger, IOptions<ListeningOptions> options)
+    public ConnectionListener(ILogger<ConnectionListener> logger, IOptions<ListeningOptions> options)
     {
         _logger = logger;
         _listeningOptions = options;
