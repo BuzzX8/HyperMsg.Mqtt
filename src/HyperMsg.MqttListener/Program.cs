@@ -1,10 +1,17 @@
 using HyperMsg.MqttListener;
 
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
+var builder = Host.CreateDefaultBuilder(args)
+    .ConfigureAppConfiguration((h, b) =>
     {
-        services.AddHostedService<ListenerWorker>();
+        //h.Configuration.
     })
-    .Build();
+    .ConfigureServices((context, services) =>
+    {        
+        services.AddHostedService<ListenerWorker>();
+        services.Configure<ListeningOptions>(context.Configuration.GetSection(nameof(ListeningOptions)));
+        //services.ConfigureOptions<ListeningOptions>();
+    });
+    
+var host = builder.Build();
 
 host.Run();

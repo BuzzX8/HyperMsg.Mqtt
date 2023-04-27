@@ -1,33 +1,51 @@
 namespace HyperMsg.MqttListener;
 
+using HyperMsg.Mqtt;
+using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Sockets;
 
 public class ListenerWorker : BackgroundService
 {
     private readonly ILogger<ListenerWorker> _logger;
-    private readonly Socket listeningSocket;
+    private readonly IOptions<ListeningOptions> _listeningOptions;
+    private Socket listeningSocket;
 
-    public ListenerWorker(ILogger<ListenerWorker> logger)
+    public ListenerWorker(ILogger<ListenerWorker> logger, IOptions<ListeningOptions> options)
     {
         _logger = logger;
+        _listeningOptions = options;
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
-    {
+    {        
+        var endpoint = IPEndPoint.Parse(_listeningOptions.Value.Endpoint);
+
+        listeningSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        listeningSocket.Bind(endpoint);
+        listeningSocket.Listen();
+
         return base.StartAsync(cancellationToken);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
+        //var received = listeningSocket.S;
+        listeningSocket.Dispose();
+
         return base.StopAsync(cancellationToken);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var buffer = new byte[10000];
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            await Task.Delay(1000, stoppingToken);
+            var acceptedSocket = await listeningSocket.AcceptAsync(stoppingToken);
+            var received = await acceptedSocket.ReceiveAsync(buffer, stoppingToken);
+
+            var packet = Decoding.Decode(buffer.AsMemory()[..received], out var consumed);
         }
     }
 }
