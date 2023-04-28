@@ -1,10 +1,47 @@
-﻿namespace HyperMsg.MqttListener.Services
+﻿using HyperMsg.Mqtt;
+using System.Buffers;
+
+namespace HyperMsg.MqttListener.Services
 {
-    public class ConnectionHandler : IConnectionHandler
+    public class ConnectionHandler : IConnectionHandler, IDisposable
     {
+        private readonly MemoryPool<byte> _memoryPool;
+        private readonly ILogger<ConnectionHandler> _logger;
+
+        public ConnectionHandler(ILogger<ConnectionHandler> logger)
+        {
+            _memoryPool = MemoryPool<byte>.Shared;
+            _logger = logger;
+        }
+
         public void HandleConnection(System.Net.Sockets.Socket connection, CancellationToken stoppingToken)
         {
-            throw new NotImplementedException();
+            _ = Task.Run(() => HandleTask(connection, stoppingToken), stoppingToken).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    _logger.LogError(task.Exception, null);
+                }
+
+                connection.Shutdown(System.Net.Sockets.SocketShutdown.Both);
+                connection.Disconnect(false);
+                connection.Dispose();
+            }, stoppingToken);
+        }
+
+        private async Task HandleTask(System.Net.Sockets.Socket connection, CancellationToken stoppingToken)
+        {
+            var receivingBuffer = _memoryPool.Rent(1000);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var received = await connection.ReceiveAsync(receivingBuffer.Memory, stoppingToken);
+                var packet = Decoding.Decode(receivingBuffer.Memory[..received], out var consumed);
+            }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

@@ -5,14 +5,14 @@ namespace HyperMsg.Mqtt
 {
     public static class Decoding
     {
-        private static readonly Dictionary<byte, object> TwoBytePackets = new Dictionary<byte, object>
+        private static readonly Dictionary<byte, object> TwoBytePackets = new()
         {
             {PacketCodes.PingReq, new PingReq()},
             {PacketCodes.PingResp, new PingResp()},
             {PacketCodes.Disconnect, new Disconnect()}
         };
 
-        private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>> Readers = new Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>>
+        private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>> Readers = new()
         {
             {PacketCodes.Connect, ReadConnect },
             {PacketCodes.ConAck, ReadConAck },
@@ -99,7 +99,7 @@ namespace HyperMsg.Mqtt
             var span = buffer.Span;
             var code = span[0];
             buffer = buffer.Slice(1);
-            (var length, var count) = buffer.ReadRemainingLength();
+            (var length, var count) = buffer.ReadVarInt();
             var consumed = length + count + 1;
 
             if ((code & 0xf0) == 0x30)
@@ -261,7 +261,7 @@ namespace HyperMsg.Mqtt
             return packetCreate(id);
         }
 
-        public static (int length, int byteCount) ReadRemainingLength(this ReadOnlyMemory<byte> buffer)
+        public static (int value, int byteCount) ReadVarInt(this ReadOnlyMemory<byte> buffer)
         {
             var span = buffer.Span;
             int result = 0;

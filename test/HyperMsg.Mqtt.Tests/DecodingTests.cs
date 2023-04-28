@@ -90,7 +90,7 @@ namespace HyperMsg.Mqtt
         {
             var buffer = new ReadOnlyMemory<byte>(serialized);
 
-            (var length, var byteCount) = buffer.ReadRemainingLength();
+            (var length, var byteCount) = buffer.ReadVarInt();
 
             Assert.Equal(expected, length);
             Assert.Equal(serialized.Length, byteCount);
@@ -102,7 +102,7 @@ namespace HyperMsg.Mqtt
             var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
             var buffer = new ReadOnlyMemory<byte>(data);
 
-            Assert.Throws<FormatException>(() => buffer.ReadRemainingLength());
+            Assert.Throws<FormatException>(() => buffer.ReadVarInt());
         }
 
 
