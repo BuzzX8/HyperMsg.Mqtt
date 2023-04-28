@@ -1,13 +1,14 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Coding;
+using HyperMsg.Mqtt.Packets;
 using Microsoft.Extensions.DependencyInjection;
-using static HyperMsg.Mqtt.Encoding;
+using static HyperMsg.Mqtt.Coding.Encoding;
 
 namespace HyperMsg.Mqtt;
 
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddMqttCoding(this IServiceCollection services)
-    {
+    {            
         var compositeEncoder = new CompositeEncoder();
         AddEncoders(compositeEncoder);
 

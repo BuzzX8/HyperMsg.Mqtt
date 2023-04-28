@@ -2,7 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 
-namespace HyperMsg.Mqtt;
+namespace HyperMsg.Mqtt.Coding;
 
 public static class Encoding
 {
@@ -217,8 +217,8 @@ public static class Encoding
         if (length > 0x1fffff)
         {
             span[0] = (byte)(length | 0x80);
-            span[1] = (byte)((length >> 7) | 0x80);
-            span[2] = (byte)((length >> 14) | 0x80);
+            span[1] = (byte)(length >> 7 | 0x80);
+            span[2] = (byte)(length >> 14 | 0x80);
             span[3] = (byte)(length >> 21);
             return 4;
         }
@@ -226,7 +226,7 @@ public static class Encoding
         if (length > 0x3fff)
         {
             span[0] = (byte)(length | 0x80);
-            span[1] = (byte)((length >> 7) | 0x80);
+            span[1] = (byte)(length >> 7 | 0x80);
             span[2] = (byte)(length >> 14);
             return 3;
         }

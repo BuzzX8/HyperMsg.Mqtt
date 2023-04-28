@@ -1,7 +1,7 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System.Buffers.Binary;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Coding
 {
     public static class Decoding
     {
