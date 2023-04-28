@@ -66,7 +66,7 @@ public class PublishService : Service
         {
             return;
         }
-                
+
         pendingPublications.Remove(pubComp.Id, out var _);
         releasedPublications.TryTake(out _);
     }

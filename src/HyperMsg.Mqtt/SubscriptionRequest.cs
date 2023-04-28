@@ -2,7 +2,7 @@
 
 public readonly record struct SubscriptionRequest(string TopicName, QosLevel Qos)
 {
-    public void Deconstruct(out string topic, out QosLevel qos) 
+    public void Deconstruct(out string topic, out QosLevel qos)
     {
         topic = TopicName;
         qos = Qos;

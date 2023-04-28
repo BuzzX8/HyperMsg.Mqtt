@@ -7,7 +7,7 @@ namespace HyperMsg.Mqtt;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddMqttCoding(this IServiceCollection services)
-    {            
+    {
         var compositeEncoder = new CompositeEncoder();
         AddEncoders(compositeEncoder);
 

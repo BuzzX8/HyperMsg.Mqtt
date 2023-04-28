@@ -51,9 +51,9 @@ public class PublishServiceTests
 
     [Fact]
     public void Receiving_PubAck_Invokes_Handler_For_Qos1()
-    {        
+    {
         var topic = Guid.NewGuid().ToString();
-                
+
         var packetId = service.Publish(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos1);
         messageBroker.Dispatch(new PubAck(packetId));
 
@@ -69,7 +69,7 @@ public class PublishServiceTests
         messageBroker.Register<PubRel>(packet => pubRel = packet);
         var packetId = service.Publish(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
         messageBroker.Dispatch(new PubRec(packetId));
-                
+
         Assert.Equal(packetId, pubRel.Id);
         Assert.Contains(pubRel.Id, service.ReleasedPublications);
     }
@@ -78,7 +78,7 @@ public class PublishServiceTests
     public void Received_PubComp_Invokes_Handler_For_Qos2()
     {
         var topic = Guid.NewGuid().ToString();
-                
+
         var packetId = service.Publish(topic, Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
         messageBroker.Dispatch(new PubRec(packetId));
         messageBroker.Dispatch(new PubComp(packetId));
