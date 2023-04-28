@@ -20,13 +20,13 @@ public class ConnectionListener : BackgroundService
         _logger = logger;
         _listeningOptions = options;
 
-        _listeningSocket = new (SocketType.Stream, ProtocolType.Tcp);
+        _listeningSocket = new(SocketType.Stream, ProtocolType.Tcp);
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
-    {        
+    {
         var endpoint = IPEndPoint.Parse(_listeningOptions.Value.Endpoint);
-        
+
         _listeningSocket.Bind(endpoint);
         _listeningSocket.Listen();
 
