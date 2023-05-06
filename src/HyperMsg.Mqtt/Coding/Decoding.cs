@@ -5,142 +5,81 @@ namespace HyperMsg.Mqtt.Coding
 {
     public static class Decoding
     {
-        private static readonly Dictionary<byte, object> TwoBytePackets = new()
+        public static (PacketType packetType, int packetSize) ReadFixedHeader(ReadOnlyMemory<byte> buffer)
         {
-            {PacketCodes.PingReq, new PingReq()},
-            {PacketCodes.PingResp, new PingResp()},
-            {PacketCodes.Disconnect, new Disconnect()}
-        };
+            var packetType = (PacketType)(buffer.Span[0] >> 4);
+            var (packetSize, _) = ReadVarInt(buffer[1..]);
 
-        private static readonly Dictionary<byte, Func<ReadOnlyMemory<byte>, int, object>> Readers = new()
-        {
-            {PacketCodes.Connect, ReadConnect },
-            {PacketCodes.ConAck, ReadConAck },
-            {PacketCodes.Subscribe, ReadSubscribe},
-            {PacketCodes.Puback, ReadPuback},
-            {PacketCodes.Pubrec, ReadPubrec},
-            {PacketCodes.Pubrel, ReadPubrel},
-            {PacketCodes.Pubcomp, ReadPubcomp},
-            {PacketCodes.SubAck, ReadSubAck},
-            {PacketCodes.Unsubscribe, ReadUnsubscribe},
-            {PacketCodes.UnsubAck, ReadUnsubAck}
-        };
-
-        internal static void Decode(IBufferReader bufferReader, IDispatcher dispatcher)
-        {
-            var buffer = bufferReader.GetMemory();
-            var packet = Decode(buffer, out var bytesConsumed);
-
-            if (bytesConsumed == 0)
-            {
-                return;
-            }
-
-            switch (packet)
-            {
-                case Connect connect:
-                    dispatcher.Dispatch(connect);
-                    break;
-
-                case ConnAck connAck:
-                    dispatcher.Dispatch(connAck);
-                    break;
-
-                case Disconnect disconnect:
-                    dispatcher.Dispatch(disconnect);
-                    break;
-
-                case PubAck pubAck:
-                    dispatcher.Dispatch(pubAck);
-                    break;
-
-                case PubRel pubRel:
-                    dispatcher.Dispatch(pubRel);
-                    break;
-
-                case PubRec pubRec:
-                    dispatcher.Dispatch(pubRec);
-                    break;
-
-                case PubComp pubComp:
-                    dispatcher.Dispatch(pubComp);
-                    break;
-
-                case PingReq pingReq:
-                    dispatcher.Dispatch(pingReq);
-                    break;
-
-                case PingResp pingResp:
-                    dispatcher.Dispatch(pingResp);
-                    break;
-
-                case Subscribe subscribe:
-                    dispatcher.Dispatch(subscribe);
-                    break;
-
-                case SubAck subAck:
-                    dispatcher.Dispatch(subAck);
-                    break;
-
-                case Unsubscribe unsubscribe:
-                    dispatcher.Dispatch(unsubscribe);
-                    break;
-
-                case UnsubAck unsubAck:
-                    dispatcher.Dispatch(unsubAck);
-                    break;
-            }
-
-            bufferReader.Advance(bytesConsumed);
+            return (packetType, packetSize);
         }
 
         public static object Decode(ReadOnlyMemory<byte> buffer, out int bytesConsumed)
         {
-            var span = buffer.Span;
-            var code = span[0];
-            buffer = buffer.Slice(1);
-            (var length, var count) = buffer.ReadVarInt();
-            var consumed = length + count + 1;
+            var (packetType, packetLength) = ReadFixedHeader(buffer);
+            bytesConsumed = packetLength;
 
-            if ((code & 0xf0) == 0x30)
+            switch (packetType)
             {
-                var publish = ReadPublish(buffer[count..], code, length);
-                bytesConsumed = consumed;
-                return publish;
+                case PacketType.Connect:
+                    return DecodeConnect(buffer);
+                case PacketType.ConAck:
+                    break;
+                case PacketType.Publish:
+                    break;
+                case PacketType.PubAck:
+                    break;
+                case PacketType.PubRec:
+                    break;
+                case PacketType.PubRel:
+                    break;
+                case PacketType.PubComp:
+                    break;
+                case PacketType.Subscribe:
+                    break;
+                case PacketType.SubAck:
+                    break;
+                case PacketType.Unsubscribe:
+                    break;
+                case PacketType.UnsubAck:
+                    break;
+                case PacketType.PingReq:
+                    break;
+                case PacketType.PingResp:
+                    break;
+                case PacketType.Disconnect:
+                    break;
+                case PacketType.Auth:
+                    break;
             }
 
-            if (TwoBytePackets.ContainsKey(code))
-            {
-                var packet = GetTwoBytePacket(code, length);
-                bytesConsumed = consumed;
-                return packet;
-            }
-
-            if (Readers.ContainsKey(code))
-            {
-                var packet = Readers[code](buffer[count..], length);
-                bytesConsumed = consumed;
-                return packet;
-            }
-
-            bytesConsumed = 0;
-            return null;
+            throw new DecodingError("Invalid packet type");
         }
 
-        private static Connect ReadConnect(ReadOnlyMemory<byte> buffer, int length)
+        public static Connect DecodeConnect(ReadOnlyMemory<byte> buffer)
         {
-            const int protocolNameLength = 6;
+            var (packetSize, byteCount) = buffer[1..].ReadVarInt();
+            var offset = 1 + byteCount;
+            var protocolName = buffer[offset..].ReadString();
+            offset += System.Text.Encoding.UTF8.GetByteCount(protocolName) + 2;
+            var protocolVersion = buffer.Span[offset];
 
-            var protocolName = buffer.Slice(0, protocolNameLength).ReadString();
-            var protocolVersion = buffer.Span[protocolNameLength];
-            var connectFlags = (ConnectFlags)buffer.Span[protocolNameLength + 1];
-            var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span[(protocolNameLength + 2)..]);
+            offset++;
+            var connectFlags = (ConnectFlags)buffer.Span[offset];
+            offset++;
+            var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span[offset..]);
+            offset += 2;
 
-            var clientId = buffer[(protocolNameLength + 4)..].ReadString();
+            if (protocolVersion == 5)
+            {
+                //TODO: Read properties
+            }
+
+            var clientId = buffer[offset..].ReadString();
 
             return new Connect
             {
                 ClientId = clientId,
+                Flags = connectFlags,
                 KeepAlive = keepAlive
             };
         }
@@ -153,7 +92,7 @@ namespace HyperMsg.Mqtt.Coding
             return new ConnAck(code, sessionPresent);
         }
 
-        private static Publish ReadPublish(ReadOnlyMemory<byte> buffer, byte code, int length)
+        private static Publish ReadPublish(ReadOnlyMemory<byte> buffer, byte code, uint length)
         {
             bool dup = (code & 0x08) == 0x08;
             QosLevel qos = (QosLevel)((code & 0x06) >> 1);
@@ -164,24 +103,15 @@ namespace HyperMsg.Mqtt.Coding
             ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
             buffer = buffer[2..];
             span = buffer.Span;
-            int payloadLength = length - System.Text.Encoding.UTF8.GetByteCount(topic) - 4;
-            byte[] payload = span.Slice(0, payloadLength).ToArray();
+            //uint payloadLength = length - System.Text.Encoding.UTF8.GetByteCount(topic) - 4;
+            //byte[] payload = span.Slice(0, payloadLength).ToArray();
 
-            return new Publish(packetId, topic, payload, qos)
-            {
-                Dup = dup,
-                Retain = retain
-            };
-        }
-
-        private static object GetTwoBytePacket(byte code, int length)
-        {
-            if (length != 0)
-            {
-                throw new FormatException();
-            }
-
-            return TwoBytePackets[code];
+            //return new Publish(packetId, topic, payload, qos)
+            //{
+            //    Dup = dup,
+            //    Retain = retain
+            //};
+            return default;
         }
 
         private static object ReadSubscribe(ReadOnlyMemory<byte> buffer, int length)
@@ -261,12 +191,12 @@ namespace HyperMsg.Mqtt.Coding
             return packetCreate(id);
         }
 
-        public static (int value, int byteCount) ReadVarInt(this ReadOnlyMemory<byte> buffer)
+        public static (int value, byte byteCount) ReadVarInt(this ReadOnlyMemory<byte> buffer)
         {
             var span = buffer.Span;
             int result = 0;
             int offset = 0;
-            int i = 0;
+            byte i = 0;
 
             int value;
             do
@@ -278,7 +208,7 @@ namespace HyperMsg.Mqtt.Coding
 
                 if (i == sizeof(int) && value >= 0x80)
                 {
-                    throw new FormatException();
+                    throw new DecodingError("VarInt incorrectly encoded");
                 }
             }
             while ((value & 0x80) == 0x80);
@@ -287,9 +217,32 @@ namespace HyperMsg.Mqtt.Coding
 
         public static string ReadString(this ReadOnlyMemory<byte> buffer)
         {
-            ushort length = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span);
-            var bytes = buffer.Slice(2, length).ToArray();
-            return System.Text.Encoding.UTF8.GetString(bytes);
+            ushort length = ReadUInt16(buffer);
+            EnsureBufferSize(buffer, 2 + length);
+
+            return System.Text.Encoding.UTF8.GetString(buffer.Slice(2, length).Span);
+        }
+
+        public static ushort ReadUInt16(this ReadOnlyMemory<byte> buffer)
+        {
+            EnsureBufferSize(buffer, sizeof(ushort));
+
+            return BinaryPrimitives.ReadUInt16BigEndian(buffer.Span);
+        }
+
+        public static uint ReadUInt32(this ReadOnlyMemory<byte> buffer)
+        {
+            EnsureBufferSize(buffer, sizeof(uint));
+
+            return BinaryPrimitives.ReadUInt32BigEndian(buffer.Span);
+        }
+
+        private static void EnsureBufferSize(ReadOnlyMemory<byte> buffer, int requiredSize)
+        {
+            if (buffer.Length < requiredSize)
+            {
+                throw new EncodingError("Buffer size less than required");
+            }
         }
     }
 }
