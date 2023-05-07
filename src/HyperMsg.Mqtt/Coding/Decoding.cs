@@ -64,7 +64,7 @@ namespace HyperMsg.Mqtt.Coding
             //Variable header
             var protocolName = buffer.ReadString(ref offset);
             var protocolVersion = buffer.ReadByte(ref offset);
-            var connectFlags = (ConnectFlags)buffer.ReadByte(ref offset);
+            var flags = (ConnectFlags)buffer.ReadByte(ref offset);
             var keepAlive = buffer.ReadUInt16(ref offset);
             var properties = DecodeConnectProperties(buffer, protocolVersion, ref offset);
 
@@ -74,15 +74,25 @@ namespace HyperMsg.Mqtt.Coding
             {
                 ProtocolName = protocolName,
                 ProtocolVersion = protocolVersion,
-                Flags = connectFlags,
+                Flags = flags,
                 KeepAlive = keepAlive,
                 ClientId = clientId,
                 Properties = properties
             };
 
-            if (connectFlags.HasFlag(ConnectFlags.Will))
+            if (flags.HasFlag(ConnectFlags.Will))
             {
                 ReadWillFields(connect, buffer, ref offset);
+            }
+
+            if (flags.HasFlag(ConnectFlags.UserName))
+            {
+                connect.UserName = buffer.ReadString(ref offset);
+            }
+
+            if (flags.HasFlag(ConnectFlags.Password))
+            {
+                connect.Password = buffer.ReadBinaryData(ref offset);
             }
 
             return connect;
@@ -175,6 +185,8 @@ namespace HyperMsg.Mqtt.Coding
         private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
         {
             connect.WillProperties = DecodeWillProperties(buffer, connect.ProtocolVersion, ref offset);
+            connect.WillTopic = buffer.ReadString(ref offset);
+            connect.WillPayload = buffer.ReadBinaryData(ref offset);
         }
 
         private static ConnectWillProperties DecodeWillProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)

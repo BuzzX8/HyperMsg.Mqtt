@@ -24,11 +24,11 @@ public class Connect : IEquatable<Connect>
 
     public string WillTopic { get; set; }
 
-    public ReadOnlyMemory<byte> WillMessage { get; set; }
+    public ReadOnlyMemory<byte> WillPayload { get; set; }
 
     public string UserName { get; set; }
 
-    public byte[] Password { get; set; }
+    public ReadOnlyMemory<byte> Password { get; set; }
 
     #endregion
 

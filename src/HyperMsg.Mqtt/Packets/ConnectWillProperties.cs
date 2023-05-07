@@ -12,5 +12,7 @@
         public string ResponseTopic { get; internal set; }
 
         public ReadOnlyMemory<byte> CorrelationData { get; internal set; }
+
+        public IDictionary<string, string> UserProperties { get; internal set; }
     }
 }

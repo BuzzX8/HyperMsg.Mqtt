@@ -43,7 +43,7 @@ public class ConnectionService : Service
         {
             connect.Flags |= ConnectFlags.Will;
             connect.WillTopic = connectionSettings.WillMessageSettings.Topic;
-            connect.WillMessage = connectionSettings.WillMessageSettings.Message;
+            connect.WillPayload = connectionSettings.WillMessageSettings.Message;
         }
 
         return connect;
