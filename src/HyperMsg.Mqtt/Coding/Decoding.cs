@@ -167,10 +167,8 @@ namespace HyperMsg.Mqtt.Coding
                     break;
 
                 case 0x26:
-                    var propName = buffer.ReadString(ref offset);
-                    var propValue = buffer.ReadString(ref offset);
                     properties.UserProperties ??= new Dictionary<string, string>();
-                    properties.UserProperties[propName] = propValue;
+                    ReadUserProperty(properties.UserProperties, buffer, ref offset);
                     break;
 
                 case 0x27:
@@ -178,8 +176,16 @@ namespace HyperMsg.Mqtt.Coding
                     break;
 
                 default:
-                    throw new DecodingError("Invalid property code provided");
+                    throw new DecodingError($"Incorrect connect property code provided ({propCode})");
             }
+        }
+
+        private static void ReadUserProperty(IDictionary<string, string> properties, ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            var propName = buffer.ReadString(ref offset);
+            var propValue = buffer.ReadString(ref offset);
+
+            properties[propName] = propValue;
         }
 
         private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
@@ -251,6 +257,11 @@ namespace HyperMsg.Mqtt.Coding
 
                 case 0x18:
                     properties.WillDelayInterval = propBuffer.ReadUInt32(ref offset);
+                    break;
+
+                case 0x26:
+                    properties.UserProperties ??= new Dictionary<string, string>();
+                    ReadUserProperty(properties.UserProperties, propBuffer, ref offset);
                     break;
 
                 default:
