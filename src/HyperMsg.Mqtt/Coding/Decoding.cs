@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Buffers.Binary;
 
 namespace HyperMsg.Mqtt.Coding
@@ -59,16 +60,17 @@ namespace HyperMsg.Mqtt.Coding
         {
             var offset = 1;
             var packetSize = buffer.ReadVarInt(ref offset);
+
+            //Variable header
             var protocolName = buffer.ReadString(ref offset);
             var protocolVersion = buffer.ReadByte(ref offset);
             var connectFlags = (ConnectFlags)buffer.ReadByte(ref offset);
             var keepAlive = buffer.ReadUInt16(ref offset);
-
-
             var properties = DecodeConnectProperties(buffer, protocolVersion, ref offset);
-            var clientId = buffer.ReadString(ref offset);
 
-            return new Connect
+            //Payload
+            var clientId = buffer.ReadString(ref offset);
+            var connect = new Connect
             {
                 ProtocolName = protocolName,
                 ProtocolVersion = protocolVersion,
@@ -77,6 +79,13 @@ namespace HyperMsg.Mqtt.Coding
                 ClientId = clientId,
                 Properties = properties
             };
+
+            if (connectFlags.HasFlag(ConnectFlags.Will))
+            {
+                ReadWillFields(connect, buffer, ref offset);
+            }
+
+            return connect;
         }
 
         private static ConnectProperties DecodeConnectProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
@@ -86,13 +95,19 @@ namespace HyperMsg.Mqtt.Coding
                 return default;
             }
 
+            var propLength = buffer.ReadVarInt(ref offset);
+
+            if (propLength == 0)
+            {
+                return default;
+            }
+
             var properties = new ConnectProperties();
-            var length = buffer.ReadVarInt(ref offset);
-            var propBuffer = buffer[offset..(offset+length)];
+            var propBuffer = buffer[offset..(offset + propLength)];
 
             ReadConnectProperties(properties, propBuffer);
 
-            offset += length;
+            offset += propLength;
 
             return properties;
         }
@@ -117,6 +132,14 @@ namespace HyperMsg.Mqtt.Coding
                     properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset);
                     break;
 
+                case 0x15:
+                    properties.AuthenticationMethod = buffer.ReadString(ref offset);
+                    break;
+
+                case 0x16:
+                    properties.AuthenticationData = Array.Empty<byte>();
+                    break;
+
                 case 0x17:
                     properties.RequestProblemInformation = Convert.ToBoolean(buffer.ReadByte(ref offset));
                     break;
@@ -133,12 +156,93 @@ namespace HyperMsg.Mqtt.Coding
                     properties.TopicAliasMaximum = buffer.ReadUInt16(ref offset);
                     break;
 
+                case 0x26:
+                    var propName = buffer.ReadString(ref offset);
+                    var propValue = buffer.ReadString(ref offset);
+                    properties.UserProperties ??= new Dictionary<string, string>();
+                    properties.UserProperties[propName] = propValue;
+                    break;
+
                 case 0x27:
-                    properties.MaximumPacketSize = buffer.ReadUInt32(ref offset); 
+                    properties.MaximumPacketSize = buffer.ReadUInt32(ref offset);
                     break;
 
                 default:
                     throw new DecodingError("Invalid property code provided");
+            }
+        }
+
+        private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            connect.WillProperties = DecodeWillProperties(buffer, connect.ProtocolVersion, ref offset);
+        }
+
+        private static ConnectWillProperties DecodeWillProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
+        {
+            if (protocolVersion < 5)
+            {
+                return default;
+            }
+
+            var willPropLength = buffer.ReadVarInt(ref offset);
+
+            if (willPropLength == 0)
+            {
+                return null;
+            }
+
+            var props = new ConnectWillProperties();
+            var propBuffer = buffer[offset..(offset + willPropLength)];
+
+            ReadWillProperties(props, propBuffer);
+
+            offset += willPropLength;
+
+            return props;
+        }
+
+        private static void ReadWillProperties(ConnectWillProperties properties, ReadOnlySpan<byte> propBuffer)
+        {
+            var offset = 0;
+
+            while (offset < propBuffer.Length)
+            {
+                var propCode = propBuffer.ReadByte(ref offset);
+
+                ReadWillProperty(properties, propCode, propBuffer, ref offset);
+            }
+        }
+
+        private static void ReadWillProperty(ConnectWillProperties properties, byte propCode, ReadOnlySpan<byte> propBuffer, ref int offset)
+        {
+            switch (propCode)
+            {
+                case 0x01:
+                    properties.PayloadFormatIndicator = propBuffer.ReadByte(ref offset);
+                    break;
+
+                case 0x02:
+                    properties.MessageExpiryInterval = propBuffer.ReadUInt32(ref offset);
+                    break;
+
+                case 0x03:
+                    properties.ContentType = propBuffer.ReadString(ref offset);
+                    break;
+
+                case 0x08:
+                    properties.ResponseTopic = propBuffer.ReadString(ref offset);
+                    break;
+
+                case 0x09:
+                    properties.CorrelationData = propBuffer.ReadBinaryData(ref offset);
+                    break;
+
+                case 0x18:
+                    properties.WillDelayInterval = propBuffer.ReadUInt32(ref offset);
+                    break;
+
+                default:
+                    throw new DecodingError($"Incorrect property code for last will property ({propCode})");
             }
         }
 
@@ -248,6 +352,15 @@ namespace HyperMsg.Mqtt.Coding
             var span = buffer.Span;
             ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
             return packetCreate(id);
+        }
+
+        public static ReadOnlyMemory<byte> ReadBinaryData(this ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            var length = buffer.ReadUInt16(ref offset);
+            var data = buffer[offset..(length + offset)];
+            offset += length;
+
+            return new ReadOnlyMemory<byte>(data.ToArray());
         }
 
         public static (int value, byte byteCount) ReadVarInt(this ReadOnlySpan<byte> buffer)

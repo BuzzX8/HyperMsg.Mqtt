@@ -2,6 +2,8 @@
 
 public class Connect : IEquatable<Connect>
 {
+    #region Variable header
+
     public string ProtocolName { get; set; }
 
     public byte ProtocolVersion { get; set; }
@@ -10,7 +12,15 @@ public class Connect : IEquatable<Connect>
 
     public ushort KeepAlive { get; set; }
 
+    public ConnectProperties Properties { get; set; }
+
+    #endregion
+
+    #region Payload
+
     public string ClientId { get; set; }
+
+    public ConnectWillProperties WillProperties { get; set; }
 
     public string WillTopic { get; set; }
 
@@ -20,7 +30,7 @@ public class Connect : IEquatable<Connect>
 
     public byte[] Password { get; set; }
 
-    public ConnectProperties Properties { get; set; }
+    #endregion
 
     public override int GetHashCode() => Flags.GetHashCode() ^ ClientId.GetHashCode();
 
