@@ -64,26 +64,82 @@ namespace HyperMsg.Mqtt.Coding
             var connectFlags = (ConnectFlags)buffer.ReadByte(ref offset);
             var keepAlive = buffer.ReadUInt16(ref offset);
 
-            if (protocolVersion >= 5)
-            {
-                ReadConnectProperties(buffer, ref offset);
-            }
 
+            var properties = DecodeConnectProperties(buffer, protocolVersion, ref offset);
             var clientId = buffer.ReadString(ref offset);
 
             return new Connect
             {
-                ClientId = clientId,
+                ProtocolName = protocolName,
+                ProtocolVersion = protocolVersion,
                 Flags = connectFlags,
-                KeepAlive = keepAlive
+                KeepAlive = keepAlive,
+                ClientId = clientId,
+                Properties = properties
             };
         }
 
-        private static void ReadConnectProperties(ReadOnlySpan<byte> buffer, ref int offset)
+        private static ConnectProperties DecodeConnectProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
         {
+            if (protocolVersion < 5)
+            {
+                return default;
+            }
+
+            var properties = new ConnectProperties();
             var length = buffer.ReadVarInt(ref offset);
+            var propBuffer = buffer[offset..(offset+length)];
+
+            ReadConnectProperties(properties, propBuffer);
 
             offset += length;
+
+            return properties;
+        }
+
+        private static void ReadConnectProperties(ConnectProperties properties, ReadOnlySpan<byte> propBuffer)
+        {
+            var offset = 0;
+
+            while (offset < propBuffer.Length)
+            {
+                var propCode = propBuffer.ReadByte(ref offset);
+
+                ReadConnectProperty(properties, propCode, propBuffer, ref offset);
+            }
+        }
+
+        private static void ReadConnectProperty(ConnectProperties properties, byte propCode, ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            switch (propCode)
+            {
+                case 0x11:
+                    properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset);
+                    break;
+
+                case 0x17:
+                    properties.RequestProblemInformation = Convert.ToBoolean(buffer.ReadByte(ref offset));
+                    break;
+
+                case 0x19:
+                    properties.RequestResponseInformation = Convert.ToBoolean(buffer.ReadByte(ref offset));
+                    break;
+
+                case 0x21:
+                    properties.ReceiveMaximum = buffer.ReadUInt16(ref offset);
+                    break;
+
+                case 0x22:
+                    properties.TopicAliasMaximum = buffer.ReadUInt16(ref offset);
+                    break;
+
+                case 0x27:
+                    properties.MaximumPacketSize = buffer.ReadUInt32(ref offset); 
+                    break;
+
+                default:
+                    throw new DecodingError("Invalid property code provided");
+            }
         }
 
         private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
