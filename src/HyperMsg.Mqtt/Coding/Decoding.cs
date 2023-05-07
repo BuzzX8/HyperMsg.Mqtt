@@ -5,18 +5,18 @@ namespace HyperMsg.Mqtt.Coding
 {
     public static class Decoding
     {
-        public static (PacketType packetType, int packetSize) ReadFixedHeader(ReadOnlyMemory<byte> buffer)
+        public static (PacketType packetType, int packetSize) ReadFixedHeader(ReadOnlySpan<byte> buffer)
         {
-            var packetType = (PacketType)(buffer.Span[0] >> 4);
+            var packetType = (PacketType)(buffer[0] >> 4);
             var (packetSize, _) = ReadVarInt(buffer[1..]);
 
             return (packetType, packetSize);
         }
 
-        public static object Decode(ReadOnlyMemory<byte> buffer, out int bytesConsumed)
+        public static object Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
         {
             var (packetType, packetLength) = ReadFixedHeader(buffer);
-            bytesConsumed = packetLength;
+            bytesRead = packetLength;
 
             switch (packetType)
             {
@@ -55,26 +55,21 @@ namespace HyperMsg.Mqtt.Coding
             throw new DecodingError("Invalid packet type");
         }
 
-        public static Connect DecodeConnect(ReadOnlyMemory<byte> buffer)
+        public static Connect DecodeConnect(ReadOnlySpan<byte> buffer)
         {
-            var (packetSize, byteCount) = buffer[1..].ReadVarInt();
-            var offset = 1 + byteCount;
-            var protocolName = buffer[offset..].ReadString();
-            offset += System.Text.Encoding.UTF8.GetByteCount(protocolName) + 2;
-            var protocolVersion = buffer.Span[offset];
+            var offset = 1;
+            var packetSize = buffer.ReadVarInt(ref offset);
+            var protocolName = buffer.ReadString(ref offset);
+            var protocolVersion = buffer.ReadByte(ref offset);
+            var connectFlags = (ConnectFlags)buffer.ReadByte(ref offset);
+            var keepAlive = buffer.ReadUInt16(ref offset);
 
-            offset++;
-            var connectFlags = (ConnectFlags)buffer.Span[offset];
-            offset++;
-            var keepAlive = BinaryPrimitives.ReadUInt16BigEndian(buffer.Span[offset..]);
-            offset += 2;
-
-            if (protocolVersion == 5)
+            if (protocolVersion >= 5)
             {
-                //TODO: Read properties
+                ReadConnectProperties(buffer, ref offset);
             }
 
-            var clientId = buffer[offset..].ReadString();
+            var clientId = buffer.ReadString(ref offset);
 
             return new Connect
             {
@@ -82,6 +77,13 @@ namespace HyperMsg.Mqtt.Coding
                 Flags = connectFlags,
                 KeepAlive = keepAlive
             };
+        }
+
+        private static void ReadConnectProperties(ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            var length = buffer.ReadVarInt(ref offset);
+
+            offset += length;
         }
 
         private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
@@ -97,7 +99,7 @@ namespace HyperMsg.Mqtt.Coding
             bool dup = (code & 0x08) == 0x08;
             QosLevel qos = (QosLevel)((code & 0x06) >> 1);
             bool retain = (code & 0x01) == 1;
-            string topic = buffer.ReadString();
+            string topic = "";// buffer.ReadString();
             buffer = buffer[(System.Text.Encoding.UTF8.GetByteCount(topic) + 2)..];
             var span = buffer.Span;
             ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
@@ -121,12 +123,13 @@ namespace HyperMsg.Mqtt.Coding
 
         private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<SubscriptionRequest> callback)
         {
-            var topic = buffer.ReadString();
-            var byteCount = System.Text.Encoding.UTF8.GetByteCount(topic) + 2;
-            buffer = buffer[byteCount..];
-            var span = buffer.Span;
-            callback(new(topic, (QosLevel)span[0]));
-            return System.Text.Encoding.UTF8.GetByteCount(topic) + 3;
+            //var topic = buffer.ReadString();
+            //var byteCount = System.Text.Encoding.UTF8.GetByteCount(topic) + 2;
+            //buffer = buffer[byteCount..];
+            //var span = buffer.Span;
+            //callback(new(topic, (QosLevel)span[0]));
+            //return System.Text.Encoding.UTF8.GetByteCount(topic) + 3;
+            return default;
         }
 
         private static object ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
@@ -148,7 +151,7 @@ namespace HyperMsg.Mqtt.Coding
 
         private static int ReadTopic(ReadOnlyMemory<byte> buffer, Action<string> callback)
         {
-            string filter = buffer.ReadString();
+            string filter = "";// buffer.ReadString();
             return System.Text.Encoding.UTF8.GetByteCount(filter) + 2;
         }
 
@@ -191,9 +194,8 @@ namespace HyperMsg.Mqtt.Coding
             return packetCreate(id);
         }
 
-        public static (int value, byte byteCount) ReadVarInt(this ReadOnlyMemory<byte> buffer)
+        public static (int value, byte byteCount) ReadVarInt(this ReadOnlySpan<byte> buffer)
         {
-            var span = buffer.Span;
             int result = 0;
             int offset = 0;
             byte i = 0;
@@ -201,7 +203,7 @@ namespace HyperMsg.Mqtt.Coding
             int value;
             do
             {
-                value = span[i];
+                value = buffer[i];
                 result |= (value & 0x7f) << offset;
                 offset += 7;
                 i++;
@@ -215,29 +217,60 @@ namespace HyperMsg.Mqtt.Coding
             return (result, i);
         }
 
-        public static string ReadString(this ReadOnlyMemory<byte> buffer)
+        private static int ReadVarInt(this ReadOnlySpan<byte> buffer, ref int offset)
         {
-            ushort length = ReadUInt16(buffer);
-            EnsureBufferSize(buffer, 2 + length);
+            var (value, byteCount) = ReadVarInt(buffer[offset..]);
 
-            return System.Text.Encoding.UTF8.GetString(buffer.Slice(2, length).Span);
+            offset += byteCount;
+            return value;
         }
 
-        public static ushort ReadUInt16(this ReadOnlyMemory<byte> buffer)
+        public static string ReadString(this ReadOnlySpan<byte> buffer)
+        {
+            var offset = 0;
+            return ReadString(buffer, ref offset);
+        }
+
+        private static string ReadString(this ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            ushort length = ReadUInt16(buffer, ref offset);
+            EnsureBufferSize(buffer, 2 + length);
+
+            var str = System.Text.Encoding.UTF8.GetString(buffer[offset..(offset + length)]);
+            offset += length;
+
+            return str;
+        }
+
+        private static byte ReadByte(this ReadOnlySpan<byte> buffer, ref int offset)
+        {
+            var value = buffer[offset];
+            offset += 1;
+
+            return value;
+        }
+
+        private static ushort ReadUInt16(this ReadOnlySpan<byte> buffer, ref int offset)
         {
             EnsureBufferSize(buffer, sizeof(ushort));
 
-            return BinaryPrimitives.ReadUInt16BigEndian(buffer.Span);
+            var value = BinaryPrimitives.ReadUInt16BigEndian(buffer[offset..]);
+            offset += sizeof(ushort);
+
+            return value;
         }
 
-        public static uint ReadUInt32(this ReadOnlyMemory<byte> buffer)
+        private static uint ReadUInt32(this ReadOnlySpan<byte> buffer, ref int offset)
         {
             EnsureBufferSize(buffer, sizeof(uint));
 
-            return BinaryPrimitives.ReadUInt32BigEndian(buffer.Span);
+            var value = BinaryPrimitives.ReadUInt32BigEndian(buffer[offset..]);
+            offset += sizeof(uint);
+
+            return value;
         }
 
-        private static void EnsureBufferSize(ReadOnlyMemory<byte> buffer, int requiredSize)
+        private static void EnsureBufferSize(ReadOnlySpan<byte> buffer, int requiredSize)
         {
             if (buffer.Length < requiredSize)
             {

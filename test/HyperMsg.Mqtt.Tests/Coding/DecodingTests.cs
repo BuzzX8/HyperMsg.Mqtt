@@ -84,7 +84,7 @@ namespace HyperMsg.Mqtt.Coding
         [MemberData(nameof(GetTestCasesForReadRemainingLength))]
         public void ReadRemainingLength_Reads_Correct_Value(byte[] serialized)
         {
-            var buffer = new ReadOnlyMemory<byte>(serialized);
+            var buffer = new ReadOnlySpan<byte>(serialized);
 
             (var length, var byteCount) = buffer.ReadVarInt();
 
@@ -98,7 +98,7 @@ namespace HyperMsg.Mqtt.Coding
             var data = new byte[] { 0xff, 0xff, 0xff, 0x80, 0x08 };
             var buffer = new ReadOnlyMemory<byte>(data);
 
-            Assert.Throws<FormatException>(() => buffer.ReadVarInt());
+            Assert.Throws<FormatException>(() => buffer.Span.ReadVarInt());
         }
 
 
@@ -108,7 +108,7 @@ namespace HyperMsg.Mqtt.Coding
             string expected = Guid.NewGuid().ToString();
             var bytes = new List<byte> { 0, (byte)expected.Length };
             bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(expected));
-            var buffer = new ReadOnlyMemory<byte>(bytes.ToArray());
+            var buffer = new ReadOnlySpan<byte>(bytes.ToArray());
 
             string actual = buffer.ReadString();
 

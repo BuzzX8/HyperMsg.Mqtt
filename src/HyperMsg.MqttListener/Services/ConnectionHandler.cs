@@ -38,7 +38,7 @@ namespace HyperMsg.MqttListener.Services
             while (!stoppingToken.IsCancellationRequested)
             {
                 var received = await connection.ReceiveAsync(receivingBuffer.Memory, stoppingToken);
-                var connect = Decoding.Decode(receivingBuffer.Memory[..received], out var consumed) as Connect;
+                var connect = Decoding.Decode(receivingBuffer.Memory.Span[..received], out var consumed) as Connect;
             }
         }
 
