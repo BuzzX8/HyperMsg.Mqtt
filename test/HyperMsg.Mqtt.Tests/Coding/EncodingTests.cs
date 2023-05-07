@@ -3,7 +3,7 @@ using HyperMsg.Mqtt.Packets;
 using System.Buffers;
 using Xunit;
 
-namespace HyperMsg.Mqtt
+namespace HyperMsg.Mqtt.Coding
 {
     public class EncodingTests
     {
