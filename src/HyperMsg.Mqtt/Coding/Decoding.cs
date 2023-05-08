@@ -17,7 +17,7 @@ public static partial class Decoding
             case PacketType.ConAck:
                 return DecodeConnAck(buffer);
             case PacketType.Publish:
-                break;
+                return DecodePublish(buffer);
             case PacketType.PubAck:
                 break;
             case PacketType.PubRec:
@@ -61,106 +61,6 @@ public static partial class Decoding
         var propValue = buffer.ReadString(ref offset);
 
         properties[propName] = propValue;
-    }
-
-    private static Publish ReadPublish(ReadOnlyMemory<byte> buffer, byte code, uint length)
-    {
-        bool dup = (code & 0x08) == 0x08;
-        QosLevel qos = (QosLevel)((code & 0x06) >> 1);
-        bool retain = (code & 0x01) == 1;
-        string topic = "";// buffer.ReadString();
-        buffer = buffer[(System.Text.Encoding.UTF8.GetByteCount(topic) + 2)..];
-        var span = buffer.Span;
-        ushort packetId = BinaryPrimitives.ReadUInt16BigEndian(span);
-        buffer = buffer[2..];
-        span = buffer.Span;
-        //uint payloadLength = length - System.Text.Encoding.UTF8.GetByteCount(topic) - 4;
-        //byte[] payload = span.Slice(0, payloadLength).ToArray();
-
-        //return new Publish(packetId, topic, payload, qos)
-        //{
-        //    Dup = dup,
-        //    Retain = retain
-        //};
-        return default;
-    }
-
-    private static object ReadSubscribe(ReadOnlyMemory<byte> buffer, int length)
-    {
-        return ReadPacketWithItems<SubscriptionRequest>(buffer, length, ReadTopicFilter, (id, items) => new Subscribe(id, items));
-    }
-
-    private static int ReadTopicFilter(ReadOnlyMemory<byte> buffer, Action<SubscriptionRequest> callback)
-    {
-        //var topic = buffer.ReadString();
-        //var byteCount = System.Text.Encoding.UTF8.GetByteCount(topic) + 2;
-        //buffer = buffer[byteCount..];
-        //var span = buffer.Span;
-        //callback(new(topic, (QosLevel)span[0]));
-        //return System.Text.Encoding.UTF8.GetByteCount(topic) + 3;
-        return default;
-    }
-
-    private static object ReadSubAck(ReadOnlyMemory<byte> buffer, int length)
-    {
-        return ReadPacketWithItems<SubscriptionResult>(buffer, length, ReadSubsResult, (id, res) => new SubAck(id, res));
-    }
-
-    private static int ReadSubsResult(ReadOnlyMemory<byte> buffer, Action<SubscriptionResult> callback)
-    {
-        var span = buffer.Span;
-        callback((SubscriptionResult)span[0]);
-        return 1;
-    }
-
-    private static object ReadUnsubscribe(ReadOnlyMemory<byte> buffer, int length)
-    {
-        return ReadPacketWithItems<string>(buffer, length, ReadTopic, (id, items) => new Unsubscribe(id, items));
-    }
-
-    private static int ReadTopic(ReadOnlyMemory<byte> buffer, Action<string> callback)
-    {
-        string filter = "";// buffer.ReadString();
-        return System.Text.Encoding.UTF8.GetByteCount(filter) + 2;
-    }
-
-    private static object ReadPacketWithItems<T>(ReadOnlyMemory<byte> buffer, int length, Func<ReadOnlyMemory<byte>, Action<T>, int> readItem, Func<ushort, T[], object> createResult)
-    {
-        var span = buffer.Span;
-        ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
-        int totalRead = 2;
-        var items = new List<T>();
-        buffer = buffer[totalRead..];
-
-        while (totalRead < length)
-        {
-            int currentRead = readItem(buffer, items.Add);
-            totalRead += currentRead;
-            buffer = buffer[currentRead..];
-        }
-
-        return createResult(id, items.ToArray());
-    }
-
-    private static object ReadPuback(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubAck(id));
-
-    private static object ReadUnsubAck(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new UnsubAck(id));
-
-    private static object ReadPubcomp(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubComp(id));
-
-    private static object ReadPubrel(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRel(id));
-
-    private static object ReadPubrec(ReadOnlyMemory<byte> buffer, int length) => ReadPacketWithIdOnly(buffer, length, id => new PubRec(id));
-
-    private static object ReadPacketWithIdOnly(ReadOnlyMemory<byte> buffer, int length, Func<ushort, object> packetCreate)
-    {
-        if (length != 2)
-        {
-            throw new Exception();
-        }
-        var span = buffer.Span;
-        ushort id = BinaryPrimitives.ReadUInt16BigEndian(span);
-        return packetCreate(id);
     }
 
     private static bool ReadBoolean(this ReadOnlySpan<byte> buffer, ref int offset)

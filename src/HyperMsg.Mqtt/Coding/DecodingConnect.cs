@@ -4,7 +4,7 @@ namespace HyperMsg.Mqtt.Coding;
 
 public static partial class Decoding
 {
-    public static Connect DecodeConnect(ReadOnlySpan<byte> buffer)
+    private static Connect DecodeConnect(ReadOnlySpan<byte> buffer)
     {
         var offset = 1;
         var packetSize = buffer.ReadVarInt(ref offset);

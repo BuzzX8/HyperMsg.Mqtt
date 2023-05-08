@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using HyperMsg.Mqtt.Packets;
+using Xunit;
 
 namespace HyperMsg.Mqtt.Coding
 {
@@ -21,7 +22,7 @@ namespace HyperMsg.Mqtt.Coding
         [Fact]
         public void DecodeConnect_Correctly_Decodes_Variable_Header()
         {
-            var packet = Decoding.DecodeConnect(EncodedConnectPacket);
+            var packet = (Connect)Decoding.Decode(EncodedConnectPacket, out var _);
 
             Assert.Equal("MQTT", packet.ProtocolName);
             Assert.Equal(5, packet.ProtocolVersion);
@@ -40,7 +41,7 @@ namespace HyperMsg.Mqtt.Coding
         [Fact]
         public void DecodeDonnect_Correctly_Decodes_Payload()
         {
-            var packet = Decoding.DecodeConnect(EncodedConnectPacket);
+            var packet = (Connect)Decoding.Decode(EncodedConnectPacket, out var _);
 
             Assert.Equal("mqttx_4b94267f", packet.ClientId);
             Assert.Equal("last-will-topic", packet.WillTopic);
