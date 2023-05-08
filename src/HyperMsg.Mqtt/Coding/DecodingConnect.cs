@@ -99,11 +99,11 @@ public static partial class Decoding
                 break;
 
             case 0x17:
-                properties.RequestProblemInformation = Convert.ToBoolean(buffer.ReadByte(ref offset));
+                properties.RequestProblemInformation = buffer.ReadBoolean(ref offset);
                 break;
 
             case 0x19:
-                properties.RequestResponseInformation = Convert.ToBoolean(buffer.ReadByte(ref offset));
+                properties.RequestResponseInformation = buffer.ReadBoolean(ref offset);
                 break;
 
             case 0x21:

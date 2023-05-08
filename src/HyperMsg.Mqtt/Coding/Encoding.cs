@@ -81,7 +81,7 @@ public static class Encoding
         span[0] = 0x20;
         span[1] = 0x02;
         span[2] = (byte)(connAck.SessionPresent ? 1 : 0);
-        span[3] = (byte)connAck.ResultCode;
+        span[3] = (byte)connAck.ReasonCode;
 
         writer.Advance(4);
     }

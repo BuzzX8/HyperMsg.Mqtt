@@ -15,7 +15,7 @@ public static partial class Decoding
             case PacketType.Connect:
                 return DecodeConnect(buffer);
             case PacketType.ConAck:
-                break;
+                return DecodeConnAck(buffer);
             case PacketType.Publish:
                 break;
             case PacketType.PubAck:
@@ -61,14 +61,6 @@ public static partial class Decoding
         var propValue = buffer.ReadString(ref offset);
 
         properties[propName] = propValue;
-    }
-
-    private static ConnAck ReadConAck(ReadOnlyMemory<byte> buffer, int length)
-    {
-        var span = buffer.Span;
-        bool sessionPresent = span[0] == 1;
-        var code = (ConnectionResult)span[1];
-        return new ConnAck(code, sessionPresent);
     }
 
     private static Publish ReadPublish(ReadOnlyMemory<byte> buffer, byte code, uint length)
@@ -171,61 +163,16 @@ public static partial class Decoding
         return packetCreate(id);
     }
 
-    public static ReadOnlyMemory<byte> ReadBinaryData(this ReadOnlySpan<byte> buffer, ref int offset)
+    private static bool ReadBoolean(this ReadOnlySpan<byte> buffer, ref int offset)
     {
-        var length = buffer.ReadUInt16(ref offset);
-        var data = buffer[offset..(length + offset)];
-        offset += length;
+        var value = ReadByte(buffer, ref offset);
 
-        return new ReadOnlyMemory<byte>(data.ToArray());
-    }
-
-    public static (int value, byte byteCount) ReadVarInt(this ReadOnlySpan<byte> buffer)
-    {
-        int result = 0;
-        int offset = 0;
-        byte i = 0;
-
-        int value;
-        do
+        if (value > 1)
         {
-            value = buffer[i];
-            result |= (value & 0x7f) << offset;
-            offset += 7;
-            i++;
-
-            if (i == sizeof(int) && value >= 0x80)
-            {
-                throw new DecodingError("VarInt incorrectly encoded");
-            }
+            throw new DecodingError("Incorrect boolean value");
         }
-        while ((value & 0x80) == 0x80);
-        return (result, i);
-    }
 
-    private static int ReadVarInt(this ReadOnlySpan<byte> buffer, ref int offset)
-    {
-        var (value, byteCount) = ReadVarInt(buffer[offset..]);
-
-        offset += byteCount;
-        return value;
-    }
-
-    public static string ReadString(this ReadOnlySpan<byte> buffer)
-    {
-        var offset = 0;
-        return ReadString(buffer, ref offset);
-    }
-
-    private static string ReadString(this ReadOnlySpan<byte> buffer, ref int offset)
-    {
-        ushort length = ReadUInt16(buffer, ref offset);
-        EnsureBufferSize(buffer, 2 + length);
-
-        var str = System.Text.Encoding.UTF8.GetString(buffer[offset..(offset + length)]);
-        offset += length;
-
-        return str;
+        return Convert.ToBoolean(value);
     }
 
     private static byte ReadByte(this ReadOnlySpan<byte> buffer, ref int offset)
@@ -254,6 +201,63 @@ public static partial class Decoding
         offset += sizeof(uint);
 
         return value;
+    }
+
+    private static int ReadVarInt(this ReadOnlySpan<byte> buffer, ref int offset)
+    {
+        var (value, byteCount) = ReadVarInt(buffer[offset..]);
+
+        offset += byteCount;
+        return value;
+    }
+
+    public static (int value, byte byteCount) ReadVarInt(this ReadOnlySpan<byte> buffer)
+    {
+        int result = 0;
+        int offset = 0;
+        byte i = 0;
+
+        int value;
+        do
+        {
+            value = buffer[i];
+            result |= (value & 0x7f) << offset;
+            offset += 7;
+            i++;
+
+            if (i == sizeof(int) && value >= 0x80)
+            {
+                throw new DecodingError("VarInt incorrectly encoded");
+            }
+        }
+        while ((value & 0x80) == 0x80);
+        return (result, i);
+    }
+
+    public static ReadOnlyMemory<byte> ReadBinaryData(this ReadOnlySpan<byte> buffer, ref int offset)
+    {
+        var length = buffer.ReadUInt16(ref offset);
+        var data = buffer[offset..(length + offset)];
+        offset += length;
+
+        return new ReadOnlyMemory<byte>(data.ToArray());
+    }
+
+    public static string ReadString(this ReadOnlySpan<byte> buffer)
+    {
+        var offset = 0;
+        return ReadString(buffer, ref offset);
+    }
+
+    private static string ReadString(this ReadOnlySpan<byte> buffer, ref int offset)
+    {
+        ushort length = ReadUInt16(buffer, ref offset);
+        EnsureBufferSize(buffer, 2 + length);
+
+        var str = System.Text.Encoding.UTF8.GetString(buffer[offset..(offset + length)]);
+        offset += length;
+
+        return str;
     }
 
     private static void EnsureBufferSize(ReadOnlySpan<byte> buffer, int requiredSize)

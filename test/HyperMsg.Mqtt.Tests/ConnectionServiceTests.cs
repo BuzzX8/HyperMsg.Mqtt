@@ -50,14 +50,15 @@ public class ConnectionServiceTests
     [Fact]
     public void ConAck_Response_Dispatches_ConnectionResult()
     {
-        var connAck = new ConnAck(ConnectionResult.Accepted, true);
+        var connAck = new ConnAck(ConnectReasonCode.Success, true);
+
         var response = default(ConnectionResponse);
         broker.Register<ConnectionResponse>(r => response = r);
 
         broker.Dispatch(connAck);
 
         Assert.NotNull(response);
-        Assert.Equal(connAck.ResultCode, response.ResultCode);
+        Assert.Equal(connAck.ReasonCode, response.ResultCode);
         Assert.Equal(connAck.SessionPresent, response.SessionPresent);
     }
 }
