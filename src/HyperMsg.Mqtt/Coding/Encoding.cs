@@ -20,7 +20,7 @@ public static class Encoding
         if (connect.Flags.HasFlag(ConnectFlags.Will))
         {
             contentLength += GetStringByteCount(connect.WillTopic);
-            contentLength += connect.WillMessage.Length + 2;
+            contentLength += connect.WillPayload.Length + 2;
         }
 
         if (connect.Flags.HasFlag(ConnectFlags.UserName))
@@ -53,10 +53,10 @@ public static class Encoding
         {
             written = writer.WriteString(connect.WillTopic);
             writer.Advance(written);
-            span = writer.GetSpan(connect.WillMessage.Length + sizeof(ushort));
-            BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.WillMessage.Length);
-            connect.WillMessage.Span.CopyTo(span[2..]);
-            writer.Advance(connect.WillMessage.Length + 2);
+            span = writer.GetSpan(connect.WillPayload.Length + sizeof(ushort));
+            BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.WillPayload.Length);
+            connect.WillPayload.Span.CopyTo(span[2..]);
+            writer.Advance(connect.WillPayload.Length + 2);
         }
 
         if (connect.Flags.HasFlag(ConnectFlags.UserName))
@@ -69,7 +69,7 @@ public static class Encoding
         {
             span = writer.GetSpan(connect.Password.Length + 2);
             BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)connect.Password.Length);
-            connect.Password.CopyTo(span[2..]);
+            //connect.Password.CopyTo(span[2..]);
             writer.Advance(connect.Password.Length + 2);
         }
     }

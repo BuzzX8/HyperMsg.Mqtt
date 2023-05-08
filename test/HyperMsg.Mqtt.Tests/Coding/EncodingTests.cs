@@ -65,7 +65,7 @@ namespace HyperMsg.Mqtt.Coding
                 ClientId = Guid.NewGuid().ToString(),
                 Flags = ConnectFlags.Will,
                 WillTopic = willTopic,
-                WillMessage = willMessage
+                WillPayload = willMessage
             };
             var expected = CreateConnectHeader(packet);
             AddString(expected, willTopic);
