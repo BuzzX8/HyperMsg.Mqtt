@@ -1,6 +1,6 @@
 ﻿namespace HyperMsg.Mqtt.Packets;
 
-public record ConnAck(ConnectionResult ResultCode, bool SessionPresent = false)
+public record ConnAck(ConnectReasonCode ReasonCode, bool SessionPresent = false, ConnAckProperties Properties = null)
 {
-    public override string ToString() => $"ConnAck(SP={SessionPresent},Code={ResultCode})";
+    public override string ToString() => $"ConnAck(SP={SessionPresent},Code={ReasonCode})";
 }

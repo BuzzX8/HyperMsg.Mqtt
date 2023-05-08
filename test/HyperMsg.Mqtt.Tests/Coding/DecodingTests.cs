@@ -45,7 +45,7 @@ namespace HyperMsg.Mqtt.Coding
                 0, 10, //Packet ID
                 9, 8, 7 //Payload
             );
-            yield return TestCase(new ConnAck(ConnectionResult.NotAuthorized, true),
+            yield return TestCase(new ConnAck(ConnectReasonCode.NotAuthorized, true),
                 0b00100000, //Packet type
                 2, //Packet length
                 1, //Flags
