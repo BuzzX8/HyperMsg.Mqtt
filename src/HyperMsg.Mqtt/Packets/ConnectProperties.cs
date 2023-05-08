@@ -16,7 +16,7 @@
 
         public string AuthenticationMethod { get; set; }
 
-        public byte[] AuthenticationData { get; set; }
+        public ReadOnlyMemory<byte> AuthenticationData { get; set; }
 
         public IDictionary<string, string> UserProperties { get; set; }
     }

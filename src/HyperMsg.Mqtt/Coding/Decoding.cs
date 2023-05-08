@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 using System.Buffers.Binary;
 
 namespace HyperMsg.Mqtt.Coding
@@ -147,7 +146,7 @@ namespace HyperMsg.Mqtt.Coding
                     break;
 
                 case 0x16:
-                    properties.AuthenticationData = Array.Empty<byte>();
+                    properties.AuthenticationData = buffer.ReadBinaryData(ref offset);
                     break;
 
                 case 0x17:
