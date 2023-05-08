@@ -395,7 +395,7 @@ namespace HyperMsg.Mqtt.Coding
         {
             var memory = bufferWriter.GetMemory(expected.Length);
 
-            int bytesWritten = memory.WriteRemainingLength(value);
+            int bytesWritten = memory.Span.WriteVarInt(value);
             bufferWriter.Advance(bytesWritten);
 
             Assert.Equal(expected.Length, bytesWritten);

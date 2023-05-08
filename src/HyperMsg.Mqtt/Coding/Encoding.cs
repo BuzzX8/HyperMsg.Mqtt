@@ -37,7 +37,7 @@ public static class Encoding
         var span = buffer.Span;
 
         span[0] = ConnectCode;
-        int written = buffer[1..].WriteRemainingLength(contentLength);
+        int written = buffer.Span[1..].WriteVarInt(contentLength);
         writer.Advance(written + 1);
 
         writer.Write(ProtocolName);
@@ -107,7 +107,7 @@ public static class Encoding
         var span = buffer.Span;
 
         span[0] = header;
-        var written = buffer[1..].WriteRemainingLength(contentLength);
+        var written = buffer.Span[1..].WriteVarInt(contentLength);
         writer.Advance(written + 1);
 
         written = writer.WriteString(publish.Topic);
@@ -179,7 +179,7 @@ public static class Encoding
         var span = buffer.Span;
 
         span[0] = code;
-        var written = buffer[1..].WriteRemainingLength(contentLength);
+        var written = buffer.Span[1..].WriteVarInt(contentLength);
         writer.Advance(written + 1);
 
         span = writer.GetSpan(sizeof(ushort));
@@ -210,35 +210,39 @@ public static class Encoding
 
     public static void Encode(IBufferWriter writer, Disconnect _) => writer.Write(Disconnect);
 
-    public static int WriteRemainingLength(this Memory<byte> buffer, int length)
+    public static int WriteByte(this Span<byte> buffer, byte value)
     {
-        var span = buffer.Span;
+        buffer[0] = value;
+        return sizeof(byte);
+    }
 
-        if (length > 0x1fffff)
+    public static int WriteVarInt(this Span<byte> buffer, int value)
+    {
+        if (value > 0x1fffff)
         {
-            span[0] = (byte)(length | 0x80);
-            span[1] = (byte)(length >> 7 | 0x80);
-            span[2] = (byte)(length >> 14 | 0x80);
-            span[3] = (byte)(length >> 21);
+            buffer[0] = (byte)(value | 0x80);
+            buffer[1] = (byte)(value >> 7 | 0x80);
+            buffer[2] = (byte)(value >> 14 | 0x80);
+            buffer[3] = (byte)(value >> 21);
             return 4;
         }
 
-        if (length > 0x3fff)
+        if (value > 0x3fff)
         {
-            span[0] = (byte)(length | 0x80);
-            span[1] = (byte)(length >> 7 | 0x80);
-            span[2] = (byte)(length >> 14);
+            buffer[0] = (byte)(value | 0x80);
+            buffer[1] = (byte)(value >> 7 | 0x80);
+            buffer[2] = (byte)(value >> 14);
             return 3;
         }
 
-        if (length > 0x7f)
+        if (value > 0x7f)
         {
-            span[0] = (byte)(length | 0x80);
-            span[1] = (byte)(length >> 7);
+            buffer[0] = (byte)(value | 0x80);
+            buffer[1] = (byte)(value >> 7);
             return 2;
         }
 
-        span[0] = (byte)length;
+        buffer[0] = (byte)value;
         return 1;
     }
 
