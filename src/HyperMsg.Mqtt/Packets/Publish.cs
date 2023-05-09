@@ -22,6 +22,8 @@ public class Publish : IEquatable<Publish>
 
     public string TopicName { get; }
 
+    public PublishProperties Properties { get; internal set; }
+
     public ReadOnlyMemory<byte> Payload { get; }
 
     public override int GetHashCode() => Id;
