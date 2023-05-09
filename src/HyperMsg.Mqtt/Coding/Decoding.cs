@@ -5,7 +5,7 @@ namespace HyperMsg.Mqtt.Coding;
 
 public static partial class Decoding
 {
-    public static object Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
+    public static Packet Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
     {
         var (packetType, packetLength) = ReadFixedHeader(buffer);
 
@@ -16,11 +16,11 @@ public static partial class Decoding
         switch (packetType)
         {
             case PacketType.Connect:
-                return DecodeConnect(buffer);
+                return DecodeConnect(buffer).ToPacket();
             case PacketType.ConAck:
-                return DecodeConnAck(buffer);
+                return DecodeConnAck(buffer).ToPacket();
             case PacketType.Publish:
-                return DecodePublish(buffer);
+                return DecodePublish(buffer).ToPacket();
             case PacketType.PubAck:
                 break;
             case PacketType.PubRec:

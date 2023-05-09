@@ -1,5 +1,4 @@
-﻿using HyperMsg.Mqtt.Packets;
-using Xunit;
+﻿using Xunit;
 
 namespace HyperMsg.Mqtt.Coding;
 
@@ -17,15 +16,17 @@ public class PublishDecodingTests
             9, 8, 7 //Payload
         };
 
-        var packet = (Publish)Decoding.Decode(buffer, out var _);
+        var packet = Decoding.Decode(buffer, out var _);
+        Assert.True(packet.IsPublish);
+        var publish = packet.ToPublish();
 
-        Assert.True(packet.Retain);
-        Assert.Equal(QosLevel.Qos2, packet.Qos);
-        Assert.True(packet.Dup);
-        Assert.Equal("a/b", packet.TopicName);
-        Assert.Equal(10, packet.Id);
-        Assert.Equal(buffer[9..].ToArray(), packet.Payload.ToArray());
-        Assert.Null(packet.Properties);
+        Assert.True(publish.Retain);
+        Assert.Equal(QosLevel.Qos2, publish.Qos);
+        Assert.True(publish.Dup);
+        Assert.Equal("a/b", publish.TopicName);
+        Assert.Equal(10, publish.Id);
+        Assert.Equal(buffer[9..].ToArray(), publish.Payload.ToArray());
+        Assert.Null(publish.Properties);
     }
 
     [Fact]
@@ -41,7 +42,7 @@ public class PublishDecodingTests
             9, 8, 7 //Payload
         };
 
-        var packet = (Publish)Decoding.Decode(buffer, out var _);
+        var packet = Decoding.Decode(buffer, out var _).ToPublish();
 
         Assert.NotNull(packet.Properties);
     }
