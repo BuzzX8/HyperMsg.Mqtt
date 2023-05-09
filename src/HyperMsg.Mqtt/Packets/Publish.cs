@@ -2,13 +2,17 @@
 
 public class Publish : IEquatable<Publish>
 {
-    public Publish(ushort packetId, string topic, ReadOnlyMemory<byte> message, QosLevel qos)
+    public Publish(ushort packetId, string topicName, ReadOnlyMemory<byte> payload, QosLevel qos)
     {
+        ArgumentNullException.ThrowIfNull(topicName, nameof(topicName));
+
         Id = packetId;
-        Topic = topic ?? throw new ArgumentNullException(nameof(topic));
-        Message = message;
+        TopicName = topicName;
+        Payload = payload;
         Qos = qos;
     }
+
+    public ushort Id { get; }
 
     public bool Dup { get; set; }
 
@@ -16,11 +20,9 @@ public class Publish : IEquatable<Publish>
 
     public bool Retain { get; set; }
 
-    public string Topic { get; }
+    public string TopicName { get; }
 
-    public ushort Id { get; }
-
-    public ReadOnlyMemory<byte> Message { get; }
+    public ReadOnlyMemory<byte> Payload { get; }
 
     public override int GetHashCode() => Id;
 
@@ -31,7 +33,7 @@ public class Publish : IEquatable<Publish>
         return packet?.Dup == Dup
             && packet?.Qos == Qos
             && packet?.Retain == Retain
-            && packet?.Topic == Topic
+            && packet?.TopicName == TopicName
             && packet?.Id == Id;
     }
 }

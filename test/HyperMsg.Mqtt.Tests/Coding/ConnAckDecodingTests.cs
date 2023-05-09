@@ -10,7 +10,7 @@ public class ConnAckDecodingTests
     {
         var sessionPresent = true;
         var reasonCode = ConnectReasonCode.Success;
-        var encodedPacket = new byte[] 
+        var encodedPacket = new byte[]
         {
             0x20, 0x03, //Fixed header
             Convert.ToByte(sessionPresent), (byte)reasonCode, 0x00

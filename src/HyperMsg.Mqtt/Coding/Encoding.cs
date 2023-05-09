@@ -102,7 +102,7 @@ public static class Encoding
             header |= 0x01;
         }
 
-        int contentLength = GetStringByteCount(publish.Topic) + sizeof(ushort) + publish.Message.Length;
+        int contentLength = GetStringByteCount(publish.TopicName) + sizeof(ushort) + publish.Payload.Length;
         var buffer = writer.GetMemory(5);//code + max length
         var span = buffer.Span;
 
@@ -110,14 +110,14 @@ public static class Encoding
         var written = buffer.Span[1..].WriteVarInt(contentLength);
         writer.Advance(written + 1);
 
-        written = writer.WriteString(publish.Topic);
+        written = writer.WriteString(publish.TopicName);
         writer.Advance(written);
 
-        buffer = writer.GetMemory(publish.Message.Length + sizeof(ushort));
+        buffer = writer.GetMemory(publish.Payload.Length + sizeof(ushort));
         span = buffer.Span;
         BinaryPrimitives.WriteUInt16BigEndian(span, publish.Id);
-        publish.Message.CopyTo(buffer[sizeof(ushort)..]);
-        writer.Advance(publish.Message.Length + sizeof(ushort));
+        publish.Payload.CopyTo(buffer[sizeof(ushort)..]);
+        writer.Advance(publish.Payload.Length + sizeof(ushort));
     }
 
     public static void Encode(IBufferWriter writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);

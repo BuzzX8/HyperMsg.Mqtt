@@ -28,8 +28,8 @@ public class PublishServiceTests
 
         Assert.NotNull(actualPacket);
         Assert.Equal(packetId, actualPacket.Id);
-        Assert.Equal(topic, actualPacket.Topic);
-        Assert.Equal(message, actualPacket.Message);
+        Assert.Equal(topic, actualPacket.TopicName);
+        Assert.Equal(message, actualPacket.Payload);
         Assert.Equal(qos, actualPacket.Qos);
     }
 

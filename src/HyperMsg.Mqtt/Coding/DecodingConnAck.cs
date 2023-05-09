@@ -34,7 +34,7 @@ public static partial class Decoding
         return properties;
     }
 
-    private static void ReadConnAckProperties(ConnAckProperties properties, ReadOnlySpan<byte> propBuffer) 
+    private static void ReadConnAckProperties(ConnAckProperties properties, ReadOnlySpan<byte> propBuffer)
     {
         var offset = 0;
 
@@ -51,7 +51,7 @@ public static partial class Decoding
         switch (propCode)
         {
             case 0x11:
-                properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset); 
+                properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset);
                 break;
 
             case 0x12:

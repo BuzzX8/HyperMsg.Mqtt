@@ -8,6 +8,9 @@ public static partial class Decoding
     public static object Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
     {
         var (packetType, packetLength) = ReadFixedHeader(buffer);
+
+        EnsureBufferSize(buffer, packetLength + 1);
+
         bytesRead = packetLength;
 
         switch (packetType)
