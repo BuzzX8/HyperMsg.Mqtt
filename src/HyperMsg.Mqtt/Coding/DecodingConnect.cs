@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 
 namespace HyperMsg.Mqtt.Coding;
 
@@ -53,80 +54,25 @@ public static partial class Decoding
             return default;
         }
 
-        var propLength = buffer.ReadVarInt(ref offset);
-
-        if (propLength == 0)
-        {
-            return default;
-        }
-
-        var properties = new ConnectProperties();
-        var propBuffer = buffer[offset..(offset + propLength)];
-
-        ReadConnectProperties(properties, propBuffer);
-
-        offset += propLength;
-
-        return properties;
+        return DecodeProperties(buffer, PropertyUpdaters, ref offset);
     }
 
-    private static void ReadConnectProperties(ConnectProperties properties, ReadOnlySpan<byte> propBuffer)
+    private static readonly Dictionary<byte, PropertyUpdater<ConnectProperties>> PropertyUpdaters = new()
     {
-        var offset = 0;
-
-        while (offset < propBuffer.Length)
+        [0x11] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
+        [0x15] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationMethod = b.ReadString(ref offset),
+        [0x16] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationData = b.ReadBinaryData(ref offset),
+        [0x17] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestProblemInformation = b.ReadBoolean(ref offset),
+        [0x19] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestResponseInformation = b.ReadBoolean(ref offset),
+        [0x21] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ReceiveMaximum = b.ReadUInt16(ref offset),
+        [0x22] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.TopicAliasMaximum = b.ReadUInt16(ref offset),
+        [0x26] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) =>
         {
-            var propCode = propBuffer.ReadByte(ref offset);
-
-            ReadConnectProperty(properties, propCode, propBuffer, ref offset);
-        }
-    }
-
-    private static void ReadConnectProperty(ConnectProperties properties, byte propCode, ReadOnlySpan<byte> buffer, ref int offset)
-    {
-        switch (propCode)
-        {
-            case 0x11:
-                properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset);
-                break;
-
-            case 0x15:
-                properties.AuthenticationMethod = buffer.ReadString(ref offset);
-                break;
-
-            case 0x16:
-                properties.AuthenticationData = buffer.ReadBinaryData(ref offset);
-                break;
-
-            case 0x17:
-                properties.RequestProblemInformation = buffer.ReadBoolean(ref offset);
-                break;
-
-            case 0x19:
-                properties.RequestResponseInformation = buffer.ReadBoolean(ref offset);
-                break;
-
-            case 0x21:
-                properties.ReceiveMaximum = buffer.ReadUInt16(ref offset);
-                break;
-
-            case 0x22:
-                properties.TopicAliasMaximum = buffer.ReadUInt16(ref offset);
-                break;
-
-            case 0x26:
-                properties.UserProperties ??= new Dictionary<string, string>();
-                ReadUserProperty(properties.UserProperties, buffer, ref offset);
-                break;
-
-            case 0x27:
-                properties.MaximumPacketSize = buffer.ReadUInt32(ref offset);
-                break;
-
-            default:
-                throw new DecodingError($"Incorrect connect property code provided ({propCode})");
-        }
-    }
+            p.UserProperties ??= new Dictionary<string, string>();
+            ReadUserProperty(p.UserProperties, b, ref offset);
+        },
+        [0x27] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MaximumPacketSize = b.ReadUInt32(ref offset),
+    };
 
     private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
     {
