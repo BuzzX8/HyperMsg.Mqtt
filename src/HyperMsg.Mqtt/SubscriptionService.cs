@@ -57,7 +57,7 @@ public class SubscriptionService : Service
             return;
         }
 
-        var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
+        //var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
 
         requestedSubscriptions.Remove(response.Id, out _);
     }

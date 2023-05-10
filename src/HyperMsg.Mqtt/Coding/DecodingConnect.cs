@@ -4,6 +4,38 @@ namespace HyperMsg.Mqtt.Coding;
 
 public static partial class Decoding
 {
+    private static readonly Dictionary<byte, PropertyUpdater<ConnectProperties>> ConnectPropertyUpdaters = new()
+    {
+        [0x11] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
+        [0x15] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationMethod = b.ReadString(ref offset),
+        [0x16] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationData = b.ReadBinaryData(ref offset),
+        [0x17] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestProblemInformation = b.ReadBoolean(ref offset),
+        [0x19] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestResponseInformation = b.ReadBoolean(ref offset),
+        [0x21] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ReceiveMaximum = b.ReadUInt16(ref offset),
+        [0x22] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.TopicAliasMaximum = b.ReadUInt16(ref offset),
+        [0x26] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) =>
+        {
+            p.UserProperties ??= new Dictionary<string, string>();
+            ReadUserProperty(p.UserProperties, b, ref offset);
+        },
+        [0x27] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MaximumPacketSize = b.ReadUInt32(ref offset),
+    };
+
+    private static readonly Dictionary<byte, PropertyUpdater<ConnectWillProperties>> ConnectWillPropertyUpdaters = new()
+    {
+        [0x01] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.PayloadFormatIndicator = b.ReadByte(ref offset),
+        [0x02] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MessageExpiryInterval = b.ReadUInt32(ref offset),
+        [0x03] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ContentType = b.ReadString(ref offset),
+        [0x08] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ResponseTopic = b.ReadString(ref offset),
+        [0x09] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.CorrelationData = b.ReadBinaryData(ref offset),
+        [0x18] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) => p.WillDelayInterval = b.ReadUInt32(ref offset),
+        [0x26] = (ConnectWillProperties p, ReadOnlySpan<byte> b, ref int offset) =>
+        {
+            p.UserProperties ??= new Dictionary<string, string>();
+            ReadUserProperty(p.UserProperties, b, ref offset);
+        }
+    };
+
     private static Connect DecodeConnect(ReadOnlySpan<byte> buffer)
     {
         var offset = 1;
@@ -53,79 +85,7 @@ public static partial class Decoding
             return default;
         }
 
-        var propLength = buffer.ReadVarInt(ref offset);
-
-        if (propLength == 0)
-        {
-            return default;
-        }
-
-        var properties = new ConnectProperties();
-        var propBuffer = buffer[offset..(offset + propLength)];
-
-        ReadConnectProperties(properties, propBuffer);
-
-        offset += propLength;
-
-        return properties;
-    }
-
-    private static void ReadConnectProperties(ConnectProperties properties, ReadOnlySpan<byte> propBuffer)
-    {
-        var offset = 0;
-
-        while (offset < propBuffer.Length)
-        {
-            var propCode = propBuffer.ReadByte(ref offset);
-
-            ReadConnectProperty(properties, propCode, propBuffer, ref offset);
-        }
-    }
-
-    private static void ReadConnectProperty(ConnectProperties properties, byte propCode, ReadOnlySpan<byte> buffer, ref int offset)
-    {
-        switch (propCode)
-        {
-            case 0x11:
-                properties.SessionExpiryInterval = buffer.ReadUInt32(ref offset);
-                break;
-
-            case 0x15:
-                properties.AuthenticationMethod = buffer.ReadString(ref offset);
-                break;
-
-            case 0x16:
-                properties.AuthenticationData = buffer.ReadBinaryData(ref offset);
-                break;
-
-            case 0x17:
-                properties.RequestProblemInformation = buffer.ReadBoolean(ref offset);
-                break;
-
-            case 0x19:
-                properties.RequestResponseInformation = buffer.ReadBoolean(ref offset);
-                break;
-
-            case 0x21:
-                properties.ReceiveMaximum = buffer.ReadUInt16(ref offset);
-                break;
-
-            case 0x22:
-                properties.TopicAliasMaximum = buffer.ReadUInt16(ref offset);
-                break;
-
-            case 0x26:
-                properties.UserProperties ??= new Dictionary<string, string>();
-                ReadUserProperty(properties.UserProperties, buffer, ref offset);
-                break;
-
-            case 0x27:
-                properties.MaximumPacketSize = buffer.ReadUInt32(ref offset);
-                break;
-
-            default:
-                throw new DecodingError($"Incorrect connect property code provided ({propCode})");
-        }
+        return DecodeProperties(buffer, ConnectPropertyUpdaters, ref offset);
     }
 
     private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
@@ -142,70 +102,6 @@ public static partial class Decoding
             return default;
         }
 
-        var willPropLength = buffer.ReadVarInt(ref offset);
-
-        if (willPropLength == 0)
-        {
-            return null;
-        }
-
-        var props = new ConnectWillProperties();
-        var propBuffer = buffer[offset..(offset + willPropLength)];
-
-        ReadWillProperties(props, propBuffer);
-
-        offset += willPropLength;
-
-        return props;
-    }
-
-    private static void ReadWillProperties(ConnectWillProperties properties, ReadOnlySpan<byte> propBuffer)
-    {
-        var offset = 0;
-
-        while (offset < propBuffer.Length)
-        {
-            var propCode = propBuffer.ReadByte(ref offset);
-
-            ReadWillProperty(properties, propCode, propBuffer, ref offset);
-        }
-    }
-
-    private static void ReadWillProperty(ConnectWillProperties properties, byte propCode, ReadOnlySpan<byte> propBuffer, ref int offset)
-    {
-        switch (propCode)
-        {
-            case 0x01:
-                properties.PayloadFormatIndicator = propBuffer.ReadByte(ref offset);
-                break;
-
-            case 0x02:
-                properties.MessageExpiryInterval = propBuffer.ReadUInt32(ref offset);
-                break;
-
-            case 0x03:
-                properties.ContentType = propBuffer.ReadString(ref offset);
-                break;
-
-            case 0x08:
-                properties.ResponseTopic = propBuffer.ReadString(ref offset);
-                break;
-
-            case 0x09:
-                properties.CorrelationData = propBuffer.ReadBinaryData(ref offset);
-                break;
-
-            case 0x18:
-                properties.WillDelayInterval = propBuffer.ReadUInt32(ref offset);
-                break;
-
-            case 0x26:
-                properties.UserProperties ??= new Dictionary<string, string>();
-                ReadUserProperty(properties.UserProperties, propBuffer, ref offset);
-                break;
-
-            default:
-                throw new DecodingError($"Incorrect property code for last will property ({propCode})");
-        }
+        return DecodeProperties(buffer, ConnectWillPropertyUpdaters, ref offset);
     }
 }

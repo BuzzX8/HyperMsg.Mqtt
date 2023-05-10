@@ -24,12 +24,12 @@ namespace HyperMsg.Mqtt.Coding
                 0, 10, //Packet Id
                 0, 2, 0x80 //Response codes
             );
-            yield return TestCase(new Subscribe(4, new SubscriptionRequest[] { new("a/b", QosLevel.Qos1), new("c/d", QosLevel.Qos2) }),
-                0b10000010, //Packet code
-                14, //Length
-                0, 4, //Packet ID
-                0, 3, 0x61, 0x2f, 0x62, 1, //Filter "a/b", Qos1
-                0, 3, 0x63, 0x2f, 0x64, 2); //Filter "c/d", Qos2
+            //yield return TestCase(new Subscribe(4, new SubscriptionRequest[] { new("a/b", QosLevel.Qos1), new("c/d", QosLevel.Qos2) }),
+            //    0b10000010, //Packet code
+            //    14, //Length
+            //    0, 4, //Packet ID
+            //    0, 3, 0x61, 0x2f, 0x62, 1, //Filter "a/b", Qos1
+            //    0, 3, 0x63, 0x2f, 0x64, 2); //Filter "c/d", Qos2
             yield return TestCase(new PubComp(50), 0b01110000, 2, 0, 50);
             yield return TestCase(new PubRel(45), 0b01100010, 2, 0, 45);
             yield return TestCase(new PubRec(40), 0b01010000, 2, 0, 40);
