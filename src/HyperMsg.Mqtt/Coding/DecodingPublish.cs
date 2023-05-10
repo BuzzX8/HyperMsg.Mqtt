@@ -11,7 +11,7 @@ public static partial class Decoding
         var packetSize = buffer.ReadVarInt(ref offset);
         var topicName = buffer.ReadString(ref offset);
         var id = buffer.ReadUInt16(ref offset);
-        
+
         var payload = buffer[offset..].ToArray();
         var qos = (QosLevel)((flags >> 1) & 0x03);
         var properties = DecodePublishProperies(buffer, ref offset);
@@ -64,7 +64,7 @@ public static partial class Decoding
                 break;
 
             case 0x02:
-                properties.MessageExpiryInterval = buffer.ReadUInt32(ref offset); 
+                properties.MessageExpiryInterval = buffer.ReadUInt32(ref offset);
                 break;
 
             case 0x03:
@@ -89,7 +89,7 @@ public static partial class Decoding
 
             case 0x26:
                 properties.UserProperties ??= new Dictionary<string, string>();
-                ReadUserProperty(properties.UserProperties, buffer, ref offset); 
+                ReadUserProperty(properties.UserProperties, buffer, ref offset);
                 break;
 
             default:
