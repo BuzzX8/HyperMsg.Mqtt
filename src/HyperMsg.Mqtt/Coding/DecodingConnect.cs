@@ -1,10 +1,26 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 
 namespace HyperMsg.Mqtt.Coding;
 
 public static partial class Decoding
 {
+    private static readonly Dictionary<byte, PropertyUpdater<ConnectProperties>> ConnectPropertyUpdaters = new()
+    {
+        [0x11] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
+        [0x15] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationMethod = b.ReadString(ref offset),
+        [0x16] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationData = b.ReadBinaryData(ref offset),
+        [0x17] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestProblemInformation = b.ReadBoolean(ref offset),
+        [0x19] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestResponseInformation = b.ReadBoolean(ref offset),
+        [0x21] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ReceiveMaximum = b.ReadUInt16(ref offset),
+        [0x22] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.TopicAliasMaximum = b.ReadUInt16(ref offset),
+        [0x26] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) =>
+        {
+            p.UserProperties ??= new Dictionary<string, string>();
+            ReadUserProperty(p.UserProperties, b, ref offset);
+        },
+        [0x27] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MaximumPacketSize = b.ReadUInt32(ref offset),
+    };
+
     private static Connect DecodeConnect(ReadOnlySpan<byte> buffer)
     {
         var offset = 1;
@@ -54,25 +70,8 @@ public static partial class Decoding
             return default;
         }
 
-        return DecodeProperties(buffer, PropertyUpdaters, ref offset);
+        return DecodeProperties(buffer, ConnectPropertyUpdaters, ref offset);
     }
-
-    private static readonly Dictionary<byte, PropertyUpdater<ConnectProperties>> PropertyUpdaters = new()
-    {
-        [0x11] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
-        [0x15] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationMethod = b.ReadString(ref offset),
-        [0x16] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationData = b.ReadBinaryData(ref offset),
-        [0x17] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestProblemInformation = b.ReadBoolean(ref offset),
-        [0x19] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RequestResponseInformation = b.ReadBoolean(ref offset),
-        [0x21] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ReceiveMaximum = b.ReadUInt16(ref offset),
-        [0x22] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.TopicAliasMaximum = b.ReadUInt16(ref offset),
-        [0x26] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) =>
-        {
-            p.UserProperties ??= new Dictionary<string, string>();
-            ReadUserProperty(p.UserProperties, b, ref offset);
-        },
-        [0x27] = (ConnectProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MaximumPacketSize = b.ReadUInt32(ref offset),
-    };
 
     private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
     {
