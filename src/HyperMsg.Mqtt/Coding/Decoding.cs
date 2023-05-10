@@ -58,6 +58,49 @@ public static partial class Decoding
         return (packetType, packetSize);
     }
 
+    private static T DecodeProperties<T>(ReadOnlySpan<byte> buffer, IDictionary<byte, PropertyUpdater<T>> updaters, ref int offset) where T : class, new()
+    {
+        var propLength = buffer.ReadVarInt(ref offset);
+
+        if (propLength == 0)
+        {
+            return default;
+        }
+
+        var properties = new T();
+        var propBuffer = buffer[offset..(offset + propLength)];
+
+        ReadProperties(properties, propBuffer, updaters);
+
+        offset += propLength;
+
+        return properties;
+    }
+
+    private static void ReadProperties<T>(T properties, ReadOnlySpan<byte> propBuffer, IDictionary<byte, PropertyUpdater<T>> updaters)
+    {
+        var offset = 0;
+
+        while (offset < propBuffer.Length)
+        {
+            var propCode = propBuffer.ReadByte(ref offset);
+
+            ReadProperty(properties, propCode, propBuffer, updaters, ref offset);
+        }
+    }
+
+    private static void ReadProperty<T>(T properties, byte propCode, ReadOnlySpan<byte> buffer, IDictionary<byte, PropertyUpdater<T>> updaters, ref int offset)
+    {
+        if (!updaters.ContainsKey(propCode))
+        {
+            throw new DecodingError($"Incorrect property code provided ({propCode})");
+        }
+
+        updaters[propCode].Invoke(properties, buffer, ref offset);
+    }
+
+    internal delegate void PropertyUpdater<T>(T properties, ReadOnlySpan<byte> buffer, ref int offset);
+
     private static void ReadUserProperty(IDictionary<string, string> properties, ReadOnlySpan<byte> buffer, ref int offset)
     {
         var propName = buffer.ReadString(ref offset);
