@@ -29,7 +29,7 @@ public static partial class Decoding
         [0x2A] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SharedSubscriptionAvailable = b.ReadBoolean(ref offset),
     };
 
-    public static ConnAck DecodeConnAck(ReadOnlySpan<byte> buffer)
+    private static ConnAck DecodeConnAck(ReadOnlySpan<byte> buffer)
     {
         var offset = 1;
         var length = buffer.ReadVarInt(ref offset);

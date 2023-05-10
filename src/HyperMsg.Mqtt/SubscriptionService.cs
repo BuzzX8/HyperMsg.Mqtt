@@ -34,7 +34,7 @@ public class SubscriptionService : Service
 
     public ushort RequestSubscription(IEnumerable<SubscriptionRequest> subscriptions)
     {
-        var request = new Subscribe(PacketId.New(), subscriptions);
+        var request = new Subscribe(PacketId.New(), subscriptions.ToArray());
         requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
         Dispatch(request);
         return request.Id;
