@@ -16,7 +16,9 @@ public class ConnAckDecodingTests
             Convert.ToByte(sessionPresent), (byte)reasonCode, 0x00
         };
 
-        var connAck = (ConnAck)Decoding.Decode(encodedPacket, out var _);
+        var packet = Decoding.Decode(encodedPacket, out var _);
+        Assert.True(packet.IsConnAck);
+        var connAck = packet.ToConnAck();
 
         Assert.Equal(sessionPresent, connAck.SessionPresent);
         Assert.Equal(reasonCode, connAck.ReasonCode);
@@ -35,7 +37,7 @@ public class ConnAckDecodingTests
             44, 17, 0, 0, 0, 11, 33, 117, 48, 39, 0, 0, 136, 184, 34, 0, 12, 38, 0, 5, 80, 114, 111, 112, 49, 0, 4, 86, 97, 108, 49, 38, 0, 5, 80, 114, 111, 112, 50, 0, 4, 86, 97, 108, 50,
         };
 
-        var connAck = (ConnAck)Decoding.Decode(encodedPacket, out var _);
+        var connAck = Decoding.Decode(encodedPacket, out var _).ToConnAck();
 
         Assert.NotNull(connAck.Properties);
     }

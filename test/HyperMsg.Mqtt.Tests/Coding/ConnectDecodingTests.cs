@@ -1,5 +1,4 @@
-﻿using HyperMsg.Mqtt.Packets;
-using Xunit;
+﻿using Xunit;
 
 namespace HyperMsg.Mqtt.Coding
 {
@@ -22,26 +21,28 @@ namespace HyperMsg.Mqtt.Coding
         [Fact]
         public void DecodeConnect_Correctly_Decodes_Variable_Header()
         {
-            var packet = (Connect)Decoding.Decode(EncodedConnectPacket, out var _);
+            var packet = Decoding.Decode(EncodedConnectPacket, out var _);
+            Assert.True(packet.IsConnect);
+            var connect = packet.ToConnect();
 
-            Assert.Equal("MQTT", packet.ProtocolName);
-            Assert.Equal(5, packet.ProtocolVersion);
-            Assert.Equal(60, packet.KeepAlive);
+            Assert.Equal("MQTT", connect.ProtocolName);
+            Assert.Equal(5, connect.ProtocolVersion);
+            Assert.Equal(60, connect.KeepAlive);
 
-            Assert.Equal(11u, packet.Properties.SessionExpiryInterval);
-            Assert.Equal(30000u, packet.Properties.ReceiveMaximum);
-            Assert.Equal(35000u, packet.Properties.MaximumPacketSize);
-            Assert.Equal(12u, packet.Properties.TopicAliasMaximum);
-            Assert.True(packet.Properties.RequestResponseInformation);
-            Assert.True(packet.Properties.RequestProblemInformation);
-            Assert.Equal("Val1", packet.Properties.UserProperties["Prop1"]);
-            Assert.Equal("Val2", packet.Properties.UserProperties["Prop2"]);
+            Assert.Equal(11u, connect.Properties.SessionExpiryInterval);
+            Assert.Equal(30000u, connect.Properties.ReceiveMaximum);
+            Assert.Equal(35000u, connect.Properties.MaximumPacketSize);
+            Assert.Equal(12u, connect.Properties.TopicAliasMaximum);
+            Assert.True(connect.Properties.RequestResponseInformation);
+            Assert.True(connect.Properties.RequestProblemInformation);
+            Assert.Equal("Val1", connect.Properties.UserProperties["Prop1"]);
+            Assert.Equal("Val2", connect.Properties.UserProperties["Prop2"]);
         }
 
         [Fact]
         public void DecodeDonnect_Correctly_Decodes_Payload()
         {
-            var packet = (Connect)Decoding.Decode(EncodedConnectPacket, out var _);
+            var packet = Decoding.Decode(EncodedConnectPacket, out var _).ToConnect();
 
             Assert.Equal("mqttx_4b94267f", packet.ClientId);
             Assert.Equal("last-will-topic", packet.WillTopic);

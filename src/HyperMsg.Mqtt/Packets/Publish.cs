@@ -38,4 +38,6 @@ public class Publish : IEquatable<Publish>
             && packet?.TopicName == TopicName
             && packet?.Id == Id;
     }
+
+    internal Packet ToPacket() => new(PacketType.Publish, this);
 }

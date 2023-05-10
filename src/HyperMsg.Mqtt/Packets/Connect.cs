@@ -45,5 +45,7 @@ public class Connect : IEquatable<Connect>
                && packet.UserName == UserName;
     }
 
+    internal Packet ToPacket() => new(PacketType.Connect, this);
+
     public override string ToString() => $"Connect(ClientId={ClientId})";
 }
