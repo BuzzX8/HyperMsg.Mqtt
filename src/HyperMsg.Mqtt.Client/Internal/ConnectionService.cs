@@ -1,7 +1,7 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using HyperMsg.Socket;
 
-namespace HyperMsg.Mqtt;
+namespace HyperMsg.Mqtt.Client.Internal;
 
 public class ConnectionService : Service
 {
