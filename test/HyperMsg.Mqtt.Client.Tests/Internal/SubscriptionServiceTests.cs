@@ -1,7 +1,8 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Client.Internal;
+using HyperMsg.Mqtt.Packets;
 using Xunit;
 
-namespace HyperMsg.Mqtt;
+namespace HyperMsg.Mqtt.Client.Tests.Internal;
 
 public class SubscriptionServiceTests
 {
