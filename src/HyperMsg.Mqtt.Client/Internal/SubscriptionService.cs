@@ -1,7 +1,7 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System.Collections.Concurrent;
 
-namespace HyperMsg.Mqtt;
+namespace HyperMsg.Mqtt.Client.Internal;
 
 public class SubscriptionService : Service
 {

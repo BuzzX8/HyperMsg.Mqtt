@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using Xunit;
 
-namespace HyperMsg.Mqtt;
+namespace HyperMsg.Mqtt.Client.Internal;
 
 public class ConnectionServiceTests
 {
