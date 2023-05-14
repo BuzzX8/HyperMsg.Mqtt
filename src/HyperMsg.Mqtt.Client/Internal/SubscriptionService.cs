@@ -34,10 +34,11 @@ public class SubscriptionService : Service
 
     public ushort RequestSubscription(IEnumerable<SubscriptionRequest> subscriptions)
     {
-        var request = new Subscribe(PacketId.New(), subscriptions);
-        requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
-        Dispatch(request);
-        return request.Id;
+        //var request = new Subscribe(PacketId.New(), subscriptions);
+        //requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
+        //Dispatch(request);
+        //return request.Id;
+        return default;
     }
 
     public ushort RequestUnsubscription(params string[] topicNames) => RequestUnsubscription((IEnumerable<string>)topicNames);
@@ -57,7 +58,7 @@ public class SubscriptionService : Service
             return;
         }
 
-        var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
+        //var requestedTopics = request.Subscriptions.Select(s => s.TopicName).ToArray();
 
         requestedSubscriptions.Remove(response.Id, out _);
     }
