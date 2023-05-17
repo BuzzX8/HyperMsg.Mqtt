@@ -3,24 +3,19 @@ using HyperMsg.Socket;
 
 namespace HyperMsg.Mqtt.Client.Internal;
 
-public class ConnectionService : Service
+public class Connection
 {
+    private readonly IMqttChannel channel;
     private readonly ConnectionSettings settings;
 
-    public ConnectionService(ITopic messageTopic, ConnectionSettings settings) : base(messageTopic)
+    public Connection(IMqttChannel channel, ConnectionSettings settings)
     {
+        this.channel = channel ?? throw new ArgumentNullException(nameof(channel));
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
-    public void RequestConnection()
+    public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        Dispatch(new ConnectRequest(settings.EndPoint));
-    }
-
-    private void HandleConnectResult(ConnectResult result)
-    {
-        var connectPacket = CreateConnectPacket(settings);
-        Dispatch(connectPacket);
     }
 
     private static Connect CreateConnectPacket(ConnectionSettings connectionSettings)
@@ -49,18 +44,9 @@ public class ConnectionService : Service
         return connect;
     }
 
-    private void HandleConAck(ConnAck response) => Dispatch(new ConnectionResponse(response.ReasonCode, response.SessionPresent));
-
-    protected override void RegisterHandlers(IRegistry registry)
+    private void HandleConAck(ConnAck response)
     {
-        registry.Register<ConnectResult>(HandleConnectResult);
-        registry.Register<ConnAck>(HandleConAck);
-    }
 
-    protected override void UnregisterHandlers(IRegistry registry)
-    {
-        registry.Unregister<ConnectResult>(HandleConnectResult);
-        registry.Unregister<ConnAck>(HandleConAck);
     }
 }
 
