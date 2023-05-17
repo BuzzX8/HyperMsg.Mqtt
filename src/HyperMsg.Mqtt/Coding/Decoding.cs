@@ -30,7 +30,7 @@ public static partial class Decoding
             case PacketType.PubComp:
                 break;
             case PacketType.Subscribe:
-                break;
+                return DecodeSubscribe(buffer).ToPacket();
             case PacketType.SubAck:
                 break;
             case PacketType.Unsubscribe:

@@ -130,20 +130,20 @@ public static class Encoding
 
     public static void Encode(IBufferWriter writer, Subscribe subscribe)
     {
-        var contentLength = GetSubscriptionsByteCount(subscribe.Subscriptions) + sizeof(ushort);//ID + subscriptions
-        WriteHeaderWithLength(writer, PacketCodes.Subscribe, subscribe.Id, contentLength);
+        //var contentLength = GetSubscriptionsByteCount(subscribe.Subscriptions) + sizeof(ushort);//ID + subscriptions
+        //WriteHeaderWithLength(writer, PacketCodes.Subscribe, subscribe.Id, contentLength);
 
-        foreach (var (topic, qos) in subscribe.Subscriptions)
-        {
-            int written = writer.WriteString(topic);
-            writer.Advance(written);
-            var span = writer.GetSpan(1);
-            span[0] = (byte)qos;
-            writer.Advance(1);
-        }
+        //foreach (var (topic, qos) in subscribe.Subscriptions)
+        //{
+        //    int written = writer.WriteString(topic);
+        //    writer.Advance(written);
+        //    var span = writer.GetSpan(1);
+        //    span[0] = (byte)qos;
+        //    writer.Advance(1);
+        //}
     }
 
-    private static int GetSubscriptionsByteCount(IEnumerable<SubscriptionRequest> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.TopicName) + 1);
+    //private static int GetSubscriptionsByteCount(IEnumerable<SubscriptionRequest> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.TopicName) + 1);
 
     public static void Encode(IBufferWriter writer, SubAck subAck)
     {

@@ -18,11 +18,15 @@ public readonly struct Packet
 
     public bool IsPublish => Type == PacketType.Publish;
 
+    public bool IsSubscribe => Type == PacketType.Subscribe;
+
     public Connect ToConnect() => To<Connect>();
 
     public ConnAck ToConnAck() => To<ConnAck>();
 
     public Publish ToPublish() => To<Publish>();
+
+    public Subscribe ToSubscribe() => To<Subscribe>();
 
     private T To<T>() => (T)packet;
 }
