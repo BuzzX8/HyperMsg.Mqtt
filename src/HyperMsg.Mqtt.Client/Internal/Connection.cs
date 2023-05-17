@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using HyperMsg.Socket;
 
 namespace HyperMsg.Mqtt.Client.Internal;
 
@@ -16,6 +15,19 @@ public class Connection
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
+        await channel.OpenAsync(cancellationToken);
+
+        var connect = CreateConnectPacket(settings);
+
+        await channel.SendAsync(connect, cancellationToken);
+        var response = await channel.ReceiveAsync(cancellationToken);
+
+        if (!response.IsConnAck)
+        {
+
+        }
+
+
     }
 
     private static Connect CreateConnectPacket(ConnectionSettings connectionSettings)
