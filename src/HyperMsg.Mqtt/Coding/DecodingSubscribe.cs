@@ -35,7 +35,10 @@ public static partial class Decoding
                 TopicFilter = topicFilter,
             });
         }
-        
-        return new(id, requests.ToArray());
+
+        return new(id, requests.ToArray())
+        {
+            Properties = DecodeProperties(buffer, SubscribePropertyUpdaters, ref offset),
+        };
     }
 }
