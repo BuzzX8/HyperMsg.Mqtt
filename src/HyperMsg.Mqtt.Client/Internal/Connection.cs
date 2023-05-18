@@ -24,10 +24,16 @@ public class Connection
 
         if (!response.IsConnAck)
         {
-
+            throw new MqttClientException($"Protocol error. Expected to receive ConnAck but received {response.Type}");
         }
 
+        var connAck = response.ToConnAck();
 
+        if (connAck.ReasonCode != ConnectReasonCode.Success)
+        {
+            await channel.CloseAsync(default);
+            throw new MqttClientException($"{connAck.ReasonCode}");
+        }
     }
 
     private static Connect CreateConnectPacket(ConnectionSettings connectionSettings)
@@ -54,11 +60,6 @@ public class Connection
         }
 
         return connect;
-    }
-
-    private void HandleConAck(ConnAck response)
-    {
-
     }
 }
 

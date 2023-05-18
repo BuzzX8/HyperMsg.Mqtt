@@ -1,6 +1,5 @@
 ﻿using FakeItEasy;
 using HyperMsg.Mqtt.Packets;
-using HyperMsg.Socket;
 using System.Net;
 using Xunit;
 
@@ -10,7 +9,7 @@ public class ConnectionTests
 {
     private readonly IMqttChannel channel;
     private readonly ConnectionSettings settings;
-    private readonly Connection service;
+    private readonly Connection connection;
 
     private readonly EndPoint endPoint = new IPEndPoint(IPAddress.Loopback, 0);
 
@@ -21,36 +20,29 @@ public class ConnectionTests
         {
             EndPoint = endPoint
         };
-        service = new(channel, settings);        
+        connection = new(channel, settings);        
     }
 
     [Fact]
-    public void RequestConnection_Dispatches_Connect_Request()
+    public async Task ConnectAsync_Opens_Channel()
     {
-        var dispatchedRequest = default(ConnectRequest);
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.Success).ToPacket());
 
-        service.ConnectAsync();
+        await connection.ConnectAsync();
 
-        Assert.Equal(endPoint, dispatchedRequest.RemoteEndPoint);
+        A.CallTo(() => channel.OpenAsync(A<CancellationToken>._)).MustHaveHappened();
     }
 
     [Fact]
-    public void ConnectResult_Dispatches_Connect_Packet()
+    public async Task ConnectAsync_Sends_Correct_ConnAck_Packet()
     {
-        var connectPacket = default(Connect);
+        var packet = default(Packet);
 
-        Assert.NotNull(connectPacket);
-    }
+        A.CallTo(() => channel.SendAsync(A<Packet>._, A<CancellationToken>._)).Invokes((Packet p, CancellationToken _) => packet = p);
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.Success).ToPacket());
 
-    [Fact]
-    public void ConAck_Response_Dispatches_ConnectionResult()
-    {
-        var connAck = new ConnAck(ConnectReasonCode.Success, true);
+        await connection.ConnectAsync();
 
-        var response = default(ConnectionResponse);
-
-        Assert.NotNull(response);
-        Assert.Equal(connAck.ReasonCode, response.ResultCode);
-        Assert.Equal(connAck.SessionPresent, response.SessionPresent);
+        Assert.True(packet.IsConnect);
     }
 }
