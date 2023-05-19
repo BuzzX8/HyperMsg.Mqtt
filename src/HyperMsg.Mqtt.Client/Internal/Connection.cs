@@ -61,6 +61,16 @@ public class Connection
 
         return connect;
     }
+
+    public Task DisconnectAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task PingAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public record ConnectionResponse(ConnectReasonCode ResultCode, bool SessionPresent);

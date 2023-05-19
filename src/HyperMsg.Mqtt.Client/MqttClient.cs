@@ -17,9 +17,9 @@ public class MqttClient
 
     public Task ConnectAsync(CancellationToken cancellationToken = default) => connection.ConnectAsync(cancellationToken);
 
-    public Task DisconnectAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task DisconnectAsync(CancellationToken cancellationToken = default) => connection.DisconnectAsync(cancellationToken);
 
-    public Task PingAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task PingAsync(CancellationToken cancellationToken = default) => connection.PingAsync(cancellationToken);
 
     public Task SubscribeAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
 

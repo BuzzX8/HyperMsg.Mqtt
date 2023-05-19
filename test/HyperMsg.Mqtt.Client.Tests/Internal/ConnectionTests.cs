@@ -1,9 +1,10 @@
 ﻿using FakeItEasy;
+using HyperMsg.Mqtt.Client.Internal;
 using HyperMsg.Mqtt.Packets;
 using System.Net;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Client.Internal;
+namespace HyperMsg.Mqtt.Client.Tests.Internal;
 
 public class ConnectionTests
 {
@@ -20,13 +21,13 @@ public class ConnectionTests
         {
             EndPoint = endPoint
         };
-        connection = new(channel, settings);        
+        connection = new(channel, settings);
     }
 
     [Fact]
     public async Task ConnectAsync_Opens_Channel()
     {
-        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.Success).ToPacket());
+        SetSuccessResponse();
 
         await connection.ConnectAsync();
 
@@ -39,10 +40,23 @@ public class ConnectionTests
         var packet = default(Packet);
 
         A.CallTo(() => channel.SendAsync(A<Packet>._, A<CancellationToken>._)).Invokes((Packet p, CancellationToken _) => packet = p);
-        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.Success).ToPacket());
+        SetSuccessResponse();
 
         await connection.ConnectAsync();
 
         Assert.True(packet.IsConnect);
+    }
+
+    private void SetSuccessResponse()
+    {
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.Success).ToPacket());
+    }
+
+    [Fact]
+    public async Task ConnectAsync_Throws_Exception_If_Not_ConnAck_Received()
+    {
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new Subscribe(0).ToPacket());
+
+        await Assert.ThrowsAsync<MqttClientException>(() => connection.ConnectAsync());
     }
 }
