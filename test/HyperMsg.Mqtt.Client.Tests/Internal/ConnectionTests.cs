@@ -59,4 +59,12 @@ public class ConnectionTests
 
         await Assert.ThrowsAsync<MqttClientException>(() => connection.ConnectAsync());
     }
+
+    [Fact]
+    public async Task ConnectAsync_Throws_Exception()
+    {
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new ConnAck(ConnectReasonCode.RetainNotSupported).ToPacket());
+
+        await Assert.ThrowsAsync<MqttClientException>(() => connection.ConnectAsync());
+    }
 }

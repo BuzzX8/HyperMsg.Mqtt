@@ -72,5 +72,3 @@ public class Connection
         throw new NotImplementedException();
     }
 }
-
-public record ConnectionResponse(ConnectReasonCode ResultCode, bool SessionPresent);
