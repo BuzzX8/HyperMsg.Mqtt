@@ -15,5 +15,5 @@ public class Subscribe
 
     public SubscribeProperties Properties { get; internal set; }
 
-    internal Packet ToPacket() => new(PacketType.Subscribe, this);
+    public Packet ToPacket() => new(PacketType.Subscribe, this);
 }

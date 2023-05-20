@@ -48,4 +48,6 @@ public class Connect : IEquatable<Connect>
     internal Packet ToPacket() => new(PacketType.Connect, this);
 
     public override string ToString() => $"Connect(ClientId={ClientId})";
+
+    public static implicit operator Packet(Connect connect) => connect.ToPacket();
 }

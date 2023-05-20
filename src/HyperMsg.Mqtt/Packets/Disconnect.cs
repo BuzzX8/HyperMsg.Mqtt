@@ -1,6 +1,5 @@
 ﻿namespace HyperMsg.Mqtt.Packets;
 
-public record class Disconnect
+public record class Disconnect(DisconnectReasonCode ReasonCode = DisconnectReasonCode.NormalDisconnection, DisconnectProperties Properties = null)
 {
-    public static readonly Disconnect Instance = new();
 }

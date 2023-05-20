@@ -8,7 +8,7 @@ public interface IMqttChannel
 
     Task CloseAsync(CancellationToken cancellationToken);
 
-    Task<int> SendAsync(Packet packet, CancellationToken cancellationToken);
+    Task SendAsync(Packet packet, CancellationToken cancellationToken);
 
     Task<Packet> ReceiveAsync(CancellationToken cancellationToken);
 }

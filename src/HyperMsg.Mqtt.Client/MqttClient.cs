@@ -1,17 +1,25 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Mqtt.Client.Internal;
+using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Client;
 
 public class MqttClient
 {
-    public Task ConnectAsync(CancellationToken cancellationToken = default)
+    private readonly Connection connection;
+
+    public MqttClient(IMqttChannel channel, ConnectionSettings settings)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(channel, nameof(channel));
+        ArgumentNullException.ThrowIfNull(settings, nameof(settings));
+
+        connection = new(channel, settings);
     }
 
-    public Task DisconnectAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task ConnectAsync(CancellationToken cancellationToken = default) => connection.ConnectAsync(cancellationToken);
 
-    public Task PingAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task DisconnectAsync(CancellationToken cancellationToken = default) => connection.DisconnectAsync(cancellationToken);
+
+    public Task PingAsync(CancellationToken cancellationToken = default) => connection.PingAsync(cancellationToken);
 
     public Task SubscribeAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
 
