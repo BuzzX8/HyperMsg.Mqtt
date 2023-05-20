@@ -4,6 +4,11 @@ public readonly struct Packet
 {
     private readonly object packet;
 
+    public Packet()
+    {
+        throw new NotImplementedException();
+    }
+
     internal Packet(PacketType type, object packet)
     {
         this.packet = packet;
