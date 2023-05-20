@@ -71,4 +71,9 @@ public class Connection
     {
         throw new NotImplementedException();
     }
+
+    public void HandleDisconnect(Disconnect disconnect)
+    {
+        throw new NotImplementedException();
+    }
 }
