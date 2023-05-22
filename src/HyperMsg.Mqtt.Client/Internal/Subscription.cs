@@ -1,15 +1,22 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System.Collections.Concurrent;
+using SendAction = System.Func<HyperMsg.Mqtt.Packets.Packet, System.Threading.CancellationToken, System.Threading.Tasks.Task>;
 
 namespace HyperMsg.Mqtt.Client.Internal;
 
-public class SubscriptionService : Service
+public class Subscription
 {
     private readonly ConcurrentDictionary<ushort, Subscribe> requestedSubscriptions;
     private readonly ConcurrentDictionary<ushort, Unsubscribe> requestedUnsubscriptions;
 
-    public SubscriptionService(ITopic messageTopic) : base(messageTopic)
+    private readonly SendAction sendAction;
+
+    public Subscription(SendAction sendAction)
     {
+        ArgumentNullException.ThrowIfNull(sendAction, nameof(sendAction));
+
+        this.sendAction = sendAction;
+
         requestedSubscriptions = new();
         requestedUnsubscriptions = new();
     }
@@ -18,27 +25,14 @@ public class SubscriptionService : Service
 
     public IReadOnlyDictionary<ushort, Unsubscribe> PendingUnsubscriptionRequests => requestedUnsubscriptions;
 
-    protected override void RegisterHandlers(IRegistry registry)
+    public async Task<ushort> RequestSubscriptionAsync(IEnumerable<SubscriptionRequest> subscriptions, CancellationToken cancellationToken = default)
     {
-        registry.Register<SubAck>(HandleSubscriptionResponse);
-        registry.Register<UnsubAck>(HandleUnsubAckResponse);
-    }
+        var request = new Subscribe(PacketId.New(), subscriptions);
+        requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
+        
+        await sendAction.Invoke(request, cancellationToken);
 
-    protected override void UnregisterHandlers(IRegistry registry)
-    {
-        registry.Unregister<SubAck>(HandleSubscriptionResponse);
-        registry.Unregister<UnsubAck>(HandleUnsubAckResponse);
-    }
-
-    public ushort RequestSubscription(params SubscriptionRequest[] subscriptions) => RequestSubscription((IEnumerable<SubscriptionRequest>)subscriptions);
-
-    public ushort RequestSubscription(IEnumerable<SubscriptionRequest> subscriptions)
-    {
-        //var request = new Subscribe(PacketId.New(), subscriptions);
-        //requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
-        //Dispatch(request);
-        //return request.Id;
-        return default;
+        return request.Id;
     }
 
     public ushort RequestUnsubscription(params string[] topicNames) => RequestUnsubscription((IEnumerable<string>)topicNames);
@@ -47,7 +41,7 @@ public class SubscriptionService : Service
     {
         var request = new Unsubscribe(PacketId.New(), topicNames);
         requestedUnsubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
-        Dispatch(request);
+        //Dispatch(request);
         return request.Id;
     }
 
