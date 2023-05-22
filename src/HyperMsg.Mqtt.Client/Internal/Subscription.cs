@@ -25,9 +25,9 @@ public class Subscription
 
     public IReadOnlyDictionary<ushort, Unsubscribe> PendingUnsubscriptionRequests => requestedUnsubscriptions;
 
-    public async Task<ushort> RequestSubscriptionAsync(IEnumerable<SubscriptionRequest> subscriptions, CancellationToken cancellationToken = default)
+    public async Task<ushort> RequestSubscriptionAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default)
     {
-        var request = new Subscribe(PacketId.New(), subscriptions);
+        var request = new Subscribe(PacketId.New(), requests);
         requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
         
         await sendAction.Invoke(request, cancellationToken);
@@ -35,17 +35,17 @@ public class Subscription
         return request.Id;
     }
 
-    public ushort RequestUnsubscription(params string[] topicNames) => RequestUnsubscription((IEnumerable<string>)topicNames);
-
-    public ushort RequestUnsubscription(IEnumerable<string> topicNames)
+    public async Task<ushort> RequestUnsubscriptionAsync(IEnumerable<string> topicFilters, CancellationToken cancellationToken = default)
     {
-        var request = new Unsubscribe(PacketId.New(), topicNames);
+        var request = new Unsubscribe(PacketId.New(), topicFilters);
         requestedUnsubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
-        //Dispatch(request);
+
+        await sendAction.Invoke(request, default);
+        
         return request.Id;
     }
 
-    private void HandleSubscriptionResponse(SubAck response)
+    private void HandleSubAck(SubAck response)
     {
         if (!requestedSubscriptions.TryGetValue(response.Id, out var request))
         {
@@ -57,7 +57,7 @@ public class Subscription
         requestedSubscriptions.Remove(response.Id, out _);
     }
 
-    private void HandleUnsubAckResponse(UnsubAck unsubAck)
+    private void HandleUnsubAck(UnsubAck unsubAck)
     {
         if (!requestedUnsubscriptions.ContainsKey(unsubAck.Id))
         {
