@@ -29,7 +29,7 @@ public class Subscription
     {
         var request = new Subscribe(PacketId.New(), requests);
         requestedSubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
-        
+
         await sendAction.Invoke(request, cancellationToken);
 
         return request.Id;
@@ -41,7 +41,7 @@ public class Subscription
         requestedUnsubscriptions.AddOrUpdate(request.Id, request, (id, val) => val);
 
         await sendAction.Invoke(request, default);
-        
+
         return request.Id;
     }
 

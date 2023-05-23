@@ -1,15 +1,21 @@
 ﻿using HyperMsg.Mqtt.Packets;
 using System.Collections.Concurrent;
+using SendAction = System.Func<HyperMsg.Mqtt.Packets.Packet, System.Threading.CancellationToken, System.Threading.Tasks.Task>;
 
 namespace HyperMsg.Mqtt.Client.Internal;
 
-public class PublishService : Service
+public class Publishing
 {
     private readonly ConcurrentDictionary<ushort, Publish> pendingPublications;
     private readonly ConcurrentBag<ushort> releasedPublications;
 
-    public PublishService(ITopic messageTopic) : base(messageTopic)
+    private readonly SendAction sendAction;
+
+    public Publishing(SendAction sendAction)
     {
+        ArgumentNullException.ThrowIfNull(sendAction, nameof(sendAction));
+        this.sendAction = sendAction;
+
         pendingPublications = new();
         releasedPublications = new();
     }
@@ -18,30 +24,33 @@ public class PublishService : Service
 
     public IReadOnlyCollection<ushort> ReleasedPublications => releasedPublications;
 
-    public ushort Publish(PublishRequest publishRequest)
+    public Task<ushort> PublishAsync(PublishRequest publishRequest, CancellationToken cancellationToken = default)
     {
         var publish = new Publish(PacketId.New(), publishRequest.TopicName, publishRequest.Message, publishRequest.Qos);
-        return DispatchPublish(publish);
+
+        return DispatchPublish(publish, cancellationToken);
     }
 
-    public ushort Publish(string topicName, ReadOnlyMemory<byte> message, QosLevel qos)
+    public Task<ushort> PublishAsync(string topicName, ReadOnlyMemory<byte> message, QosLevel qos, CancellationToken cancellationToken = default)
     {
         var publish = new Publish(PacketId.New(), topicName, message, qos);
-        return DispatchPublish(publish);
+
+        return DispatchPublish(publish, cancellationToken);
     }
 
-    private ushort DispatchPublish(Publish publish)
+    private async Task<ushort> DispatchPublish(Publish publish, CancellationToken cancellationToken)
     {
         if (publish.Qos != QosLevel.Qos0)
         {
             pendingPublications.TryAdd(publish.Id, publish);
         }
 
-        Dispatch(publish);
+        await sendAction.Invoke(publish, cancellationToken);
+
         return publish.Id;
     }
 
-    private void HandlePubAckResponse(PubAck pubAck)
+    private void HandlePubAck(PubAck pubAck)
     {
         if (pendingPublications.TryGetValue(pubAck.Id, out var publish) && publish.Qos == QosLevel.Qos1)
         {
@@ -49,18 +58,19 @@ public class PublishService : Service
         }
     }
 
-    private void HandlePubRecResponse(PubRec pubRec)
+    public async Task HandlePubRecAsync(PubRec pubRec, CancellationToken cancellationToken = default)
     {
         if (!pendingPublications.TryGetValue(pubRec.Id, out var publish) && publish.Qos != QosLevel.Qos2)
         {
             return;
         }
 
-        Dispatch(new PubRel(pubRec.Id));
+        await sendAction.Invoke(new PubRel(pubRec.Id), cancellationToken);
+
         releasedPublications.Add(pubRec.Id);
     }
 
-    private void HandlePubCompResponse(PubComp pubComp)
+    private void HandlePubComp(PubComp pubComp)
     {
         if (!releasedPublications.Contains(pubComp.Id) && !pendingPublications.TryGetValue(pubComp.Id, out var publish) && publish.Qos != QosLevel.Qos2)
         {
@@ -69,19 +79,5 @@ public class PublishService : Service
 
         pendingPublications.Remove(pubComp.Id, out var _);
         releasedPublications.TryTake(out _);
-    }
-
-    protected override void RegisterHandlers(IRegistry registry)
-    {
-        registry.Register<PubAck>(HandlePubAckResponse);
-        registry.Register<PubRec>(HandlePubRecResponse);
-        registry.Register<PubComp>(HandlePubCompResponse);
-    }
-
-    protected override void UnregisterHandlers(IRegistry registry)
-    {
-        registry.Unregister<PubAck>(HandlePubAckResponse);
-        registry.Unregister<PubRec>(HandlePubRecResponse);
-        registry.Unregister<PubComp>(HandlePubCompResponse);
     }
 }

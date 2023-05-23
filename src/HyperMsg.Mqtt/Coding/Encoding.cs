@@ -163,10 +163,10 @@ public static class Encoding
 
     public static void Encode(IBufferWriter writer, Unsubscribe unsubscribe)
     {
-        var contentLength = GetTopicsByteCount(unsubscribe.Topics) + sizeof(ushort);//ID + topics
+        var contentLength = GetTopicsByteCount(unsubscribe.TopicFilters) + sizeof(ushort);//ID + topics
         WriteHeaderWithLength(writer, PacketCodes.Unsubscribe, unsubscribe.Id, contentLength);
 
-        foreach (var topic in unsubscribe.Topics)
+        foreach (var topic in unsubscribe.TopicFilters)
         {
             int written = writer.WriteString(topic);
             writer.Advance(written);

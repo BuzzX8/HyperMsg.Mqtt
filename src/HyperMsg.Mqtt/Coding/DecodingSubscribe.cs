@@ -7,7 +7,7 @@ public static partial class Decoding
     private static readonly Dictionary<byte, PropertyUpdater<SubscribeProperties>> SubscribePropertyUpdaters = new()
     {
         [0x0B] = (SubscribeProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SubscriptionIdentifier = b.ReadVarInt(ref offset),
-        [0x26] = (SubscribeProperties p, ReadOnlySpan<byte> b, ref int offset) => 
+        [0x26] = (SubscribeProperties p, ReadOnlySpan<byte> b, ref int offset) =>
         {
             p.UserProperties ??= new();
             ReadUserProperty(p.UserProperties, b, ref offset);
@@ -19,7 +19,7 @@ public static partial class Decoding
         var offset = 1;
         var packetSize = buffer.ReadVarInt(ref offset);
         var id = buffer.ReadUInt16(ref offset);
-        
+
         var requests = new List<SubscriptionRequest>();
 
         while (offset < packetSize)
