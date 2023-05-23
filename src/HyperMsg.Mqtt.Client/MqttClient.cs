@@ -27,5 +27,5 @@ public class MqttClient
 
     public Task PublishAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
 
-    public event Action<Publish> PublishReceived;
+    public event Action<Packets.Publish> PublishReceived;
 }

@@ -39,5 +39,7 @@ public class Publish : IEquatable<Publish>
             && packet?.Id == Id;
     }
 
-    internal Packet ToPacket() => new(PacketType.Publish, this);
+    public Packet ToPacket() => new(PacketType.Publish, this);
+
+    public static implicit operator Packet(Publish publish) => publish.ToPacket();
 }
