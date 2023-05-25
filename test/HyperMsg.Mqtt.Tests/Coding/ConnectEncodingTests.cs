@@ -11,10 +11,9 @@ public class ConnectEncodingTests
     public void Encode_Connect_With_Password_Flag()
     {
         byte[] password = Guid.NewGuid().ToByteArray();
-        var packet = new Connect
+        var packet = Connect.NewV5(Guid.NewGuid().ToString()) with
         {
             Flags = ConnectFlags.Password,
-            ClientId = Guid.NewGuid().ToString(),
             Password = password
         };
 
@@ -31,9 +30,8 @@ public class ConnectEncodingTests
     public void Encode_Connect_With_Username_Flag()
     {
         string username = Guid.NewGuid().ToString();
-        var packet = new Connect
+        var packet = Connect.NewV5(Guid.NewGuid().ToString()) with
         {
-            ClientId = Guid.NewGuid().ToString(),
             Flags = ConnectFlags.UserName,
             UserName = username
         };
@@ -51,9 +49,8 @@ public class ConnectEncodingTests
     {
         string willTopic = Guid.NewGuid().ToString();
         byte[] willMessage = Guid.NewGuid().ToByteArray();
-        var packet = new Connect
+        var packet = Connect.NewV5(Guid.NewGuid().ToString()) with
         {
-            ClientId = Guid.NewGuid().ToString(),
             Flags = ConnectFlags.Will,
             WillTopic = willTopic,
             WillPayload = willMessage
@@ -85,11 +82,10 @@ public class ConnectEncodingTests
     {
         ushort keepAlive = BitConverter.ToUInt16(Guid.NewGuid().ToByteArray(), 0);
         string clientId = Guid.NewGuid().ToString();
-        var packet = new Connect
+        var packet = Connect.NewV5(clientId) with
         {
             Flags = flags,
-            KeepAlive = keepAlive,
-            ClientId = clientId
+            KeepAlive = keepAlive
         };
         var expected = CreateConnectHeader(packet);
         SetRemainingLength(expected);
