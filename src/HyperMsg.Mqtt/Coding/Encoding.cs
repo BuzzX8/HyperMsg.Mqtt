@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Packets;
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
 
@@ -9,7 +10,6 @@ public static partial class Encoding
     private static readonly byte[] Disconnect = { 0b11100000, 0b00000000 };
     private static readonly byte[] PingResp = { 0b11010000, 0b00000000 };
     private static readonly byte[] PingReq = { 0b11000000, 0b00000000 };
-    private static readonly byte[] ProtocolName = { 0, 4, (byte)'M', (byte)'Q', (byte)'T', (byte)'T', 4 };
 
     public static void Encode(IBufferWriter writer, ConnAck connAck)
     {
@@ -47,7 +47,7 @@ public static partial class Encoding
         var written = buffer.Span[1..].WriteVarInt(contentLength);
         writer.Advance(written + 1);
 
-        written = writer.WriteString(publish.TopicName);
+        written = 0;// writer.WriteString(publish.TopicName);
         writer.Advance(written);
 
         buffer = writer.GetMemory(publish.Payload.Length + sizeof(ushort));
@@ -105,7 +105,7 @@ public static partial class Encoding
 
         foreach (var topic in unsubscribe.TopicFilters)
         {
-            int written = writer.WriteString(topic);
+            int written = 0;// writer.WriteString(topic);
             writer.Advance(written);
         }
     }
@@ -147,11 +147,25 @@ public static partial class Encoding
 
     public static void Encode(IBufferWriter writer, Disconnect _) => writer.Write(Disconnect);
 
-    public static int WriteByte(this Span<byte> buffer, byte value)
+    private static void WriteByte(this Span<byte> buffer, byte value, ref int offset)
     {
-        buffer[0] = value;
-        return sizeof(byte);
+        buffer[offset] = value;
+        offset += sizeof(byte);
     }
+
+    private static void WriteUInt16(this Span<byte> buffer, ushort value, ref int offset)
+    {
+        BinaryPrimitives.WriteUInt16BigEndian(buffer[offset..], value);
+        offset += sizeof(ushort);
+    }
+
+    private static void WriteUInt32(this Span<byte> buffer, uint value, ref int offset)
+    {
+        BinaryPrimitives.WriteUInt32BigEndian(buffer[offset..], value);
+        offset += sizeof(uint);
+    }
+
+    private static void WriteVarInt(this Span<byte> buffer, int value, ref int offset) => offset += WriteVarInt(buffer[offset..], value);
 
     public static int WriteVarInt(this Span<byte> buffer, int value)
     {
@@ -183,12 +197,25 @@ public static partial class Encoding
         return 1;
     }
 
-    public static int WriteString(this IBufferWriter writer, string value)
+    private static void WriteBinaryData(this Span<byte> buffer, ReadOnlySpan<byte> data, ref int offset)
     {
-        var span = writer.GetSpan(System.Text.Encoding.UTF8.GetByteCount(value) + sizeof(ushort));
+        buffer.WriteUInt16((ushort)data.Length, ref offset);
+        data.CopyTo(buffer[offset..]);
+    }
+
+    public static void WriteString(this Span<byte> buffer, string value, ref int offset)
+    {
+        var length = System.Text.Encoding.UTF8.GetByteCount(value);
+
+        if (length > ushort.MaxValue - sizeof(ushort))
+        {
+            throw new EncodingError($"String length too big. It must be less of equal {ushort.MaxValue - sizeof(ushort)}");
+        }
+
         var bytes = System.Text.Encoding.UTF8.GetBytes(value);
-        BinaryPrimitives.WriteUInt16BigEndian(span, (ushort)bytes.Length);
-        bytes.CopyTo(span[sizeof(ushort)..]);
-        return bytes.Length + sizeof(ushort);
+
+        buffer.WriteUInt16((ushort)length, ref offset);
+        bytes.CopyTo(buffer[offset..]);
+        offset += bytes.Length;
     }
 }

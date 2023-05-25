@@ -4,9 +4,9 @@ public class Connect : IEquatable<Connect>
 {
     #region Variable header
 
-    public string ProtocolName { get; set; }
+    public string ProtocolName { get; set; } = "MQTT";
 
-    public byte ProtocolVersion { get; set; }
+    public byte ProtocolVersion { get; set; } = 5;
 
     public ConnectFlags Flags { get; set; }
 

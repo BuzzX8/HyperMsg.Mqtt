@@ -1,13 +1,11 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System.Buffers;
 using Xunit;
 
 namespace HyperMsg.Mqtt.Coding;
 
 public class ConnectEncodingTests
 {
-    private readonly Buffer buffer;
-    private readonly IBufferWriter bufferWriter;
+    private readonly byte[] buffer = new byte[1000];
 
     [Fact(DisplayName = "Encodes Connect packet with Password flag")]
     public void Encode_Connect_With_Password_Flag()
@@ -19,11 +17,12 @@ public class ConnectEncodingTests
             ClientId = Guid.NewGuid().ToString(),
             Password = password
         };
+
         var expected = CreateConnectHeader(packet);
         AddBinary(expected, password);
         SetRemainingLength(expected);
 
-        Encoding.Encode(bufferWriter, packet);
+        Encoding.Encode(buffer, packet);
 
         VerifySerialization(expected.ToArray());
     }
@@ -42,7 +41,7 @@ public class ConnectEncodingTests
         AddString(expected, username);
         SetRemainingLength(expected);
 
-        Encoding.Encode(bufferWriter, packet);
+        Encoding.Encode(buffer, packet);
 
         VerifySerialization(expected.ToArray());
     }
@@ -64,7 +63,7 @@ public class ConnectEncodingTests
         AddBinary(expected, willMessage);
         SetRemainingLength(expected);
 
-        Encoding.Encode(bufferWriter, packet);
+        Encoding.Encode(buffer, packet);
 
         VerifySerialization(expected.ToArray());
     }
@@ -95,7 +94,7 @@ public class ConnectEncodingTests
         var expected = CreateConnectHeader(packet);
         SetRemainingLength(expected);
 
-        Encoding.Encode(bufferWriter, packet);
+        Encoding.Encode(buffer, packet);
 
         VerifySerialization(expected.ToArray());
     }
@@ -107,7 +106,7 @@ public class ConnectEncodingTests
             0x10, //Type code
 				0, //Length placeholder
 				0, 4, (byte)'M', (byte)'Q', (byte)'T', (byte)'T', //Protocol name
-				4, //Protocol level
+				5, //Protocol version
 				(byte)packet.Flags, //Flags
 				(byte)(packet.KeepAlive >> 8), (byte)packet.KeepAlive,
 				//0, (byte)packet.ClientId.Length//Client ID length
@@ -135,7 +134,7 @@ public class ConnectEncodingTests
 
     private void VerifySerialization(params byte[] expected)
     {
-        var actual = buffer.Reader.GetMemory().ToArray();
+        var actual = buffer[..(expected.Length)];
         Assert.Equal(expected, actual);
     }
 }
