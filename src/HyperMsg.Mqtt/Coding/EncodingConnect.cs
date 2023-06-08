@@ -6,7 +6,7 @@ public static partial class Encoding
 {
     const byte ConnectCode = 0b00010000;
 
-    public static void Encode(Span<byte> buffer, Connect connect)
+    private static void Encode(Span<byte> buffer, Connect connect, out int bytesWritten)
     {
         var contentLength = 10 + GetStringByteCount(connect.ClientId);
 
@@ -53,5 +53,7 @@ public static partial class Encoding
         {
             buffer.WriteBinaryData(connect.Password.Span, ref offset);
         }
+
+        bytesWritten = offset;
     }
 }

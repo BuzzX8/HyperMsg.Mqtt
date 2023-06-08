@@ -1,5 +1,4 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using System;
 using System.Buffers;
 using System.Buffers.Binary;
 
@@ -10,6 +9,19 @@ public static partial class Encoding
     private static readonly byte[] Disconnect = { 0b11100000, 0b00000000 };
     private static readonly byte[] PingResp = { 0b11010000, 0b00000000 };
     private static readonly byte[] PingReq = { 0b11000000, 0b00000000 };
+
+    public static void Encode(Span<byte> buffer, Packet packet, out int bytesWritten)
+    {
+        switch (packet.Type)
+        {
+            case PacketType.Connect:
+                Encode(buffer, packet.ToConnect(), out bytesWritten);
+                break;
+
+            default:
+                throw new NotSupportedException();
+        }
+    }
 
     public static void Encode(IBufferWriter writer, ConnAck connAck)
     {

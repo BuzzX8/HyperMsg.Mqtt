@@ -17,13 +17,7 @@ public class ConnectEncodingTests
             Password = password
         };
 
-        var expected = CreateConnectHeader(packet);
-        AddBinary(expected, password);
-        SetRemainingLength(expected);
-
-        Encoding.Encode(buffer, packet);
-
-        VerifySerialization(expected.ToArray());
+        VerifyEncoding(packet);
     }
 
     [Fact(DisplayName = "Encode Connect with Username flag")]
@@ -35,13 +29,8 @@ public class ConnectEncodingTests
             Flags = ConnectFlags.UserName,
             UserName = username
         };
-        var expected = CreateConnectHeader(packet);
-        AddString(expected, username);
-        SetRemainingLength(expected);
 
-        Encoding.Encode(buffer, packet);
-
-        VerifySerialization(expected.ToArray());
+        VerifyEncoding(packet);
     }
 
     [Fact(DisplayName = "Encodes Connect with Will flag")]
@@ -55,14 +44,8 @@ public class ConnectEncodingTests
             WillTopic = willTopic,
             WillPayload = willMessage
         };
-        var expected = CreateConnectHeader(packet);
-        AddString(expected, willTopic);
-        AddBinary(expected, willMessage);
-        SetRemainingLength(expected);
 
-        Encoding.Encode(buffer, packet);
-
-        VerifySerialization(expected.ToArray());
+        VerifyEncoding(packet);
     }
 
     public static IEnumerable<object[]> GetTestCasesForConnectEncoding()
@@ -87,50 +70,19 @@ public class ConnectEncodingTests
             Flags = flags,
             KeepAlive = keepAlive
         };
-        var expected = CreateConnectHeader(packet);
-        SetRemainingLength(expected);
 
-        Encoding.Encode(buffer, packet);
-
-        VerifySerialization(expected.ToArray());
+        VerifyEncoding(packet);
     }
 
-    private static List<byte> CreateConnectHeader(Connect packet)
+    private static void VerifyEncoding(Connect packet)
     {
-        List<byte> expected = new List<byte>
-        {
-            0x10, //Type code
-				0, //Length placeholder
-				0, 4, (byte)'M', (byte)'Q', (byte)'T', (byte)'T', //Protocol name
-				5, //Protocol version
-				(byte)packet.Flags, //Flags
-				(byte)(packet.KeepAlive >> 8), (byte)packet.KeepAlive,
-				//0, (byte)packet.ClientId.Length//Client ID length
-			};
-        AddString(expected, packet.ClientId);
-        return expected;
-    }
+        var buffer = new byte[1000];
 
-    private static void AddBinary(List<byte> packet, byte[] bytes)
-    {
-        packet.AddRange(new byte[] { 0, (byte)bytes.Length });
-        packet.AddRange(bytes);
-    }
+        Encoding.Encode(buffer, packet, out var bytesWritten);
 
-    private static void AddString(List<byte> packet, string str)
-    {
-        packet.AddRange(new byte[] { 0, (byte)str.Length });
-        packet.AddRange(System.Text.Encoding.UTF8.GetBytes(str));
-    }
+        var decodedPacket = Decoding.Decode(buffer[..bytesWritten], out var bytesRead).ToConnect();
 
-    private static void SetRemainingLength(List<byte> packet)
-    {
-        packet[1] = (byte)(packet.Count - 2);
-    }
-
-    private void VerifySerialization(params byte[] expected)
-    {
-        var actual = buffer[..(expected.Length)];
-        Assert.Equal(expected, actual);
+        Assert.Equal(bytesWritten, bytesRead);
+        Assert.Equal(packet, decodedPacket);
     }
 }
