@@ -1,12 +1,14 @@
 ﻿namespace HyperMsg.Mqtt.Packets;
 
-public class Connect : IEquatable<Connect>
+public record Connect
 {
+    internal Connect() { }
+
     #region Variable header
 
-    public string ProtocolName { get; set; }
+    public string ProtocolName { get; internal set; }
 
-    public byte ProtocolVersion { get; set; }
+    public byte ProtocolVersion { get; internal set; }
 
     public ConnectFlags Flags { get; set; }
 
@@ -32,22 +34,19 @@ public class Connect : IEquatable<Connect>
 
     #endregion
 
-    public override int GetHashCode() => Flags.GetHashCode() ^ ClientId.GetHashCode();
-
-    public override bool Equals(object obj) => Equals(obj as Connect);
-
-    public bool Equals(Connect packet)
-    {
-        return packet?.Flags == Flags
-               && packet.KeepAlive == KeepAlive
-               && packet.ClientId == ClientId
-               && packet.WillTopic == WillTopic
-               && packet.UserName == UserName;
-    }
-
     internal Packet ToPacket() => new(PacketType.Connect, this);
 
     public override string ToString() => $"Connect(ClientId={ClientId})";
+
+    public static Connect NewV5(string clientId)
+    {
+        return new()
+        {
+            ProtocolName = "MQTT",
+            ProtocolVersion = 5,
+            ClientId = clientId,
+        };
+    }
 
     public static implicit operator Packet(Connect connect) => connect.ToPacket();
 }

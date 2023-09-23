@@ -45,9 +45,8 @@ public class Connection
             flags |= ConnectFlags.CleanSession;
         }
 
-        var connect = new Connect
+        var connect = Connect.NewV5(connectionSettings.ClientId) with
         {
-            ClientId = connectionSettings.ClientId,
             KeepAlive = connectionSettings.KeepAlive,
             Flags = flags
         };

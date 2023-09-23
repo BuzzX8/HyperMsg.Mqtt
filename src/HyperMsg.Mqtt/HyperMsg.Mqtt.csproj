@@ -6,8 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HyperMsg.Core" Version="1.0.221206-a" />
-    <PackageReference Include="HyperMsg.Socket" Version="1.0.221206-a" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
   </ItemGroup>
 
