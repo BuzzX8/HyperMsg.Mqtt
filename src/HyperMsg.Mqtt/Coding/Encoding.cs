@@ -15,7 +15,7 @@ public static partial class Encoding
         switch (packet.Type)
         {
             case PacketType.Connect:
-                Encode(buffer, packet.ToConnect(), out bytesWritten);
+                EncodeConnect(buffer, packet.ToConnect(), out bytesWritten);
                 break;
 
             default:
@@ -23,19 +23,15 @@ public static partial class Encoding
         }
     }
 
-    public static void Encode(IBufferWriter writer, ConnAck connAck)
+    public static void Encode(Span<byte> buffer, ConnAck connAck)
     {
-        var span = writer.GetSpan(4);
-
-        span[0] = 0x20;
-        span[1] = 0x02;
-        span[2] = (byte)(connAck.SessionPresent ? 1 : 0);
-        span[3] = (byte)connAck.ReasonCode;
-
-        writer.Advance(4);
+        buffer[0] = 0x20;
+        buffer[1] = 0x02;
+        buffer[2] = (byte)(connAck.SessionPresent ? 1 : 0);
+        buffer[3] = (byte)connAck.ReasonCode;
     }
 
-    public static void Encode(IBufferWriter writer, Publish publish)
+    public static void Encode(Span<byte> buffer, Publish publish)
     {
         byte header = 0b00110000;
 
@@ -51,33 +47,33 @@ public static partial class Encoding
             header |= 0x01;
         }
 
-        int contentLength = GetStringByteCount(publish.TopicName) + sizeof(ushort) + publish.Payload.Length;
-        var buffer = writer.GetMemory(5);//code + max length
-        var span = buffer.Span;
+        //int contentLength = GetStringByteCount(publish.TopicName) + sizeof(ushort) + publish.Payload.Length;
+        //var buffer = writer.GetMemory(5);//code + max length
+        //var span = buffer.Span;
 
-        span[0] = header;
-        var written = buffer.Span[1..].WriteVarInt(contentLength);
-        writer.Advance(written + 1);
+        //span[0] = header;
+        //var written = buffer.Span[1..].WriteVarInt(contentLength);
+        //writer.Advance(written + 1);
 
-        written = 0;// writer.WriteString(publish.TopicName);
-        writer.Advance(written);
+        //written = 0;// writer.WriteString(publish.TopicName);
+        //writer.Advance(written);
 
-        buffer = writer.GetMemory(publish.Payload.Length + sizeof(ushort));
-        span = buffer.Span;
-        BinaryPrimitives.WriteUInt16BigEndian(span, publish.Id);
-        publish.Payload.CopyTo(buffer[sizeof(ushort)..]);
-        writer.Advance(publish.Payload.Length + sizeof(ushort));
+        //buffer = writer.GetMemory(publish.Payload.Length + sizeof(ushort));
+        //span = buffer.Span;
+        //BinaryPrimitives.WriteUInt16BigEndian(span, publish.Id);
+        //publish.Payload.CopyTo(buffer[sizeof(ushort)..]);
+        //writer.Advance(publish.Payload.Length + sizeof(ushort));
     }
 
-    public static void Encode(IBufferWriter writer, PubAck pubAck) => WriteShortPacket(writer, PacketCodes.Puback, pubAck.Id);
+    public static void Encode(Span<byte> buffer, PubAck pubAck) => WriteShortPacket(buffer, PacketCodes.Puback, pubAck.Id);
 
-    public static void Encode(IBufferWriter writer, PubRec pubRec) => WriteShortPacket(writer, PacketCodes.Pubrec, pubRec.Id);
+    public static void Encode(Span<byte> buffer, PubRec pubRec) => WriteShortPacket(buffer, PacketCodes.Pubrec, pubRec.Id);
 
-    public static void Encode(IBufferWriter writer, PubRel pubRel) => WriteShortPacket(writer, PacketCodes.Pubrel, pubRel.Id);
+    public static void Encode(Span<byte> buffer, PubRel pubRel) => WriteShortPacket(buffer, PacketCodes.Pubrel, pubRel.Id);
 
-    public static void Encode(IBufferWriter writer, PubComp pubComp) => WriteShortPacket(writer, PacketCodes.Pubcomp, pubComp.Id);
+    public static void Encode(Span<byte> buffer, PubComp pubComp) => WriteShortPacket(buffer, PacketCodes.Pubcomp, pubComp.Id);
 
-    public static void Encode(IBufferWriter writer, Subscribe subscribe)
+    public static void Encode(Span<byte> buffer, Subscribe subscribe)
     {
         //var contentLength = GetSubscriptionsByteCount(subscribe.Subscriptions) + sizeof(ushort);//ID + subscriptions
         //WriteHeaderWithLength(writer, PacketCodes.Subscribe, subscribe.Id, contentLength);
@@ -94,70 +90,59 @@ public static partial class Encoding
 
     //private static int GetSubscriptionsByteCount(IEnumerable<SubscriptionRequest> subscriptions) => subscriptions.Aggregate(0, (a, s) => a + GetStringByteCount(s.TopicName) + 1);
 
-    public static void Encode(IBufferWriter writer, SubAck subAck)
+    public static void Encode(Span<byte> buffer, SubAck subAck)
     {
         var results = subAck.Results.ToArray();
         var contentLength = results.Length + sizeof(ushort);
-        WriteHeaderWithLength(writer, PacketCodes.SubAck, subAck.Id, contentLength);
-
-        var span = writer.GetSpan(results.Length);
-
+        WriteHeaderWithLength(buffer, PacketCodes.SubAck, subAck.Id, contentLength);
+        
         for (int i = 0; i < results.Length; i++)
         {
-            span[i] = (byte)results[i];
+            buffer[i] = (byte)results[i];
         }
-
-        writer.Advance(results.Length);
     }
 
-    public static void Encode(IBufferWriter writer, Unsubscribe unsubscribe)
+    public static void Encode(Span<byte> buffer, Unsubscribe unsubscribe)
     {
         var contentLength = GetTopicsByteCount(unsubscribe.TopicFilters) + sizeof(ushort);//ID + topics
-        WriteHeaderWithLength(writer, PacketCodes.Unsubscribe, unsubscribe.Id, contentLength);
+        WriteHeaderWithLength(buffer, PacketCodes.Unsubscribe, unsubscribe.Id, contentLength);
 
-        foreach (var topic in unsubscribe.TopicFilters)
-        {
-            int written = 0;// writer.WriteString(topic);
-            writer.Advance(written);
-        }
+        //foreach (var topic in unsubscribe.TopicFilters)
+        //{
+        //    int written = 0;// writer.WriteString(topic);
+        //    writer.Advance(written);
+        //}
     }
 
-    private static void WriteHeaderWithLength(IBufferWriter writer, byte code, ushort packetId, int contentLength)
+    private static void WriteHeaderWithLength(Span<byte> buffer, byte code, ushort packetId, int contentLength)
     {
-        var buffer = writer.GetMemory(5);//code + max length
-        var span = buffer.Span;
+        buffer[0] = code;
+        var written = buffer[1..].WriteVarInt(contentLength);
+        //writer.Advance(written + 1);
 
-        span[0] = code;
-        var written = buffer.Span[1..].WriteVarInt(contentLength);
-        writer.Advance(written + 1);
-
-        span = writer.GetSpan(sizeof(ushort));
-        BinaryPrimitives.WriteUInt16BigEndian(span, packetId);
-        writer.Advance(sizeof(ushort));
+        //span = writer.GetSpan(sizeof(ushort));
+        //BinaryPrimitives.WriteUInt16BigEndian(span, packetId);
+        //writer.Advance(sizeof(ushort));
     }
 
     private static int GetTopicsByteCount(IEnumerable<string> topics) => topics.Aggregate(0, (a, s) => a + GetStringByteCount(s));
 
     private static int GetStringByteCount(string str) => string.IsNullOrEmpty(str) ? 0 : System.Text.Encoding.UTF8.GetByteCount(str) + sizeof(ushort);
 
-    public static void Encode(IBufferWriter writer, UnsubAck unsubAck) => WriteShortPacket(writer, PacketCodes.UnsubAck, unsubAck.Id);
+    public static void Encode(Span<byte> buffer, UnsubAck unsubAck) => WriteShortPacket(buffer, PacketCodes.UnsubAck, unsubAck.Id);
 
-    private static void WriteShortPacket(IBufferWriter writer, byte code, ushort packetId)
+    private static void WriteShortPacket(Span<byte> buffer, byte code, ushort packetId)
     {
-        var buffer = writer.GetMemory(4);
-        var span = buffer.Span;
-
-        span[0] = code;
-        span[1] = 2; //Remaining length always 2
-        BinaryPrimitives.WriteUInt16BigEndian(span[2..], packetId);
-        writer.Advance(4);
+        buffer[0] = code;
+        buffer[1] = 2; //Remaining length always 2
+        BinaryPrimitives.WriteUInt16BigEndian(buffer[2..], packetId);
     }
 
-    public static void Encode(IBufferWriter writer, PingReq _) => writer.Write(PingReq);
+    //public static void Encode(Span<byte> buffer, PingReq _) => writer.Write(PingReq);
 
-    public static void Encode(IBufferWriter writer, PingResp _) => writer.Write(PingResp);
+    //public static void Encode(Span<byte> buffer, PingResp _) => writer.Write(PingResp);
 
-    public static void Encode(IBufferWriter writer, Disconnect _) => writer.Write(Disconnect);
+    //public static void Encode(Span<byte> buffer, Disconnect _) => writer.Write(Disconnect);
 
     private static void WriteByte(this Span<byte> buffer, byte value, ref int offset)
     {

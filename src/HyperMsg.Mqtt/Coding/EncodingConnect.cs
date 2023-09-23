@@ -6,7 +6,7 @@ public static partial class Encoding
 {
     const byte ConnectCode = 0b00010000;
 
-    private static void Encode(Span<byte> buffer, Connect connect, out int bytesWritten)
+    private static void EncodeConnect(Span<byte> buffer, Connect connect, out int bytesWritten)
     {
         var contentLength = 10 + GetStringByteCount(connect.ClientId);
 
@@ -35,7 +35,7 @@ public static partial class Encoding
         buffer.WriteByte(connect.ProtocolVersion, ref offset);
         buffer.WriteByte((byte)connect.Flags, ref offset);
         buffer.WriteUInt16(connect.KeepAlive, ref offset);
-        //TODO: Properties shold be here
+        buffer.EncodeConnectProperties(connect.Properties, ref offset);
         buffer.WriteString(connect.ClientId, ref offset);
 
         if (connect.Flags.HasFlag(ConnectFlags.Will))
@@ -55,5 +55,10 @@ public static partial class Encoding
         }
 
         bytesWritten = offset;
+    }
+
+    private static void EncodeConnectProperties(this Span<byte> buffer, ConnectProperties properties, ref int offset)
+    {
+        throw new NotImplementedException();
     }
 }
