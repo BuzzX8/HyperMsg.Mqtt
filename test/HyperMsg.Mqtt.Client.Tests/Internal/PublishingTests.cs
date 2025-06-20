@@ -23,7 +23,7 @@ public class PublishingTests
         var message = Guid.NewGuid().ToByteArray();
         var qos = QosLevel.Qos1;
         var actualPacket = default(Publish);
-        
+
         var packetId = await publishing.PublishAsync(topic, message, qos);
 
         Assert.NotNull(actualPacket);
@@ -64,7 +64,7 @@ public class PublishingTests
     {
         var pubRel = default(PubRel);
         var topic = Guid.NewGuid().ToString();
-        
+
         var packetId = await publishing.PublishAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToByteArray(), QosLevel.Qos2);
 
         Assert.Equal(packetId, pubRel.Id);
