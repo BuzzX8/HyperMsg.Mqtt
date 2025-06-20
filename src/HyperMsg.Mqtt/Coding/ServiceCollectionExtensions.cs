@@ -5,6 +5,18 @@ namespace HyperMsg.Mqtt.Coding;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddMqttCoding(this IServiceCollection services)
+    {        
+        return services.AddMqttDecoding()
+            .AddMqttEncoding();
+    }
+
+    public static IServiceCollection AddMqttEncoding(this IServiceCollection services)
+    {
+        
+        return services;
+    }
+
+    public static IServiceCollection AddMqttDecoding(this IServiceCollection services)
     {
         
         return services;
