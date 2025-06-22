@@ -15,4 +15,9 @@ public class DecodingComponent : IMessagingComponent
     {
         throw new NotImplementedException();
     }
+
+    public void Handle(Span<byte> data)
+    {
+        var packet = Decoding.Decode(data, out var bytesRead);
+    }
 }
