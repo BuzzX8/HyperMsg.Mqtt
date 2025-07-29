@@ -1,10 +1,18 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Coding;
+using HyperMsg.Mqtt.Packets;
 using System.Buffers.Binary;
 
 namespace HyperMsg.Mqtt.Coding;
 
 public static partial class Decoding
 {
+    public static DecodingResult<Packet> Decode(ReadOnlyMemory<byte> buffer)
+    {
+        var packet = Decode(buffer.Span, out var bytesRead);
+
+        return new DecodingResult<Packet>(packet, (ulong)bytesRead);
+    }
+
     public static Packet Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
     {
         var (packetType, packetLength) = ReadFixedHeader(buffer);
