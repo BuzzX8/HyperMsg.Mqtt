@@ -22,8 +22,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperMsg.Mqtt.Client", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HyperMsg.Mqtt.Client.Tests", "test\HyperMsg.Mqtt.Client.Tests\HyperMsg.Mqtt.Client.Tests.csproj", "{0BEDDB97-CFA4-43E4-BECC-565A758C4758}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HyperMsg.Core", "..\HyperMsg\src\HyperMsg.Core\HyperMsg.Core.csproj", "{15274C8F-224D-C7B7-0155-5392B059DAEE}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
