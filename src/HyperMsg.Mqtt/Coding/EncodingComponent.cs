@@ -4,32 +4,25 @@ using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Coding;
 
-public class EncodingComponent : IMessagingComponent
+public class EncodingComponent
 {
-    IBufferWriter _bufferWriter;
-
-    public EncodingComponent(IBufferWriter bufferWriter)
+    public void Attach(IBufferingContext bufferingContext)
     {
-        _bufferWriter = bufferWriter;
+        ArgumentNullException.ThrowIfNull(bufferingContext);
+
+        //messagingContext.HandlerRegistry.Register<Packet>(Handle);
     }
 
-    public void Attach(IMessagingContext messagingContext)
+    public void Detach(IBufferingContext bufferingContext)
     {
-        ArgumentNullException.ThrowIfNull(messagingContext);
+        ArgumentNullException.ThrowIfNull(bufferingContext);
 
-        messagingContext.HandlerRegistry.Register<Packet>(Handle);
-    }
-
-    public void Detach(IMessagingContext messagingContext)
-    {
-        ArgumentNullException.ThrowIfNull(messagingContext);
-
-        messagingContext.HandlerRegistry.Unregister<Packet>(Handle);
+        //messagingContext.HandlerRegistry.Unregister<Packet>(Handle);
     }
 
     public void Handle(Packet packet)
     {
-        Encoding.Encode(_bufferWriter.GetSpan(), packet, out int bytesWritten);
-        _bufferWriter.Advance(bytesWritten);
+        //Encoding.Encode(_bufferWriter.GetSpan(), packet, out int bytesWritten);
+        //_bufferWriter.Advance(bytesWritten);
     }
 }

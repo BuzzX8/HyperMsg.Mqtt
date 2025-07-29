@@ -1,17 +1,16 @@
-﻿using HyperMsg.Messaging;
+﻿using HyperMsg.Buffers;
+using HyperMsg.Messaging;
 
 namespace HyperMsg.Mqtt.Coding;
 
-public class DecodingComponent : IMessagingComponent
+public class DecodingComponent
 {
-    private readonly IMessagingContext _messagingContext;
-
-    public void Attach(IMessagingContext messagingContext)
+    public void Attach(IBufferingContext bufferingContext)
     {
         throw new NotImplementedException();
     }
 
-    public void Detach(IMessagingContext messagingContext)
+    public void Detach(IBufferingContext bufferingContext)
     {
         throw new NotImplementedException();
     }
