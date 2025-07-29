@@ -10,6 +10,13 @@ public static partial class Encoding
     private static readonly byte[] PingResp = { 0b11010000, 0b00000000 };
     private static readonly byte[] PingReq = { 0b11000000, 0b00000000 };
 
+    public static ulong Encode(Memory<byte> buffer, Packet packet)
+    {
+        Encode(buffer.Span, packet, out var bytesEncoded);
+
+        return (ulong)bytesEncoded;
+    }
+
     public static void Encode(Span<byte> buffer, Packet packet, out int bytesWritten)
     {
         switch (packet.Type)
