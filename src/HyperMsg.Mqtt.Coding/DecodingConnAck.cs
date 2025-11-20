@@ -6,7 +6,7 @@ public static partial class Decoding
 {
     private static readonly Dictionary<byte, PropertyUpdater<ConnAckProperties>> ConnAckPropertyUpdaters = new()
     {
-        [0x11] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
+        [0x11] = (p, b, ref offset) => p.SessionExpiryInterval = b.ReadUInt32(ref offset),
         [0x12] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AssignedClientIdentifier = b.ReadString(ref offset),
         [0x13] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.ServerKeepAlive = b.ReadUInt16(ref offset),
         [0x15] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.AuthenticationMethod = b.ReadString(ref offset),
@@ -20,7 +20,7 @@ public static partial class Decoding
         [0x25] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.RetainAvailable = b.ReadBoolean(ref offset),
         [0x26] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) =>
         {
-            p.UserProperties ??= new Dictionary<string, string>();
+            p.UserProperties ??= [];
             ReadUserProperty(p.UserProperties, b, ref offset);
         },
         [0x27] = (ConnAckProperties p, ReadOnlySpan<byte> b, ref int offset) => p.MaximumPacketSize = b.ReadUInt32(ref offset),

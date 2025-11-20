@@ -1,6 +1,5 @@
 namespace HyperMsg.MqttListener;
 
-using HyperMsg.Mqtt;
 using HyperMsg.MqttListener.Services;
 using Microsoft.Extensions.Options;
 using System.Net;

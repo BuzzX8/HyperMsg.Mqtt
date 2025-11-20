@@ -2,13 +2,13 @@
 {
     public class PublishProperties
     {
-        public byte PayloadFormatIndicator { get; internal set; }
-        public uint MessageExpiryInterval { get; internal set; }
-        public ushort TopicAlias { get; internal set; }
-        public string ResponseTopic { get; internal set; }
-        public ReadOnlyMemory<byte> CorrelationData { get; internal set; }
-        public Dictionary<string, string> UserProperties { get; internal set; }
-        public int SubscriptionIdentifier { get; internal set; }
-        public string ContentType { get; internal set; }
+        public byte PayloadFormatIndicator { get; set; }
+        public uint MessageExpiryInterval { get; set; }
+        public ushort TopicAlias { get; set; }
+        public string ResponseTopic { get; set; }
+        public ReadOnlyMemory<byte> CorrelationData { get; set; }
+        public Dictionary<string, string> UserProperties { get; set; }
+        public int SubscriptionIdentifier { get; set; }
+        public string ContentType { get; set; }
     }
 }

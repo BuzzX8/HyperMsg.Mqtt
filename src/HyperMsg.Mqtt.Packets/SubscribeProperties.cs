@@ -2,7 +2,7 @@
 {
     public class SubscribeProperties
     {
-        public int SubscriptionIdentifier { get; internal set; }
-        public Dictionary<string, string> UserProperties { get; internal set; }
+        public int SubscriptionIdentifier { get; set; }
+        public Dictionary<string, string> UserProperties { get; set; }
     }
 }

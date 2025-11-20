@@ -16,9 +16,9 @@ public class Subscribe
 
     public ushort Id { get; }
 
-    public List<SubscriptionRequest> Requests { get; } = new();
+    public List<SubscriptionRequest> Requests { get; } = [];
 
-    public SubscribeProperties Properties { get; internal set; }
+    public SubscribeProperties Properties { get; set; }
 
     public Packet ToPacket() => new(PacketType.Subscribe, this);
 

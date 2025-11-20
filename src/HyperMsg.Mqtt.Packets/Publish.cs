@@ -22,7 +22,7 @@ public class Publish : IEquatable<Publish>
 
     public string TopicName { get; }
 
-    public PublishProperties Properties { get; internal set; }
+    public PublishProperties Properties { get; set; }
 
     public ReadOnlyMemory<byte> Payload { get; }
 

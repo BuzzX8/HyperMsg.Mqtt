@@ -19,7 +19,7 @@ public class Connection
 
         var connect = CreateConnectPacket(settings);
 
-        await channel.SendAsync(connect, cancellationToken);
+        //await channel.SendAsync(connect, cancellationToken);
         var response = await channel.ReceiveAsync(cancellationToken);
 
         if (!response.IsConnAck)

@@ -8,19 +8,19 @@ public record Connect
     /// <summary>
     /// Initializes a new instance of the <see cref="Connect"/> record.
     /// </summary>
-    internal Connect() { }
+    public Connect() { }
 
     #region Variable header
 
     /// <summary>
     /// Gets or sets the protocol name (e.g., "MQTT").
     /// </summary>
-    public string ProtocolName { get; internal set; }
+    public string ProtocolName { get; set; }
 
     /// <summary>
     /// Gets or sets the protocol version (e.g., 5 for MQTT 5.0).
     /// </summary>
-    public byte ProtocolVersion { get; internal set; }
+    public byte ProtocolVersion { get; set; }
 
     /// <summary>
     /// Gets or sets the connect flags, indicating session and authentication options.
