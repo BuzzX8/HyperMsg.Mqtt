@@ -77,7 +77,7 @@ public record Connect
     /// Converts this <see cref="Connect"/> instance to a <see cref="Packet"/> of type Connect.
     /// </summary>
     /// <returns>A <see cref="Packet"/> representing this Connect packet.</returns>
-    internal Packet ToPacket() => new(PacketType.Connect, this);
+    public Packet ToPacket() => new(PacketType.Connect, this);
 
     /// <summary>
     /// Returns a string representation of the Connect packet.

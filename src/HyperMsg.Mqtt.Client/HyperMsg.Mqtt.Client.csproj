@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HyperMsg.Mqtt\HyperMsg.Mqtt.csproj" />
-  </ItemGroup>
-
 </Project>
