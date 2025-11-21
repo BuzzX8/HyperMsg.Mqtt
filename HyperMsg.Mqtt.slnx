@@ -1,0 +1,20 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/HyperMsg.Mqtt.Client/HyperMsg.Mqtt.Client.csproj" />
+    <Project Path="src/HyperMsg.Mqtt.Coding/HyperMsg.Mqtt.Coding.csproj" Id="78942370-0e30-4e74-9d13-7c8c2699438b" />
+    <Project Path="src/HyperMsg.Mqtt.Packets/HyperMsg.Mqtt.Packets.csproj" Id="e33ed7e9-93e3-466f-9cba-5f6283a4e427" />
+    <Project Path="src/HyperMsg.MqttListener/HyperMsg.MqttListener.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/HyperMsg.Mqtt.Client.Tests/HyperMsg.Mqtt.Client.Tests.csproj" />
+    <Project Path="test/HyperMsg.Mqtt.Coding.Tests/HyperMsg.Mqtt.Coding.Tests.csproj" Id="356aba58-b30e-4bf1-ab6b-f1b77cefd4d4" />
+  </Folder>
+</Solution>
