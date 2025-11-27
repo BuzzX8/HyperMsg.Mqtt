@@ -2,7 +2,7 @@
 
 public record Unsubscribe(ushort Id, IEnumerable<string> TopicFilters)
 {
-    public Packet ToPacket() => new(PacketType.Unsubscribe, this);
+    public Packet ToPacket() => new(PacketKind.Unsubscribe, this);
 
     public static implicit operator Packet(Unsubscribe packet) => packet.ToPacket();
 }

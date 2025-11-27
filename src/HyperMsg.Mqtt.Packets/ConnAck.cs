@@ -9,13 +9,13 @@
 public record ConnAck(
     ConnectReasonCode ReasonCode,
     bool SessionPresent = false,
-    ConnAckProperties Properties = null)
+    ConnAckProperties? Properties = null)
 {
     /// <summary>
     /// Converts this <see cref="ConnAck"/> instance to a <see cref="Packet"/> of type CONNACK.
     /// </summary>
     /// <returns>A <see cref="Packet"/> representing this CONNACK packet.</returns>
-    public Packet ToPacket() => new(PacketType.ConAck, this);
+    public Packet ToPacket() => Packet.From(this);
 
     /// <summary>
     /// Returns a string representation of the CONNACK packet.

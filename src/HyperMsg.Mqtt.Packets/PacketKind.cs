@@ -1,6 +1,6 @@
 ﻿namespace HyperMsg.Mqtt.Packets
 {
-    public enum PacketType : byte
+    public enum PacketKind : byte
     {
         Connect = 1,
         ConAck = 2,

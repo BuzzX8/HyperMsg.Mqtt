@@ -24,7 +24,7 @@ public class Connection
 
         if (!response.IsConnAck)
         {
-            throw new MqttClientException($"Protocol error. Expected to receive ConnAck but received {response.Type}");
+            throw new MqttClientException($"Protocol error. Expected to receive ConnAck but received {response.Kind}");
         }
 
         var connAck = response.ToConnAck();
