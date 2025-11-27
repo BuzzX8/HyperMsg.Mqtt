@@ -1,12 +1,9 @@
 ﻿using HyperMsg.Mqtt.Packets;
-using Xunit;
 
 namespace HyperMsg.Mqtt.Coding;
 
 public class ConnectEncodingTests
 {
-    private readonly byte[] buffer = new byte[1000];
-
     [Fact(DisplayName = "Encodes Connect packet with Password flag")]
     public void Encode_Connect_With_Password_Flag()
     {
@@ -48,15 +45,18 @@ public class ConnectEncodingTests
         VerifyEncoding(packet);
     }
 
-    public static IEnumerable<object[]> GetTestCasesForConnectEncoding()
+    public static TheoryData<ConnectFlags> GetTestCasesForConnectEncoding()
     {
-        yield return new object[] { ConnectFlags.None };
-        yield return new object[] { ConnectFlags.CleanSession };
-        yield return new object[] { ConnectFlags.WillRetain };
-        yield return new object[] { ConnectFlags.Qos0 };
-        yield return new object[] { ConnectFlags.Qos1 };
-        yield return new object[] { ConnectFlags.Qos2 };
-        yield return new object[] { ConnectFlags.CleanSession | ConnectFlags.WillRetain };
+        return
+        [
+            ConnectFlags.None,
+            ConnectFlags.CleanSession,
+            ConnectFlags.WillRetain,
+            ConnectFlags.Qos0,
+            ConnectFlags.Qos1,
+            ConnectFlags.Qos2,
+            ConnectFlags.CleanSession | ConnectFlags.WillRetain
+        ];
     }
 
     [Theory(DisplayName = "Encodes Connect packet")]
