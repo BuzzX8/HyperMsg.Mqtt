@@ -23,44 +23,44 @@ public static partial class Decoding
 
         switch (packetType)
         {
-            case PacketType.Connect:
+            case PacketKind.Connect:
                 return DecodeConnect(buffer).ToPacket();
-            case PacketType.ConAck:
+            case PacketKind.ConAck:
                 return DecodeConnAck(buffer).ToPacket();
-            case PacketType.Publish:
+            case PacketKind.Publish:
                 return DecodePublish(buffer).ToPacket();
-            case PacketType.PubAck:
+            case PacketKind.PubAck:
                 break;
-            case PacketType.PubRec:
+            case PacketKind.PubRec:
                 break;
-            case PacketType.PubRel:
+            case PacketKind.PubRel:
                 break;
-            case PacketType.PubComp:
+            case PacketKind.PubComp:
                 break;
-            case PacketType.Subscribe:
+            case PacketKind.Subscribe:
                 return DecodeSubscribe(buffer).ToPacket();
-            case PacketType.SubAck:
+            case PacketKind.SubAck:
                 break;
-            case PacketType.Unsubscribe:
+            case PacketKind.Unsubscribe:
                 break;
-            case PacketType.UnsubAck:
+            case PacketKind.UnsubAck:
                 break;
-            case PacketType.PingReq:
+            case PacketKind.PingReq:
                 break;
-            case PacketType.PingResp:
+            case PacketKind.PingResp:
                 break;
-            case PacketType.Disconnect:
+            case PacketKind.Disconnect:
                 break;
-            case PacketType.Auth:
+            case PacketKind.Auth:
                 break;
         }
 
         throw new DecodingError("Invalid packet type");
     }
 
-    private static (PacketType packetType, int packetSize) ReadFixedHeader(ReadOnlySpan<byte> buffer)
+    private static (PacketKind packetType, int packetSize) ReadFixedHeader(ReadOnlySpan<byte> buffer)
     {
-        var packetType = (PacketType)(buffer[0] >> 4);
+        var packetType = (PacketKind)(buffer[0] >> 4);
         var (packetSize, _) = ReadVarInt(buffer[1..]);
 
         return (packetType, packetSize);

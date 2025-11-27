@@ -19,9 +19,9 @@ public static partial class Encoding
 
     public static void Encode(Span<byte> buffer, Packet packet, out int bytesWritten)
     {
-        switch (packet.Type)
+        switch (packet.Kind)
         {
-            case PacketType.Connect:
+            case PacketKind.Connect:
                 EncodeConnect(buffer, packet.ToConnect(), out bytesWritten);
                 break;
 

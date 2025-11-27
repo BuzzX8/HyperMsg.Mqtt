@@ -20,7 +20,7 @@ public class Subscribe
 
     public SubscribeProperties Properties { get; set; }
 
-    public Packet ToPacket() => new(PacketType.Subscribe, this);
+    public Packet ToPacket() => new(PacketKind.Subscribe, this);
 
     public static implicit operator Packet(Subscribe subscribe) => subscribe.ToPacket();
 }
