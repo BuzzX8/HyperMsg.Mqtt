@@ -50,15 +50,15 @@ public static partial class Decoding
 
         //Payload
         var clientId = buffer.ReadString(ref offset);
-        var connect = new Connect
-        {
-            ProtocolName = protocolName,
-            ProtocolVersion = protocolVersion,
-            Flags = flags,
-            KeepAlive = keepAlive,
-            ClientId = clientId,
-            Properties = properties
-        };
+        var connect = default(Connect);
+        //{
+        //    ProtocolName = protocolName,
+        //    ProtocolVersion = protocolVersion,
+        //    Flags = flags,
+        //    KeepAlive = keepAlive,
+        //    ClientId = clientId,
+        //    Properties = properties
+        //};
 
         if (flags.HasFlag(ConnectFlags.Will))
         {

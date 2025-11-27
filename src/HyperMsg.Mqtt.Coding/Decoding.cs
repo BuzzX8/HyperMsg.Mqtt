@@ -24,11 +24,11 @@ public static partial class Decoding
         switch (packetType)
         {
             case PacketKind.Connect:
-                return DecodeConnect(buffer).ToPacket();
+                return DecodeConnect(buffer);
             case PacketKind.ConAck:
-                return DecodeConnAck(buffer).ToPacket();
+                return DecodeConnAck(buffer);
             case PacketKind.Publish:
-                return DecodePublish(buffer).ToPacket();
+                return DecodePublish(buffer);
             case PacketKind.PubAck:
                 break;
             case PacketKind.PubRec:
@@ -38,7 +38,7 @@ public static partial class Decoding
             case PacketKind.PubComp:
                 break;
             case PacketKind.Subscribe:
-                return DecodeSubscribe(buffer).ToPacket();
+                return DecodeSubscribe(buffer);
             case PacketKind.SubAck:
                 break;
             case PacketKind.Unsubscribe:

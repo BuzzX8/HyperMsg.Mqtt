@@ -2,7 +2,5 @@
 
 public record struct PubRel(ushort Id)
 {
-    public Packet ToPacket() => new(PacketKind.PubRel, this);
-
-    public static implicit operator Packet(PubRel pubRel) => pubRel.ToPacket();
+    public static implicit operator Packet(PubRel pubRel) => pubRel;
 }
