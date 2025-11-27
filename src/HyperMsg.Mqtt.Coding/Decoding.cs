@@ -10,18 +10,18 @@ public static partial class Decoding
     {
         var packet = Decode(buffer.Span, out var bytesRead);
 
-        return new DecodingResult<Packet>(packet, (ulong)bytesRead);
+        return new(packet, (ulong)bytesRead);
     }
 
     public static Packet Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
     {
-        var (packetType, packetLength) = ReadFixedHeader(buffer);
+        var (packetKind, packetLength) = ReadFixedHeader(buffer);
 
         EnsureBufferSize(buffer, packetLength + 1);
 
         bytesRead = packetLength;
 
-        switch (packetType)
+        switch (packetKind)
         {
             case PacketKind.Connect:
                 return DecodeConnect(buffer);

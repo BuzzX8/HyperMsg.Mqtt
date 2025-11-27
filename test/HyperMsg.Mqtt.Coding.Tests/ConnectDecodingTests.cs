@@ -40,7 +40,7 @@ namespace HyperMsg.Mqtt.Coding
         }
 
         [Fact]
-        public void DecodeDonnect_Correctly_Decodes_Payload()
+        public void DecodeConnect_Correctly_Decodes_Payload()
         {
             var packet = Decoding.Decode(EncodedConnectPacket, out var _).ToConnect();
 
