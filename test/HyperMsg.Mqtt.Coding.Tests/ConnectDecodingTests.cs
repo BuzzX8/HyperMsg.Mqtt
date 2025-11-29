@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace HyperMsg.Mqtt.Coding
+﻿namespace HyperMsg.Mqtt.Coding
 {
     public class ConnectDecodingTests
     {
