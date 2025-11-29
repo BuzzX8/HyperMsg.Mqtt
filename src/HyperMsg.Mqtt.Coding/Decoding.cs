@@ -10,25 +10,25 @@ public static partial class Decoding
     {
         var packet = Decode(buffer.Span, out var bytesRead);
 
-        return new DecodingResult<Packet>(packet, (ulong)bytesRead);
+        return new(packet, (ulong)bytesRead);
     }
 
     public static Packet Decode(ReadOnlySpan<byte> buffer, out int bytesRead)
     {
-        var (packetType, packetLength) = ReadFixedHeader(buffer);
+        var (packetKind, packetLength) = ReadFixedHeader(buffer);
 
         EnsureBufferSize(buffer, packetLength + 1);
 
         bytesRead = packetLength;
 
-        switch (packetType)
+        switch (packetKind)
         {
             case PacketKind.Connect:
-                return DecodeConnect(buffer).ToPacket();
+                return DecodeConnect(buffer);
             case PacketKind.ConAck:
-                return DecodeConnAck(buffer).ToPacket();
+                return DecodeConnAck(buffer);
             case PacketKind.Publish:
-                return DecodePublish(buffer).ToPacket();
+                return DecodePublish(buffer);
             case PacketKind.PubAck:
                 break;
             case PacketKind.PubRec:
@@ -38,7 +38,7 @@ public static partial class Decoding
             case PacketKind.PubComp:
                 break;
             case PacketKind.Subscribe:
-                return DecodeSubscribe(buffer).ToPacket();
+                return DecodeSubscribe(buffer);
             case PacketKind.SubAck:
                 break;
             case PacketKind.Unsubscribe:
@@ -55,7 +55,7 @@ public static partial class Decoding
                 break;
         }
 
-        throw new DecodingError("Invalid packet type");
+        throw new DecodingException("Invalid packet type");
     }
 
     private static (PacketKind packetType, int packetSize) ReadFixedHeader(ReadOnlySpan<byte> buffer)
@@ -101,7 +101,7 @@ public static partial class Decoding
     {
         if (!updaters.ContainsKey(propCode))
         {
-            throw new DecodingError($"Incorrect property code provided ({propCode})");
+            throw new DecodingException($"Incorrect property code provided ({propCode})");
         }
 
         updaters[propCode].Invoke(properties, buffer, ref offset);
@@ -123,7 +123,7 @@ public static partial class Decoding
 
         if (value > 1)
         {
-            throw new DecodingError("Incorrect boolean value");
+            throw new DecodingException("Incorrect boolean value");
         }
 
         return Convert.ToBoolean(value);
@@ -181,7 +181,7 @@ public static partial class Decoding
 
             if (i == sizeof(int) && value >= 0x80)
             {
-                throw new DecodingError("VarInt incorrectly encoded");
+                throw new DecodingException("VarInt incorrectly encoded");
             }
         }
         while ((value & 0x80) == 0x80);
@@ -218,7 +218,7 @@ public static partial class Decoding
     {
         if (buffer.Length < requiredSize)
         {
-            throw new EncodingError("Buffer size less than required");
+            throw new EncodingException("Buffer size less than required");
         }
     }
 }

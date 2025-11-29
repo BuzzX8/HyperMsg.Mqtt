@@ -1,4 +1,5 @@
-﻿using HyperMsg.Mqtt.Packets;
+﻿using HyperMsg.Coding;
+using HyperMsg.Mqtt.Packets;
 using System.Buffers;
 using System.Buffers.Binary;
 
@@ -213,7 +214,7 @@ public static partial class Encoding
 
         if (length > ushort.MaxValue - sizeof(ushort))
         {
-            throw new EncodingError($"String length too big. It must be less of equal {ushort.MaxValue - sizeof(ushort)}");
+            throw new EncodingException($"String length too big. It must be less of equal {ushort.MaxValue - sizeof(ushort)}");
         }
 
         var bytes = System.Text.Encoding.UTF8.GetBytes(value);

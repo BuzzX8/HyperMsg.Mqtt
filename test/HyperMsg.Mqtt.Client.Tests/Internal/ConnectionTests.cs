@@ -55,7 +55,7 @@ public class ConnectionTests
     [Fact]
     public async Task ConnectAsync_Throws_Exception_If_Not_ConnAck_Received()
     {
-        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new Subscribe(0).ToPacket());
+        A.CallTo(() => channel.ReceiveAsync(A<CancellationToken>._)).Returns(new Subscribe(0));
 
         await Assert.ThrowsAsync<MqttClientException>(() => connection.ConnectAsync());
     }
