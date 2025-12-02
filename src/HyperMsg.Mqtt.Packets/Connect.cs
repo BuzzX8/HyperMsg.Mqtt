@@ -68,7 +68,7 @@ public record Connect
     /// <summary>
     /// Gets or sets the password for authentication.
     /// </summary>
-    public ReadOnlyMemory<byte> Password { get; set; }
+    public ReadOnlyMemory<byte>? Password { get; set; }
 
     #endregion
 

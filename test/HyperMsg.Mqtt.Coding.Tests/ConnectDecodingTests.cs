@@ -16,12 +16,15 @@ public class ConnectDecodingTests
         Assert.Equal(ProtocolVersion.V5_0, connect.ProtocolVersion);
         Assert.Equal(60, connect.KeepAlive);
 
+        Assert.NotNull(connect.Properties);
         Assert.Equal(11u, connect.Properties.SessionExpiryInterval);
         Assert.Equal(30000u, connect.Properties.ReceiveMaximum);
         Assert.Equal(35000u, connect.Properties.MaximumPacketSize);
         Assert.Equal(12u, connect.Properties.TopicAliasMaximum);
         Assert.True(connect.Properties.RequestResponseInformation);
         Assert.True(connect.Properties.RequestProblemInformation);
+
+        Assert.NotNull(connect.Properties.UserProperties);
         Assert.Equal("Val1", connect.Properties.UserProperties["Prop1"]);
         Assert.Equal("Val2", connect.Properties.UserProperties["Prop2"]);
     }

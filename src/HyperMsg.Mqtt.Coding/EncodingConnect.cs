@@ -24,7 +24,7 @@ public static partial class Encoding
 
         if (connect.Flags.HasFlag(ConnectFlags.Password))
         {
-            contentLength += connect.Password.Length + 2;
+            //contentLength += connect.Password.Length + 2;
         }
 
         var offset = 0;
@@ -52,7 +52,7 @@ public static partial class Encoding
 
         if (connect.Flags.HasFlag(ConnectFlags.Password))
         {
-            buffer.WriteBinaryData(connect.Password.Span, ref offset);
+            //buffer.WriteBinaryData(connect.Password.Span, ref offset);
         }
 
         bytesEncoded = offset;
