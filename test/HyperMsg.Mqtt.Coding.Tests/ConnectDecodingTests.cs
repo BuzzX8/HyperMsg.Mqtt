@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Coding;
+using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Coding;
 
@@ -9,6 +10,7 @@ public class ConnectDecodingTests
     {
         var packet = Decoding.Decode(ConnectDecodingTestData.EncodedConnectPacket, out var _);
         Assert.True(packet.IsConnect);
+        Assert.Equal(PacketKind.Connect, packet.Kind);
         var connect = packet.ToConnect();
 
         Assert.Equal("MQTT", connect.ProtocolName);

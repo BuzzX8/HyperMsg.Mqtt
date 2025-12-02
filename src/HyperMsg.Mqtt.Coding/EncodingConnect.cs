@@ -5,6 +5,7 @@ namespace HyperMsg.Mqtt.Coding;
 public static partial class Encoding
 {
     const byte ConnectCode = 0b00010000;
+    const string ProtocolName = "MQTT";
 
     private static void EncodeConnect(Span<byte> buffer, Connect connect, out int bytesEncoded)
     {
@@ -31,8 +32,8 @@ public static partial class Encoding
         buffer.WriteByte(ConnectCode, ref offset);
         buffer.WriteVarInt(contentLength, ref offset);
         //Variable header
-        buffer.WriteString(connect.ProtocolName, ref offset);
-        buffer.WriteByte(connect.ProtocolVersion, ref offset);
+        buffer.WriteString(ProtocolName, ref offset);
+        buffer.WriteByte((byte)connect.ProtocolVersion, ref offset);
         buffer.WriteByte((byte)connect.Flags, ref offset);
         buffer.WriteUInt16(connect.KeepAlive, ref offset);
         buffer.EncodeConnectProperties(connect.Properties, ref offset);

@@ -96,7 +96,7 @@ public static partial class Decoding
 
     private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
     {
-        connect.WillProperties = DecodeWillProperties(buffer, connect.ProtocolVersion, ref offset);
+        connect.WillProperties = DecodeWillProperties(buffer, (byte)connect.ProtocolVersion, ref offset);
         connect.WillTopic = buffer.ReadString(ref offset);
         connect.WillPayload = buffer.ReadBinaryData(ref offset);
     }
