@@ -13,8 +13,7 @@ public class ConnectDecodingTests
         Assert.Equal(PacketKind.Connect, packet.Kind);
         var connect = packet.ToConnect();
 
-        Assert.Equal("MQTT", connect.ProtocolName);
-        Assert.Equal(5, connect.ProtocolVersion);
+        Assert.Equal(ProtocolVersion.V5_0, connect.ProtocolVersion);
         Assert.Equal(60, connect.KeepAlive);
 
         Assert.Equal(11u, connect.Properties.SessionExpiryInterval);

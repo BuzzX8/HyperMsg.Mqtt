@@ -84,7 +84,7 @@ public static partial class Decoding
         }
     }
 
-    private static ConnectProperties DecodeConnectProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
+    private static ConnectProperties? DecodeConnectProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
     {
         if (protocolVersion < 5)
         {
@@ -101,7 +101,7 @@ public static partial class Decoding
         connect.WillPayload = buffer.ReadBinaryData(ref offset);
     }
 
-    private static ConnectWillProperties DecodeWillProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
+    private static ConnectWillProperties? DecodeWillProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
     {
         if (protocolVersion < 5)
         {

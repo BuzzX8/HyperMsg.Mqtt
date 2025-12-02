@@ -34,7 +34,7 @@ public record Connect
     /// <summary>
     /// Gets or sets the properties for the CONNECT packet (MQTT 5.0).
     /// </summary>
-    public ConnectProperties Properties { get; set; }
+    public ConnectProperties? Properties { get; set; }
 
     #endregion
 
@@ -48,12 +48,12 @@ public record Connect
     /// <summary>
     /// Gets or sets the properties for the Will message (MQTT 5.0).
     /// </summary>
-    public ConnectWillProperties WillProperties { get; set; }
+    public ConnectWillProperties? WillProperties { get; set; }
 
     /// <summary>
     /// Gets or sets the Will topic.
     /// </summary>
-    public string WillTopic { get; set; }
+    public string? WillTopic { get; set; }
 
     /// <summary>
     /// Gets or sets the Will payload.
@@ -63,7 +63,7 @@ public record Connect
     /// <summary>
     /// Gets or sets the user name for authentication.
     /// </summary>
-    public string UserName { get; set; }
+    public string? UserName { get; set; }
 
     /// <summary>
     /// Gets or sets the password for authentication.
