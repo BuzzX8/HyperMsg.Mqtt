@@ -2,8 +2,35 @@
 
 internal class ConnectDecodingTestData
 {
+    // Minimal valid CONNECT packet (MQTT v5, empty Client ID)
+    public static readonly byte[] CorrectPacketWithEmptyClientId =
+    [
+        0x10,       // Fixed header: CONNECT
+        0x0B,       // Remaining length = 11
+        0x00, 0x04, // Protocol Name length
+        0x4D, 0x51, 0x54, 0x54, // "MQTT"
+        0x05,       // Protocol Level = 5
+        0x02,       // Connect Flags (Clean Start)
+        0x00, 0x3C, // Keep Alive = 60
+        0x00, 0x00  // Client ID length = 0 (empty)
+    ];
+
+    // Minimal valid CONNECT packet (MQTT v5, Client ID = "c")
+    public static readonly byte[] CorrectPacketMinimal =
+    [
+        0x10,       // Fixed header: CONNECT
+        0x0C,       // Remaining length = 12
+        0x00, 0x04, // Protocol Name length
+        0x4D, 0x51, 0x54, 0x54, // "MQTT"
+        0x05,       // Protocol Level = 5
+        0x02,       // Connect Flags (Clean Start)
+        0x00, 0x3C, // Keep Alive = 60
+        0x00, 0x01, // Client ID length = 1
+        0x63        // "c"
+    ];
+
     // CONNECT packet with various properties and payload fields set
-    public static readonly byte[] EncodedConnectPacket =
+    public static readonly byte[] CorrectPacketWithProperties =
     [
         16, 171, 1, //Fixed header
         0, 4, 77, 81, 84, 84, //Protocol name (MQTT)

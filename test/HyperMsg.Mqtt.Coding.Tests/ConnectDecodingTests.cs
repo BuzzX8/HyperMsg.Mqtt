@@ -6,9 +6,41 @@ namespace HyperMsg.Mqtt.Coding;
 public class ConnectDecodingTests
 {
     [Fact]
+    public void DecodeConnect_Decodes_Minimal_Packet()
+    {
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketMinimal, out var _);
+
+        Assert.True(packet.IsConnect);
+        Assert.Equal(PacketKind.Connect, packet.Kind);
+
+        var connect = packet.ToConnect();
+
+        Assert.Equal(ProtocolVersion.V5_0, connect.ProtocolVersion);
+        Assert.Equal(60, connect.KeepAlive);
+        Assert.Equal("c", connect.ClientId);
+        Assert.Equal(ConnectFlags.CleanSession, connect.Flags);
+    }
+
+    [Fact]
+    public void DecodeConnect_Decodes_Packet_With_Empty_ClientId()
+    {
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithEmptyClientId, out var _);
+
+        Assert.True(packet.IsConnect);
+        Assert.Equal(PacketKind.Connect, packet.Kind);
+
+        var connect = packet.ToConnect();
+
+        Assert.Equal(ProtocolVersion.V5_0, connect.ProtocolVersion);
+        Assert.Equal(60, connect.KeepAlive);
+        Assert.Equal(string.Empty, connect.ClientId);
+        Assert.Equal(ConnectFlags.CleanSession, connect.Flags);
+    }
+
+    [Fact]
     public void DecodeConnect_Correctly_Decodes_Variable_Header()
     {
-        var packet = Decoding.Decode(ConnectDecodingTestData.EncodedConnectPacket, out var _);
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithProperties, out var _);
         Assert.True(packet.IsConnect);
         Assert.Equal(PacketKind.Connect, packet.Kind);
         var connect = packet.ToConnect();
@@ -32,7 +64,7 @@ public class ConnectDecodingTests
     [Fact]
     public void DecodeConnect_Correctly_Decodes_Payload()
     {
-        var packet = Decoding.Decode(ConnectDecodingTestData.EncodedConnectPacket, out var _).ToConnect();
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithProperties, out var _).ToConnect();
 
         Assert.Equal("mqttx_4b94267f", packet.ClientId);
         Assert.Equal("last-will-topic", packet.WillTopic);
