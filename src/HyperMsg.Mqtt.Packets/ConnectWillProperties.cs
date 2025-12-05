@@ -8,11 +8,11 @@ public class ConnectWillProperties
 
     public uint WillDelayInterval { get; set; }
 
-    public string ContentType { get; set; }
+    public string? ContentType { get; set; }
 
-    public string ResponseTopic { get; set; }
+    public string? ResponseTopic { get; set; }
 
     public ReadOnlyMemory<byte> CorrelationData { get; set; }
 
-    public IDictionary<string, string> UserProperties { get; set; }
+    public IDictionary<string, string>? UserProperties { get; set; }
 }
