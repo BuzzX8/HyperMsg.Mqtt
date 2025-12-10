@@ -56,6 +56,7 @@ internal class ConnectDecodingTestData
         0x05,       // Protocol Level = 5
         0x02,       // Connect Flags (Clean Start)
         0x00, 0x3C, // Keep Alive = 60
+        0x00,       // Properties length = 0
         0x00, 0x0A, // Client ID length = 10
         0x74, 0x65, 0x73, 0x74, 0x43, 0x6C, 0x69, 0x65, 0x6E, 0x74 // "testClient"
     ];
