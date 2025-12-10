@@ -44,7 +44,7 @@ public static partial class Decoding
 
         //Variable header
         VerifyProtocolName(buffer, ref offset);
-        var protocolVersion = buffer.ReadByte(ref offset);
+        var protocolVersion = (ProtocolVersion)buffer.ReadByte(ref offset);
         var flags = (ConnectFlags)buffer.ReadByte(ref offset);
         var keepAlive = buffer.ReadUInt16(ref offset);
         var properties = DecodeConnectProperties(buffer, protocolVersion, ref offset);
@@ -84,9 +84,9 @@ public static partial class Decoding
         }
     }
 
-    private static ConnectProperties? DecodeConnectProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
+    private static ConnectProperties? DecodeConnectProperties(ReadOnlySpan<byte> buffer, ProtocolVersion protocolVersion, ref int offset)
     {
-        if (protocolVersion < 5)
+        if (protocolVersion != ProtocolVersion.V5_0)
         {
             return default;
         }
@@ -96,14 +96,14 @@ public static partial class Decoding
 
     private static void ReadWillFields(Connect connect, ReadOnlySpan<byte> buffer, ref int offset)
     {
-        connect.WillProperties = DecodeWillProperties(buffer, (byte)connect.ProtocolVersion, ref offset);
+        connect.WillProperties = DecodeWillProperties(buffer, connect.ProtocolVersion, ref offset);
         connect.WillTopic = buffer.ReadString(ref offset);
         connect.WillPayload = buffer.ReadBinaryData(ref offset);
     }
 
-    private static ConnectWillProperties? DecodeWillProperties(ReadOnlySpan<byte> buffer, byte protocolVersion, ref int offset)
+    private static ConnectWillProperties? DecodeWillProperties(ReadOnlySpan<byte> buffer, ProtocolVersion protocolVersion, ref int offset)
     {
-        if (protocolVersion < 5)
+        if (protocolVersion != ProtocolVersion.V5_0)
         {
             return default;
         }

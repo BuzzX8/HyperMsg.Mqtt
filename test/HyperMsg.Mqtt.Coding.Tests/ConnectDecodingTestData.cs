@@ -12,6 +12,7 @@ internal class ConnectDecodingTestData
         0x05,       // Protocol Level = 5
         0x02,       // Connect Flags (Clean Start)
         0x00, 0x3C, // Keep Alive = 60
+        0x00,       // Properties length = 0
         0x00, 0x00  // Client ID length = 0 (empty)
     ];
 
@@ -25,6 +26,7 @@ internal class ConnectDecodingTestData
         0x05,       // Protocol Level = 5
         0x02,       // Connect Flags (Clean Start)
         0x00, 0x3C, // Keep Alive = 60
+        0x00,       // Properties length = 0
         0x00, 0x01, // Client ID length = 1
         0x63        // "c"
     ];
