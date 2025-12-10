@@ -8,10 +8,11 @@ public class ConnectDecodingTests
     [Fact]
     public void DecodeConnect_Decodes_Minimal_Packet()
     {
-        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketMinimal, out var _);
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketMinimal, out var bytesRead);
 
         Assert.True(packet.IsConnect);
         Assert.Equal(PacketKind.Connect, packet.Kind);
+        Assert.Equal(ConnectDecodingTestData.CorrectPacketMinimal.Length, bytesRead);
 
         var connect = packet.ToConnect();
 
@@ -24,10 +25,11 @@ public class ConnectDecodingTests
     [Fact]
     public void DecodeConnect_Decodes_Packet_With_Empty_ClientId()
     {
-        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithEmptyClientId, out var _);
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithEmptyClientId, out var bytesRead);
 
         Assert.True(packet.IsConnect);
         Assert.Equal(PacketKind.Connect, packet.Kind);
+        Assert.Equal(ConnectDecodingTestData.CorrectPacketWithEmptyClientId.Length, bytesRead);
 
         var connect = packet.ToConnect();
 
@@ -40,9 +42,12 @@ public class ConnectDecodingTests
     [Fact]
     public void DecodeConnect_Correctly_Decodes_Variable_Header()
     {
-        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithProperties, out var _);
+        var packet = Decoding.Decode(ConnectDecodingTestData.CorrectPacketWithProperties, out var bytesRead);
+
         Assert.True(packet.IsConnect);
         Assert.Equal(PacketKind.Connect, packet.Kind);
+        Assert.Equal(ConnectDecodingTestData.CorrectPacketWithProperties.Length, bytesRead);
+
         var connect = packet.ToConnect();
 
         Assert.Equal(ProtocolVersion.V5_0, connect.ProtocolVersion);
