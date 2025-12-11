@@ -99,12 +99,12 @@ public static partial class Decoding
 
     private static void ReadProperty<T>(T properties, byte propCode, ReadOnlySpan<byte> buffer, IDictionary<byte, PropertyUpdater<T>> updaters, ref int offset)
     {
-        if (!updaters.ContainsKey(propCode))
+        if (!updaters.TryGetValue(propCode, out PropertyUpdater<T>? value))
         {
             throw new DecodingException($"Incorrect property code provided ({propCode})");
         }
 
-        updaters[propCode].Invoke(properties, buffer, ref offset);
+        value.Invoke(properties, buffer, ref offset);
     }
 
     internal delegate void PropertyUpdater<T>(T properties, ReadOnlySpan<byte> buffer, ref int offset);
