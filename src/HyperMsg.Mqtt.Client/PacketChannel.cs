@@ -4,12 +4,12 @@ using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Client;
 
-public class PacketChannel : IPacketChannel
+public class PacketChannel(IBufferingContext bufferingContext) : IPacketChannel
 {
-    private readonly IBufferingContext bufferingContext;
-
     public async ValueTask<Packet> ReceiveAsync(CancellationToken cancellationToken)
     {
+        await bufferingContext.RequestInputBufferHandling(cancellationToken);
+
         var reader = bufferingContext.Input.Reader;
         var buffer = reader.GetMemory();
         var (packet, bytesDecoded) = Decoding.Decode(buffer);
