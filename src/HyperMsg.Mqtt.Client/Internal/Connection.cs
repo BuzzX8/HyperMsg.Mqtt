@@ -4,10 +4,10 @@ namespace HyperMsg.Mqtt.Client.Internal;
 
 public class Connection
 {
-    private readonly IMqttChannel channel;
+    private readonly IPacketChannel channel;
     private readonly ConnectionSettings settings;
 
-    public Connection(IMqttChannel channel, ConnectionSettings settings)
+    public Connection(IPacketChannel channel, ConnectionSettings settings)
     {
         this.channel = channel ?? throw new ArgumentNullException(nameof(channel));
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -15,7 +15,7 @@ public class Connection
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        await channel.OpenAsync(cancellationToken);
+        //await channel.OpenAsync(cancellationToken);
 
         var connect = CreateConnectPacket(settings);
 
@@ -31,7 +31,7 @@ public class Connection
 
         if (connAck.ReasonCode != ConnectReasonCode.Success)
         {
-            await channel.CloseAsync(default);
+            //await channel.CloseAsync(default);
             throw new MqttClientException($"{connAck.ReasonCode}");
         }
     }

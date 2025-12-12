@@ -6,7 +6,7 @@ public class MqttClient
 {
     private readonly Connection connection;
 
-    public MqttClient(IMqttChannel channel, ConnectionSettings settings)
+    public MqttClient(IPacketChannel channel, ConnectionSettings settings)
     {
         ArgumentNullException.ThrowIfNull(channel, nameof(channel));
         ArgumentNullException.ThrowIfNull(settings, nameof(settings));
