@@ -2,9 +2,14 @@
 
 namespace HyperMsg.Mqtt.Client;
 
-public class PacketListener : IPacketListener
+internal class PacketListener : IPacketListener
 {
     private readonly IBufferingContext bufferingContext;
+
+    public PacketListener(IBufferingContext bufferingContext)
+    {
+        this.bufferingContext = bufferingContext;
+    }
 
     public bool IsActive { get; private set; }
 

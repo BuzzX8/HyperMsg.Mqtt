@@ -4,13 +4,13 @@ using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Client;
 
-public class PacketChannel(IBufferingContext bufferingContext) : IPacketChannel
+internal class PacketChannel(IBufferingContext bufferingContext) : IPacketChannel
 {
     public async ValueTask<Packet> ReceiveAsync(CancellationToken cancellationToken)
     {
-        await bufferingContext.RequestInputBufferHandling(cancellationToken);
+        await bufferingContext.RequestInputBufferUpstreamUpdate(cancellationToken);
 
-        var reader = bufferingContext.Input.Reader;
+        var reader = bufferingContext.InputBuffer.Reader;
         var buffer = reader.GetMemory();
         var (packet, bytesDecoded) = Decoding.Decode(buffer);
 
@@ -21,12 +21,12 @@ public class PacketChannel(IBufferingContext bufferingContext) : IPacketChannel
 
     public async ValueTask SendAsync(Packet packet, CancellationToken cancellationToken)
     {
-        var writer = bufferingContext.Output.Writer;
+        var writer = bufferingContext.OutputBuffer.Writer;
         var buffer = writer.GetMemory();
         var bytesEncoded = Encoding.Encode(buffer, packet);
         
         writer.Advance((int)bytesEncoded);
 
-        await bufferingContext.RequestOutputBufferHandling(cancellationToken);
+        await bufferingContext.RequestOutputBufferDownstreamUpdate(cancellationToken);
     }
 }

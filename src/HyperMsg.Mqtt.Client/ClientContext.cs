@@ -3,19 +3,11 @@ using HyperMsg.Transport;
 
 namespace HyperMsg.Mqtt.Client;
 
-public class ClientContext : IClientContext
+public record ClientContext(IBufferingContext bufferingContext, IConnection connection) : IClientContext
 {
-    private readonly IBufferingContext bufferingContext;
+    public IConnection Connection { get; } = connection;
 
-    public ClientContext(IBufferingContext bufferingContext, IConnection connection)
-    {
-        this.bufferingContext = bufferingContext;
-        Connection = connection;
-    }
+    public IPacketChannel Channel { get; } = new PacketChannel(bufferingContext);
 
-    public IConnection Connection { get; }
-
-    public IPacketChannel Channel => throw new NotImplementedException();
-
-    public IPacketListener Listener => throw new NotImplementedException();
+    public IPacketListener Listener { get; } = new PacketListener(bufferingContext);
 }
