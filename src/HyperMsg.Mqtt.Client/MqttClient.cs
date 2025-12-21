@@ -1,4 +1,4 @@
-﻿using HyperMsg.Mqtt.Client.Internal;
+﻿using HyperMsg.Mqtt.Client.Components;
 
 namespace HyperMsg.Mqtt.Client;
 

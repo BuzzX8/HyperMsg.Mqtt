@@ -1,5 +1,5 @@
 ﻿using FakeItEasy;
-using HyperMsg.Mqtt.Client.Internal;
+using HyperMsg.Mqtt.Client.Components;
 using HyperMsg.Mqtt.Packets;
 using System.Net;
 using Xunit;
