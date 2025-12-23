@@ -1,17 +1,16 @@
-﻿using HyperMsg.Mqtt.Client.Internal;
+﻿using HyperMsg.Mqtt.Client.Components;
 
 namespace HyperMsg.Mqtt.Client;
 
 public class MqttClient
 {
+    private readonly IClientContext clientContext;
     private readonly Connection connection;
 
-    public MqttClient(IMqttChannel channel, ConnectionSettings settings)
+    public MqttClient(IClientContext clientContext, ConnectionSettings settings)
     {
-        ArgumentNullException.ThrowIfNull(channel, nameof(channel));
-        ArgumentNullException.ThrowIfNull(settings, nameof(settings));
-
-        connection = new(channel, settings);
+        this.clientContext = clientContext;
+        connection = new(clientContext.Channel, settings);
     }
 
     public Task ConnectAsync(CancellationToken cancellationToken = default) => connection.ConnectAsync(cancellationToken);
