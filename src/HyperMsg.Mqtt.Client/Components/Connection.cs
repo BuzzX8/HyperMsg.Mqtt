@@ -2,16 +2,10 @@
 
 namespace HyperMsg.Mqtt.Client.Components;
 
-public class Connection
+public class Connection(IPacketChannel channel, ConnectionSettings settings)
 {
-    private readonly IPacketChannel channel;
-    private readonly ConnectionSettings settings;
-
-    public Connection(IPacketChannel channel, ConnectionSettings settings)
-    {
-        this.channel = channel ?? throw new ArgumentNullException(nameof(channel));
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-    }
+    private readonly IPacketChannel channel = channel ?? throw new ArgumentNullException(nameof(channel));
+    private readonly ConnectionSettings settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
