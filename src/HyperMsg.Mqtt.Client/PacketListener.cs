@@ -2,31 +2,41 @@
 
 namespace HyperMsg.Mqtt.Client;
 
-internal class PacketListener : IPacketListener
+internal class PacketListener(IBufferingContext bufferingContext) : IPacketListener, IDisposable
 {
-    private readonly IBufferingContext bufferingContext;
-
-    public PacketListener(IBufferingContext bufferingContext)
-    {
-        this.bufferingContext = bufferingContext;
-    }
-
     public bool IsActive { get; private set; }
 
     public void Start()
     {
-        throw new NotImplementedException();
+        if (IsActive)
+        {
+            return;
+        }
+
+        bufferingContext.InputBufferDownstreamUpdateRequested += HandleInputBuffer;
+        IsActive = true;
     }
 
     public void Stop()
     {
-        throw new NotImplementedException();
+        if (!IsActive)
+        {
+            return;
+        }
+
+        bufferingContext.InputBufferDownstreamUpdateRequested -= HandleInputBuffer;
+        IsActive = false;
     }
 
-    private Task HandleInputBuffer(IBuffer buffer, CancellationToken cancellationToken)
+    private ValueTask HandleInputBuffer(IBuffer buffer, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
     
     public event PacketHandler? PacketAccepted;
+
+    public void Dispose()
+    {
+        Stop();
+    }
 }

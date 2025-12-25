@@ -45,8 +45,16 @@ public class MqttClient
     }
 
     private async Task HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
-    {        
-        throw new NotImplementedException();
+    {
+        switch (packet.Kind)
+        {
+            case PacketKind.Publish:
+                var publishPacket = packet.ToPublish();
+                PublishReceived?.Invoke(publishPacket);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     /// <summary>
