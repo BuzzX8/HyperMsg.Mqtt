@@ -1,19 +1,12 @@
 ﻿namespace HyperMsg.Mqtt;
 
-public class PublishRequest
+public class PublishRequest(string topicName, ReadOnlyMemory<byte> message, QosLevel qos = QosLevel.Qos0, bool retainMessage = false)
 {
-    public PublishRequest(string topicName, ReadOnlyMemory<byte> message, QosLevel qos = QosLevel.Qos0)
-    {
-        TopicName = topicName ?? throw new ArgumentNullException(nameof(topicName));
-        Message = message;
-        Qos = qos;
-    }
+    public string TopicName { get; } = topicName ?? throw new ArgumentNullException(nameof(topicName));
 
-    public string TopicName { get; }
+    public ReadOnlyMemory<byte> Message { get; } = message;
 
-    public ReadOnlyMemory<byte> Message { get; }
+    public QosLevel Qos { get; } = qos;
 
-    public QosLevel Qos { get; }
-
-    public bool RetainMessage { get; }
+    public bool RetainMessage { get; } = retainMessage;
 }
