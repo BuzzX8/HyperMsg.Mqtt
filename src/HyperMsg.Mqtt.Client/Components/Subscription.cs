@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using SendAction = System.Func<HyperMsg.Mqtt.Packets.Packet, System.Threading.CancellationToken, System.Threading.Tasks.Task>;
 
-namespace HyperMsg.Mqtt.Client.Internal;
+namespace HyperMsg.Mqtt.Client.Components;
 
 public class Subscription
 {
