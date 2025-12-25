@@ -36,9 +36,17 @@ public class MqttClient
     public MqttClient(IClientContext clientContext, ConnectionSettings settings)
     {
         this.clientContext = clientContext;
+
         connection = new(clientContext.Channel, settings);
         publishing = new(SendPacketAsync);
         subscription = new(SendPacketAsync);
+
+        this.clientContext.Listener.PacketAccepted += HandleAcceptedPacket;
+    }
+
+    private async Task HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
+    {        
+        throw new NotImplementedException();
     }
 
     /// <summary>
