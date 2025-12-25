@@ -85,10 +85,7 @@ public class MqttClient
     /// <param name="cancellationToken">Token to cancel the send operation.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous send operation.</returns>
     /// <exception cref="NotImplementedException">Thrown until the packet send implementation is provided.</exception>
-    private Task SendPacketAsync(Packet packet, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    private Task SendPacketAsync(Packet packet, CancellationToken cancellationToken = default) => clientContext.Channel.SendAsync(packet, cancellationToken).AsTask();
 
     /// <summary>
     /// Publishes a message to the specified topic.
