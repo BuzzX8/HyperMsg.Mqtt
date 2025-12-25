@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Mqtt.Client.Components;
+using HyperMsg.Mqtt.Packets;
 
 namespace HyperMsg.Mqtt.Client;
 
@@ -7,6 +8,7 @@ public class MqttClient
     private readonly IClientContext clientContext;
     private readonly Connection connection;
     private readonly Publishing publishing;
+    private readonly Subscription subscription;
 
     public MqttClient(IClientContext clientContext, ConnectionSettings settings)
     {
@@ -20,9 +22,9 @@ public class MqttClient
 
     public Task PingAsync(CancellationToken cancellationToken = default) => connection.PingAsync(cancellationToken);
 
-    public Task SubscribeAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task RequestSubscriptionAsync(IEnumerable<SubscriptionRequest> requests, CancellationToken cancellationToken = default) => subscription.RequestSubscriptionAsync(requests, cancellationToken);
 
-    public Task UnsubscribeAsync(CancellationToken cancellationToken = default) { throw new NotImplementedException(); }
+    public Task UnsubscribeAsync(IEnumerable<string> topicfilters, CancellationToken cancellationToken = default) => subscription.RequestUnsubscriptionAsync(topicfilters, cancellationToken);
 
     public Task PublishAsync(string topicName, ReadOnlyMemory<byte> message, QosLevel qos = QosLevel.Qos0, bool retainMessage = false, CancellationToken cancellationToken = default) 
         => publishing.PublishAsync(new PublishRequest(topicName, message, qos, retainMessage), cancellationToken);
