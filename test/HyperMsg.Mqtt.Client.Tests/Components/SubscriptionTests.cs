@@ -3,7 +3,7 @@ using HyperMsg.Mqtt.Client.Components;
 using HyperMsg.Mqtt.Packets;
 using Xunit;
 
-namespace HyperMsg.Mqtt.Client.Tests.Internal;
+namespace HyperMsg.Mqtt.Client.Tests.Components;
 
 public class SubscriptionTests
 {
