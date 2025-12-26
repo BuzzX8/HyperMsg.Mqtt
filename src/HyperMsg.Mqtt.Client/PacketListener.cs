@@ -1,4 +1,5 @@
 ﻿using HyperMsg.Buffers;
+using HyperMsg.Mqtt.Coding;
 
 namespace HyperMsg.Mqtt.Client;
 
@@ -30,7 +31,13 @@ internal class PacketListener(IBufferingContext bufferingContext) : IPacketListe
 
     private ValueTask HandleInputBuffer(IBuffer buffer, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var reader = buffer.Reader;
+        var memory = reader.GetMemory();
+        (var packet, var bytesDecoded) = Decoding.Decode(memory);
+
+        reader.Advance((int)bytesDecoded);
+
+        return PacketAccepted?.Invoke(packet, cancellationToken) ?? ValueTask.CompletedTask;
     }
     
     public event PacketHandler? PacketAccepted;
