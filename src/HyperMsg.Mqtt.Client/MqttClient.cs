@@ -9,24 +9,10 @@ namespace HyperMsg.Mqtt.Client;
 /// </summary>
 public class MqttClient : IDisposable
 {
-    /// <summary>
-    /// The client context providing the underlying channel and runtime information.
-    /// </summary>
     private readonly IClientContext clientContext;
 
-    /// <summary>
-    /// Component responsible for establishing and managing the MQTT connection.
-    /// </summary>
     private readonly Connection connection;
-
-    /// <summary>
-    /// Component responsible for publishing messages.
-    /// </summary>
     private readonly Publishing publishing;
-
-    /// <summary>
-    /// Component responsible for subscription management.
-    /// </summary>
     private readonly Subscription subscription;
 
     private IConnection Connection => clientContext.Connection;
