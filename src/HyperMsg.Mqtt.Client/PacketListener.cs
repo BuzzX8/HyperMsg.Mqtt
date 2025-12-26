@@ -1,32 +1,49 @@
 ﻿using HyperMsg.Buffers;
+using HyperMsg.Mqtt.Coding;
 
 namespace HyperMsg.Mqtt.Client;
 
-internal class PacketListener : IPacketListener
+internal class PacketListener(IBufferingContext bufferingContext) : IPacketListener, IDisposable
 {
-    private readonly IBufferingContext bufferingContext;
-
-    public PacketListener(IBufferingContext bufferingContext)
-    {
-        this.bufferingContext = bufferingContext;
-    }
-
     public bool IsActive { get; private set; }
 
     public void Start()
     {
-        throw new NotImplementedException();
+        if (IsActive)
+        {
+            return;
+        }
+
+        bufferingContext.InputBufferDownstreamUpdateRequested += HandleInputBuffer;
+        IsActive = true;
     }
 
     public void Stop()
     {
-        throw new NotImplementedException();
+        if (!IsActive)
+        {
+            return;
+        }
+
+        bufferingContext.InputBufferDownstreamUpdateRequested -= HandleInputBuffer;
+        IsActive = false;
     }
 
-    private Task HandleInputBuffer(IBuffer buffer, CancellationToken cancellationToken)
+    private ValueTask HandleInputBuffer(IBuffer buffer, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var reader = buffer.Reader;
+        var memory = reader.GetMemory();
+        (var packet, var bytesDecoded) = Decoding.Decode(memory);
+
+        reader.Advance((int)bytesDecoded);
+
+        return PacketAccepted?.Invoke(packet, cancellationToken) ?? ValueTask.CompletedTask;
     }
     
     public event PacketHandler? PacketAccepted;
+
+    public void Dispose()
+    {
+        Stop();
+    }
 }

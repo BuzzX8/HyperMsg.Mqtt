@@ -33,6 +33,8 @@ public readonly struct Packet
     /// </summary>
     public bool IsConnAck => Kind == PacketKind.ConAck;
 
+    public bool IsDisconnect => Kind == PacketKind.Disconnect;
+
     /// <summary>
     /// Gets a value indicating whether this packet is a PUBLISH packet.
     /// </summary>
@@ -54,6 +56,8 @@ public readonly struct Packet
     /// </summary>
     /// <returns>The <see cref="ConnAck"/> representation of this packet.</returns>
     public ConnAck ToConnAck() => To<ConnAck>();
+
+    public Disconnect ToDisconect() => To<Disconnect>();
 
     /// <summary>
     /// Converts this packet to a <see cref="Publish"/> instance.

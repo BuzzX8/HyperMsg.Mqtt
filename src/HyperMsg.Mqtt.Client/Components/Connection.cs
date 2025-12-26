@@ -9,11 +9,9 @@ public class Connection(IPacketChannel channel, ConnectionSettings settings)
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        //await channel.OpenAsync(cancellationToken);
-
         var connect = CreateConnectPacket(settings);
 
-        //await channel.SendAsync(connect, cancellationToken);
+        await channel.SendAsync(connect, cancellationToken);
         var response = await channel.ReceiveAsync(cancellationToken);
 
         if (!response.IsConnAck)
@@ -25,7 +23,6 @@ public class Connection(IPacketChannel channel, ConnectionSettings settings)
 
         if (connAck.ReasonCode != ConnectReasonCode.Success)
         {
-            //await channel.CloseAsync(default);
             throw new MqttClientException($"{connAck.ReasonCode}");
         }
     }

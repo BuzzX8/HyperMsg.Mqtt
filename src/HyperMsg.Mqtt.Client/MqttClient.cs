@@ -1,32 +1,25 @@
 ﻿using HyperMsg.Mqtt.Client.Components;
 using HyperMsg.Mqtt.Packets;
+using HyperMsg.Transport;
 
 namespace HyperMsg.Mqtt.Client;
 
 /// <summary>
 /// High-level MQTT client that coordinates connection, publishing and subscription components.
 /// </summary>
-public class MqttClient
+public class MqttClient : IDisposable
 {
-    /// <summary>
-    /// The client context providing the underlying channel and runtime information.
-    /// </summary>
     private readonly IClientContext clientContext;
 
-    /// <summary>
-    /// Component responsible for establishing and managing the MQTT connection.
-    /// </summary>
     private readonly Connection connection;
-
-    /// <summary>
-    /// Component responsible for publishing messages.
-    /// </summary>
     private readonly Publishing publishing;
-
-    /// <summary>
-    /// Component responsible for subscription management.
-    /// </summary>
     private readonly Subscription subscription;
+
+    private IConnection Connection => clientContext.Connection;
+
+    private IPacketChannel Channel => clientContext.Channel;
+
+    private IPacketListener Listener => clientContext.Listener;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MqttClient"/> class.
@@ -36,9 +29,28 @@ public class MqttClient
     public MqttClient(IClientContext clientContext, ConnectionSettings settings)
     {
         this.clientContext = clientContext;
-        connection = new(clientContext.Channel, settings);
+
+        connection = new(Channel, settings);
         publishing = new(SendPacketAsync);
         subscription = new(SendPacketAsync);
+
+        Listener.PacketAccepted += HandleAcceptedPacket;
+    }
+
+    private async ValueTask HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
+    {
+        switch (packet.Kind)
+        {
+            case PacketKind.Disconnect:
+                connection.HandleDisconnect(packet.ToDisconect());
+                break;
+            case PacketKind.Publish:
+                var publishPacket = packet.ToPublish();
+                PublishReceived?.Invoke(publishPacket);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -46,14 +58,24 @@ public class MqttClient
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the connect operation.</param>
     /// <returns>A <see cref="Task"/> that completes when the connection is established.</returns>
-    public Task ConnectAsync(CancellationToken cancellationToken = default) => connection.ConnectAsync(cancellationToken);
+    public async Task ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        await Connection.OpenAsync(cancellationToken);
+        await connection.ConnectAsync(cancellationToken);
+        Listener.Start();
+    }
 
     /// <summary>
     /// Disconnects from the MQTT broker.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the disconnect operation.</param>
     /// <returns>A <see cref="Task"/> that completes when the client has disconnected.</returns>
-    public Task DisconnectAsync(CancellationToken cancellationToken = default) => connection.DisconnectAsync(cancellationToken);
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
+    {
+        Listener.Stop();
+        await connection.DisconnectAsync(cancellationToken);
+        await Connection.CloseAsync(cancellationToken);
+    }
 
     /// <summary>
     /// Sends a PINGREQ to the broker to keep the connection alive.
@@ -106,5 +128,10 @@ public class MqttClient
     /// Subscribers can attach handlers to this event to process incoming application messages.
     /// The event receives the parsed <see cref="Packets.Publish"/> packet.
     /// </remarks>
-    public event Action<Packets.Publish> PublishReceived;
+    public event Action<Publish>? PublishReceived;
+
+    public void Dispose()
+    {
+        clientContext.Listener.PacketAccepted -= HandleAcceptedPacket;
+    }
 }
