@@ -44,10 +44,13 @@ public class MqttClient
         this.clientContext.Listener.PacketAccepted += HandleAcceptedPacket;
     }
 
-    private async Task HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
+    private async ValueTask HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
     {
         switch (packet.Kind)
         {
+            case PacketKind.Disconnect:
+                connection.HandleDisconnect(packet.ToDisconect());
+                break;
             case PacketKind.Publish:
                 var publishPacket = packet.ToPublish();
                 PublishReceived?.Invoke(publishPacket);
@@ -62,14 +65,22 @@ public class MqttClient
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the connect operation.</param>
     /// <returns>A <see cref="Task"/> that completes when the connection is established.</returns>
-    public Task ConnectAsync(CancellationToken cancellationToken = default) => connection.ConnectAsync(cancellationToken);
+    public async Task ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        await clientContext.Connection.OpenAsync(cancellationToken);
+        await connection.ConnectAsync(cancellationToken);
+        clientContext.Listener.Start();
+    }
 
     /// <summary>
     /// Disconnects from the MQTT broker.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the disconnect operation.</param>
     /// <returns>A <see cref="Task"/> that completes when the client has disconnected.</returns>
-    public Task DisconnectAsync(CancellationToken cancellationToken = default) => connection.DisconnectAsync(cancellationToken);
+    public Task DisconnectAsync(CancellationToken cancellationToken = default)
+    {
+        return connection.DisconnectAsync(cancellationToken);
+    }
 
     /// <summary>
     /// Sends a PINGREQ to the broker to keep the connection alive.
@@ -122,5 +133,5 @@ public class MqttClient
     /// Subscribers can attach handlers to this event to process incoming application messages.
     /// The event receives the parsed <see cref="Packets.Publish"/> packet.
     /// </remarks>
-    public event Action<Packets.Publish> PublishReceived;
+    public event Action<Publish> PublishReceived;
 }

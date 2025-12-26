@@ -13,4 +13,4 @@ public interface IPacketListener
     event PacketHandler? PacketAccepted;
 }
 
-public delegate Task PacketHandler(Packet packet, CancellationToken cancellationToken);
+public delegate ValueTask PacketHandler(Packet packet, CancellationToken cancellationToken);
