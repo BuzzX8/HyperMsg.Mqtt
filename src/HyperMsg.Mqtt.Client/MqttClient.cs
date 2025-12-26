@@ -1,5 +1,6 @@
 ﻿using HyperMsg.Mqtt.Client.Components;
 using HyperMsg.Mqtt.Packets;
+using HyperMsg.Transport;
 
 namespace HyperMsg.Mqtt.Client;
 
@@ -28,6 +29,12 @@ public class MqttClient : IDisposable
     /// </summary>
     private readonly Subscription subscription;
 
+    private IConnection Connection => clientContext.Connection;
+
+    private IPacketChannel Channel => clientContext.Channel;
+
+    private IPacketListener Listener => clientContext.Listener;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MqttClient"/> class.
     /// </summary>
@@ -37,11 +44,11 @@ public class MqttClient : IDisposable
     {
         this.clientContext = clientContext;
 
-        connection = new(clientContext.Channel, settings);
+        connection = new(Channel, settings);
         publishing = new(SendPacketAsync);
         subscription = new(SendPacketAsync);
 
-        this.clientContext.Listener.PacketAccepted += HandleAcceptedPacket;
+        Listener.PacketAccepted += HandleAcceptedPacket;
     }
 
     private async ValueTask HandleAcceptedPacket(Packet packet, CancellationToken cancellationToken)
@@ -67,9 +74,9 @@ public class MqttClient : IDisposable
     /// <returns>A <see cref="Task"/> that completes when the connection is established.</returns>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        await clientContext.Connection.OpenAsync(cancellationToken);
+        await Connection.OpenAsync(cancellationToken);
         await connection.ConnectAsync(cancellationToken);
-        clientContext.Listener.Start();
+        Listener.Start();
     }
 
     /// <summary>
@@ -77,9 +84,11 @@ public class MqttClient : IDisposable
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the disconnect operation.</param>
     /// <returns>A <see cref="Task"/> that completes when the client has disconnected.</returns>
-    public Task DisconnectAsync(CancellationToken cancellationToken = default)
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
-        return connection.DisconnectAsync(cancellationToken);
+        Listener.Stop();
+        await connection.DisconnectAsync(cancellationToken);
+        await Connection.CloseAsync(cancellationToken);
     }
 
     /// <summary>
