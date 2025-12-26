@@ -6,7 +6,7 @@ namespace HyperMsg.Mqtt.Client;
 /// <summary>
 /// High-level MQTT client that coordinates connection, publishing and subscription components.
 /// </summary>
-public class MqttClient
+public class MqttClient : IDisposable
 {
     /// <summary>
     /// The client context providing the underlying channel and runtime information.
@@ -133,5 +133,10 @@ public class MqttClient
     /// Subscribers can attach handlers to this event to process incoming application messages.
     /// The event receives the parsed <see cref="Packets.Publish"/> packet.
     /// </remarks>
-    public event Action<Publish> PublishReceived;
+    public event Action<Publish>? PublishReceived;
+
+    public void Dispose()
+    {
+        clientContext.Listener.PacketAccepted -= HandleAcceptedPacket;
+    }
 }
