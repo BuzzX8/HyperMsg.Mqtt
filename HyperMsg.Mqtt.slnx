@@ -13,6 +13,7 @@
     <Project Path="src/HyperMsg.Mqtt.Packets/HyperMsg.Mqtt.Packets.csproj" Id="e33ed7e9-93e3-466f-9cba-5f6283a4e427" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/HyperMsg.Mqtt.Client.Integration.Tests/HyperMsg.Mqtt.Client.Integration.Tests.csproj" Id="3448accc-c105-44aa-8860-b9cdd18c2302" />
     <Project Path="test/HyperMsg.Mqtt.Client.Tests/HyperMsg.Mqtt.Client.Tests.csproj" />
     <Project Path="test/HyperMsg.Mqtt.Coding.Tests/HyperMsg.Mqtt.Coding.Tests.csproj" Id="356aba58-b30e-4bf1-ab6b-f1b77cefd4d4" />
   </Folder>
